@@ -77,14 +77,8 @@ const enum PieceType {
   QUEEN,
   KING,
 }
-const PIECE_TYPES: PieceType[] = [
-  PieceType.PAWN,
-  PieceType.KNIGHT,
-  PieceType.BISHOP,
-  PieceType.ROOK,
-  PieceType.QUEEN,
-  PieceType.KING,
-];
+const PIECE_TYPES: PieceType[] = Array.from({ length: 6 }, (_, i) => i + 1);
+const [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING] = PIECE_TYPES;
 const PIECE_SYMBOLS: (string | null)[] = [null, 'p', 'n', 'b', 'r', 'q', 'k'];
 const PIECE_NAMES: (string | null)[] = [
   null,
