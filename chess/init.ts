@@ -875,3 +875,222 @@ class Move {
   }
 }
 
+/**
+ * A board representing the position of chess pieces. See
+ * :class:`~chess.Board` for a full board with move generation.
+ *
+ * The board is initialized with the standard chess starting position, unless
+ * otherwise specified in the optional *board_fen* argument. If *board_fen*
+ * is ``null``, an empty board is created.
+ */
+class BaseBoard {
+  occupied: Bitboard;
+  occupiedCo: [Bitboard, Bitboard];
+  pawns: Bitboard;
+  knights: Bitboard;
+  bishops: Bitboard;
+  rooks: Bitboard;
+  queens: Bitboard;
+  kings: Bitboard;
+  promoted: Bitboard;
+
+  constructor(boardFen?: string) {
+    this.occupiedCo = [BB_EMPTY, BB_EMPTY];
+
+    if (boardFen !== undefined) {
+      this._clearBoard();
+    } else if (boardFen === STARTING_BOARD_FEN) {
+      this._resetBoard();
+    } else {
+      this._setBoardFen(boardFen);
+    }
+  }
+
+  _resetBoard() {
+    this.pawns = BB_RANK_2 | BB_RANK_7;
+    this.knights = BB_B1 | BB_G1 | BB_B8 | BB_G8;
+    this.bishops = BB_C1 | BB_F1 | BB_C8 | BB_F8;
+    this.rooks = BB_CORNERS;
+    this.queens = BB_D1 | BB_D8;
+    this.kings = BB_E1 | BB_E8;
+
+    this.promoted = BB_EMPTY;
+
+    this.occupiedCo[colorIdx(WHITE)] = BB_RANK_1 | BB_RANK_2;
+    this.occupiedCo[colorIdx(BLACK)] = BB_RANK_7 | BB_RANK_8;
+    this.occupied = BB_RANK_1 | BB_RANK_2 | BB_RANK_7 | BB_RANK_8;
+  }
+
+  /**
+   * Resets pieces to the starting position.
+   *
+   * :class:`~chess.Board` also resets the move stack, but not turn,
+   * castling rights and move counters. Use :func:`chess.Board.reset()` to
+   * fully restore the starting position.
+   */
+  resetBoard() {
+    this._resetBoard();
+  }
+
+  _clearBoard() {
+    this.pawns = BB_EMPTY;
+    this.knights = BB_EMPTY;
+    this.bishops = BB_EMPTY;
+    this.rooks = BB_EMPTY;
+    this.queens = BB_EMPTY;
+    this.kings = BB_EMPTY;
+
+    this.promoted = BB_EMPTY;
+
+    this.occupiedCo[colorIdx(WHITE)] = BB_EMPTY;
+    this.occupiedCo[colorIdx(BLACK)] = BB_EMPTY;
+    this.occupied = BB_EMPTY;
+  }
+
+  /**
+   * Clears the board.
+   *
+   * :class:`~chess.Board` also clears the move stack.
+   */
+  clearBoard() {
+    this._clearBoard();
+  }
+
+  piecesMask(pieceType: PieceType, color: Color): Bitboard {
+    let bb: Bitboard;
+    if (pieceType === PAWN) {
+      bb = this.pawns;
+    } else if (pieceType === KNIGHT) {
+      bb = this.knights;
+    } else if (pieceType === BISHOP) {
+      bb = this.bishops;
+    } else if (pieceType === ROOK) {
+      bb = this.rooks;
+    } else if (pieceType === QUEEN) {
+      bb = this.queens;
+    } else if (pieceType === KING) {
+      bb = this.kings;
+    } else {
+      throw new Error(`expected PieceType, got ${pieceType}`);
+    }
+
+    return bb & this.occupiedCo[colorIdx(color)];
+  }
+
+  /**
+   * Gets pieces of the given type and color.
+   *
+   * Returns a :class:`set of squares <chess.SquareSet>`.
+   */
+  pieces(pieceType: PieceType, color: Color): SquareSet {
+    return new SquareSet(this.piecesMask(pieceType, color));
+  }
+
+  /**
+   * Gets the :class:`piece <chess.Piece>` at the given square.
+   */
+  pieceAt(square: Square): Piece | null {
+    const pieceType = this.pieceTypeAt(square);
+    if (pieceType !== null) {
+      const mask = BB_SQUARES[square];
+      const color = bool(this.occupiedCo[colorIdx(WHITE)] & mask);
+      return new Piece(pieceType, color);
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Gets the piece type at the given square.
+   */
+  pieceTypeAt(square: Square): PieceType | null {
+    const mask = BB_SQUARES[square];
+
+    if (!(this.occupied & mask)) {
+      return null; // Early return
+    } else if (this.pawns & mask) {
+      return PAWN;
+    } else if (this.knights & mask) {
+      return KNIGHT;
+    } else if (this.bishops & mask) {
+      return BISHOP;
+    } else if (this.rooks & mask) {
+      return ROOK;
+    } else if (this.queens & mask) {
+      return QUEEN;
+    } else {
+      return KING;
+    }
+  }
+
+  /**
+   * Gets the color of the piece at the given square.
+   */
+  colorAt(square: Square): Color | null {
+    const mask = BB_SQUARES[square];
+    if (this.occupiedCo[colorIdx(WHITE)] & mask) {
+      return WHITE;
+    } else if (this.occupiedCo[colorIdx(BLACK)] & mask) {
+      return BLACK;
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Finds the king square of the given side. Returns ``null`` if there
+   * is no king of that color.
+   *
+   * In variants with king promotions, only non-promoted kings are
+   * considered.
+   */
+  king(color: Color): Square | null {
+    const kingMask =
+      this.occupiedCo[colorIdx(color)] & this.kings & ~this.promoted;
+    return kingMask ? msb(kingMask) : null;
+  }
+
+  attacks_mask(square: Square): Bitboard {
+    const bb_square = BB_SQUARES[square];
+
+    if (bb_square & this.pawns) {
+      const color = bool(bb_square & this.occupiedCo[colorIdx(WHITE)]);
+      return BB_PAWN_ATTACKS[colorIdx(color)][square];
+    } else if (bb_square & this.knights) {
+      return BB_KNIGHT_ATTACKS[square];
+    } else if (bb_square & this.kings) {
+      return BB_KING_ATTACKS[square];
+    } else {
+      let attacks = 0n;
+      if (bb_square & this.bishops || bb_square & this.queens) {
+        attacks = BB_DIAG_ATTACKS[square].get(
+          BB_DIAG_MASKS[square] & this.occupied,
+        ) as Bitboard;
+      }
+      if (bb_square & this.rooks || bb_square & this.queens) {
+        attacks |=
+          (BB_RANK_ATTACKS[square].get(
+            BB_RANK_MASKS[square] & this.occupied,
+          ) as Bitboard) |
+          (BB_FILE_ATTACKS[square].get(
+            BB_FILE_MASKS[square] & this.occupied,
+          ) as Bitboard);
+      }
+      return attacks;
+    }
+  }
+
+  // ...
+}
+
+class _BoardState<BoardT> {}
+
+class Board extends BaseBoard {}
+
+class PseudoLegalMoveGenerator {}
+
+class LegalMoveGenerator {}
+
+// const IntoSquareSet =
+
+class SquareSet {}
