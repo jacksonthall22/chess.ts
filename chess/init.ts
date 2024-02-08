@@ -8,7 +8,7 @@
  * This is a direct port of their excellent library to TypeScript.
  */
 
-/** Custom declarations */
+/** ========== Custom declarations (no mirror in python-chess) ========== */
 type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /**
@@ -50,7 +50,15 @@ const bitCount = (n: number | bigint): number => {
   return count;
 };
 
-/** Direct transpilation below */
+const bool = (x: any) => {
+  return !!x;
+};
+
+/** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
+const colorIdx = (color: Color): 1 | 0 => (color ? 1 : 0);
+
+
+/** ========== Direct transpilation ========== */
 
 const __author__ = 'Niklas Fiekas';
 const __email__ = 'niklas.fiekas@backscattering.de';
@@ -63,15 +71,14 @@ const __transpiled_version__ = '0.0.1';
 type EnPassantSpec = 'legal' | 'fen' | 'xfen';
 
 type Color = boolean;
-const WHITE: Color = true;
-const BLACK: Color = false;
+const [WHITE, BLACK] = [true, false];
 const COLORS: Color[] = [WHITE, BLACK];
 type ColorName = 'white' | 'black';
 const COLOR_NAMES: ColorName[] = ['white', 'black'];
 
 const enum PieceType {
   PAWN = 1,
-  KNIGHT,
+  KNIGHT,  // = 2, etc.
   BISHOP,
   ROOK,
   QUEEN,
@@ -198,7 +205,7 @@ class Outcome {
   /** The reason for the game to have ended. */
 
   winner: Color | null;
-  /** The winning color or ``None`` if drawn. */
+  /** The winning color or ``null`` if drawn. */
 
   constructor(termination: Termination, winner: Color | null) {
     this.termination = termination;
@@ -270,7 +277,7 @@ const [
   A8, B8, C8, D8, E8, F8, G8, H8,
 ] = SQUARES;
 
-const SQUARE_NAMES: string[] = RANK_NAMES.flatMap((r) =>
+const SQUARE_NAMES = RANK_NAMES.flatMap((r) =>
   FILE_NAMES.map((f) => f + r),
 );
 
@@ -702,7 +709,7 @@ class Piece {
   /**
    * Gets the Unicode character for the piece.
    */
-  unicodeSymbol({ invertColor = false }: { invertColor?: boolean }): string {
+  unicodeSymbol({ invertColor }: { invertColor: boolean } = { invertColor: false }): string {
     const swapcase = (symbol: string) =>
       symbol === symbol.toUpperCase()
         ? symbol.toLowerCase()
@@ -749,10 +756,10 @@ class Move {
   /** The target square. */
   toSquare: Square;
 
-  /** The promotion piece type or ``None``. */
+  /** The promotion piece type or ``null``. */
   promotion: PieceType | null;
 
-  /** The drop piece type or ``None``. */
+  /** The drop piece type or ``null``. */
   drop: PieceType | null;
 
   constructor(
@@ -800,7 +807,7 @@ class Move {
   }
 
   bool(): boolean {
-    return !!(
+    return bool(
       this.fromSquare ||
       this.toSquare ||
       this.promotion !== null ||
