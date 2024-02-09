@@ -446,7 +446,7 @@ const msb = (bb: Bitboard): Square => {
   return (bitLength(bb) - 1) as Square;
 };
 
-function* scanReverse(bb: Bitboard): IterableIterator<Square> {
+function* scanReversed(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
     let r = bitLength(bb) - 1;
     yield r as Square;
