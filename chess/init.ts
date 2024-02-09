@@ -1091,6 +1091,419 @@ class PseudoLegalMoveGenerator {}
 
 class LegalMoveGenerator {}
 
-// const IntoSquareSet =
 
-class SquareSet {}
+type IntoSquareSet = Bitboard | Iterable<Square>
+
+/**
+ * A set of squares.
+ * 
+ * >>> import chess
+ * >>>
+ * >>> squares = chess.SquareSet([chess.A8, chess.A1])
+ * >>> squares
+ * SquareSet(0x0100_0000_0000_0001)
+ * 
+ * >>> squares = chess.SquareSet(chess.BB_A8 | chess.BB_RANK_1)
+ * >>> squares
+ * SquareSet(0x0100_0000_0000_00ff)
+ * 
+ * >>> print(squares)
+ * 1 . . . . . . .
+ * . . . . . . . .
+ * . . . . . . . .
+ * . . . . . . . .
+ * . . . . . . . .
+ * . . . . . . . .
+ * . . . . . . . .
+ * 1 1 1 1 1 1 1 1
+ * 
+ * >>> len(squares)
+ * 9
+ * 
+ * >>> bool(squares)
+ * True
+ * 
+ * >>> chess.B1 in squares
+ * True
+ * 
+ * >>> for square in squares:
+ * ...     # 0 -- chess.A1
+ * ...     # 1 -- chess.B1
+ * ...     # 2 -- chess.C1
+ * ...     # 3 -- chess.D1
+ * ...     # 4 -- chess.E1
+ * ...     # 5 -- chess.F1
+ * ...     # 6 -- chess.G1
+ * ...     # 7 -- chess.H1
+ * ...     # 56 -- chess.A8
+ * ...     print(square)
+ * ...
+ * 0
+ * 1
+ * 2
+ * 3
+ * 4
+ * 5
+ * 6
+ * 7
+ * 56
+ * 
+ * >>> list(squares)
+ * [0, 1, 2, 3, 4, 5, 6, 7, 56]
+ * 
+ * Square sets are internally represented by 64-bit integer masks of the
+ * included squares. Bitwise operations can be used to compute unions,
+ * intersections and shifts.
+ * 
+ * >>> int(squares)
+ * 72057594037928191
+ * 
+ * Also supports common set operations like
+ * :func:`~chess.SquareSet.issubset()`, :func:`~chess.SquareSet.issuperset()`,
+ * :func:`~chess.SquareSet.union()`, :func:`~chess.SquareSet.intersection()`,
+ * :func:`~chess.SquareSet.difference()`,
+ * :func:`~chess.SquareSet.symmetric_difference()` and
+ * :func:`~chess.SquareSet.copy()` as well as
+ * :func:`~chess.SquareSet.update()`,
+ * :func:`~chess.SquareSet.intersection_update()`,
+ * :func:`~chess.SquareSet.difference_update()`,
+ * :func:`~chess.SquareSet.symmetric_difference_update()` and
+ * :func:`~chess.SquareSet.clear()`.
+ */
+class SquareSet {
+  mask: Bitboard;
+
+  constructor(squares: IntoSquareSet = BB_EMPTY) {
+    if (typeof squares === 'bigint') {
+      this.mask = squares & BB_ALL;
+      return;
+    } else {
+      this.mask = 0n;
+    }
+
+    // Try squares as an iterable. Not under except clause for nicer backtraces
+    for (const square of squares) {
+      this.add(square);
+    }
+  }
+
+  // Set
+
+  contains(square: Square) {
+    return bool(BB_SQUARES[square] & this.mask);
+  }
+
+  iter() {
+    return scanForward(this.mask);
+  }
+
+  reversed() {
+    return scanReversed(this.mask);
+  }
+
+  length() {
+    return popcount(this.mask);
+  }
+
+  // MutableSet
+
+  add(square: Square) {
+    this.mask |= BB_SQUARES[square];
+  }
+
+  discard(square: Square) {
+    this.mask &= ~BB_SQUARES[square];
+  }
+
+  // frozenset
+
+  /**
+   * Tests if the square sets are disjoint.
+   */
+  isdisjoint(other: IntoSquareSet) {
+    return !bool(this.mask & new SquareSet(other).mask);
+  }
+
+  /**
+   * Tests if this square set is a subset of another.
+   */
+  issubset(other: IntoSquareSet) {
+    return !bool(this.mask & ~new SquareSet(other).mask);
+  }
+
+  /**
+   * Tests if this square set is a superset of another.
+   */
+  issuperset(other: IntoSquareSet) {
+    return !bool(~this.mask & new SquareSet(other).mask);
+  }
+
+  union(other: IntoSquareSet) {
+    return this.or(other);
+  }
+
+  or(other: IntoSquareSet) {
+    const r = new SquareSet(other);
+    r.mask |= this.mask;
+    return r;
+  }
+
+  intersection(other: IntoSquareSet) {
+    return this.and(other);
+  }
+
+  and(other: IntoSquareSet) {
+    const r = new SquareSet(other);
+    r.mask &= this.mask;
+    return r;
+  }
+
+  difference(other: IntoSquareSet) {
+    return this.sub(other);
+  }
+
+  sub(other: IntoSquareSet) {
+    const r = new SquareSet(other);
+    r.mask = this.mask & ~r.mask;
+    return r;
+  }
+
+  symmetricDifference(other: IntoSquareSet) {
+    return this.mask ^ new SquareSet(other).mask;
+  }
+
+  xor(other: IntoSquareSet) {
+    const r = new SquareSet(other);
+    r.mask ^= this.mask;
+    return r;
+  }
+
+  copy() {
+    return new SquareSet(this.mask);
+  }
+
+  // set
+
+  update(...others: IntoSquareSet[]) {
+    for (const other of others) {
+      this.ior(other);
+    }
+  }
+
+  ior(other: IntoSquareSet) {
+    this.mask |= new SquareSet(other).mask;
+    return this;
+  }
+
+  intersectionUpdate(...others: IntoSquareSet[]) {
+    for (const other of others) {
+      this.iand(other);
+    }
+  }
+
+  iand(other: IntoSquareSet) {
+    this.mask &= new SquareSet(other).mask;
+    return this;
+  }
+
+  differenceUpdate(other: IntoSquareSet) {
+    this.isub(other);
+  }
+
+  isub(other: IntoSquareSet) {
+    this.mask &= ~new SquareSet(other).mask;
+    return this;
+  }
+
+  symmetricDifferenceUpdate(other: IntoSquareSet) {
+    this.ixor(other);
+  }
+
+  ixor(other: IntoSquareSet) {
+    this.mask ^= new SquareSet(other).mask;
+    return this;
+  }
+
+  /**
+   * Removes a square from the set.
+   *
+   * @thrwos :exc:`Error` if the given *square* was not in the set.
+   */
+  remove(square: Square) {
+    const mask = BB_SQUARES[square];
+    if (this.mask & mask) {
+      this.mask ^= mask;
+    } else {
+      throw new Error(`KeyError: ${square}`);
+    }
+  }
+
+  /**
+   * Removes and returns a square from the set.
+   * 
+   * @throws :exc:`KeyError` if the set is empty.
+   */
+  pop() {
+    if (!this.mask) {
+      throw new Error('pop from empty SquareSet');
+    }
+
+    const square = lsb(this.mask);
+    this.mask &= (this.mask - 1n);
+    return square;
+  }
+
+  /**
+   * Removes all elements from this set.
+   */
+  clear() {
+    this.mask = BB_EMPTY;
+  }
+
+  // SquareSet
+
+  /**
+   * Iterator over the subsets of this set.
+   */
+  carryRippler() {
+    return _carryRippler(this.mask)
+  }
+
+  /**
+   * Returns a vertically mirrored copy of this square set.
+   */
+  mirror() {
+    return new SquareSet(flipVertical(this.mask))
+  }
+
+  /**
+   * Converts the set to a list of 64 bools.
+   */
+  tolist() {
+    const result = new Array(64).fill(false);
+    for (const square of this.iter()) {
+      result[square] = true
+    }
+    return result
+  }
+
+  bool() {
+    return bool(this.mask)
+  }
+
+  eq(other: object) {
+    try {
+      return this.mask == new SquareSet(other as any).mask
+    } catch (e) {
+      return false
+    }
+  }
+
+  lshift(shift: bigint) {
+    return new SquareSet((this.mask << shift) & BB_ALL)
+  }
+
+  rshift(shift: bigint) {
+    return new SquareSet(this.mask >> shift)
+  }
+
+  ilshift(shift: bigint) {
+    this.mask = (this.mask << shift) & BB_ALL
+    return this
+  }
+
+  irshift(shift: bigint) {
+    this.mask >>= shift
+    return self
+  }
+
+  invert() {
+    return new SquareSet(~this.mask & BB_ALL)
+  }
+
+  int() {
+    return this.mask
+  }
+
+  index() {
+    return this.mask
+  }
+
+  toRepr() {
+    return `SquareSet(${this.mask.toString(16).padStart(16, '0').match(/.{1,4}/g)!.join('_')})`
+  }
+
+  str() {
+    const builder: string[] = []
+
+    for (const square of SQUARES_180) {
+      const mask = BB_SQUARES[square]
+      builder.push(this.mask & mask ? "1" : ".")
+
+      if (!(mask & BB_FILE_H)) {
+        builder.push(" ")
+      } else if (square != H1) {
+        builder.push("\n")
+      }
+    }
+
+    return builder.join("");
+  }
+
+  _reprSvg_() {
+    return '';  // TODO
+  }
+
+  /**
+   * All squares on the rank, file or diagonal with the two squares, if they
+   * are aligned.
+   * 
+   * >>> import chess
+   * >>>
+   * >>> print(chess.SquareSet.ray(chess.E2, chess.B5))
+   * . . . . . . . .
+   * . . . . . . . .
+   * 1 . . . . . . .
+   * . 1 . . . . . .
+   * . . 1 . . . . .
+   * . . . 1 . . . .
+   * . . . . 1 . . .
+   * . . . . . 1 . .
+   */
+  ray(a: Square, b: Square) {
+    return new SquareSet(ray(a, b))
+  }
+
+  /**
+   * All squares on the rank, file or diagonal between the two squares
+   * (bounds not included), if they are aligned.
+   * 
+   * >>> import chess
+   * >>>
+   * >>> print(chess.SquareSet.between(chess.E2, chess.B5))
+   * . . . . . . . .
+   * . . . . . . . .
+   * . . . . . . . .
+   * . . . . . . . .
+   * . . 1 . . . . .
+   * . . . 1 . . . .
+   * . . . . . . . .
+   * . . . . . . . .
+   */
+  between(a: Square, b: Square) {
+    return new SquareSet(between(a, b))
+  }
+
+  /**
+   * Creates a :class:`~chess.SquareSet` from a single square.
+   * 
+   * >>> import chess
+   * >>>
+   * >>> chess.SquareSet.from_square(chess.A1) == chess.BB_A1
+   * True
+   */
+  static fromSquare(square: Square) {
+    return new SquareSet(BB_SQUARES[square]);
+  }
+
+}
