@@ -1050,7 +1050,7 @@ class BaseBoard {
     return kingMask ? msb(kingMask) : null;
   }
 
-  attacks_mask(square: Square): Bitboard {
+  attacksMask(square: Square): Bitboard {
     const bb_square = BB_SQUARES[square];
 
     if (bb_square & this.pawns) {
