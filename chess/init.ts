@@ -894,10 +894,10 @@ class BaseBoard {
   kings: Bitboard;
   promoted: Bitboard;
 
-  constructor(boardFen?: string) {
+  constructor(boardFen: string | null = null) {
     this.occupiedCo = [BB_EMPTY, BB_EMPTY];
 
-    if (boardFen !== undefined) {
+    if (boardFen === null) {
       this._clearBoard();
     } else if (boardFen === STARTING_BOARD_FEN) {
       this._resetBoard();
