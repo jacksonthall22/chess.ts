@@ -30,6 +30,17 @@ function* range(
 }
 
 /**
+ * A mirror of Python's `enumerate()` function.
+ */
+function* enumerate<T>(
+  iterable: Iterable<T>,
+  start = 0,
+): IterableIterator<[number, T]> {
+  for (const value of iterable) {
+    yield [start++, value];
+  }
+}
+
 type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /**
@@ -75,9 +86,24 @@ const bool = (x: any) => {
   return !!x;
 };
 
-/** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
-const colorIdx = (color: Color): 1 | 0 => (color ? 1 : 0);
+/**
+ * Convert a boolean to 1 if true, 0 if false.
+ */
+const intFromBool = (b: boolean): 1 | 0 => (b ? 1 : 0);
 
+/** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
+const colorIdx = (color: Color): 1 | 0 => intFromBool(color);
+
+/**
+ * Return the quotient and remainder of the division of `x` by `y`.
+ *
+ * A mirror of Python's `divmod()` function.
+ */
+function divmod(x: number, y: number): [number, number] {
+  const quotient = Math.floor(x / y);
+  const remainder = x % y;
+  return [quotient, remainder];
+}
 
 /** ========== Direct transpilation ========== */
 
@@ -828,8 +854,8 @@ class Move {
   bool(): boolean {
     return bool(
       this.fromSquare ||
-      this.toSquare ||
-      this.promotion !== null ||
+        this.toSquare ||
+        this.promotion !== null ||
         this.drop !== null,
     );
   }
@@ -1099,10 +1125,874 @@ class BaseBoard {
     }
   }
 
-  // ...
+  /**
+   * Gets the set of attacked squares from the given square.
+   *
+   * There will be no attacks if the square is empty. Pinned pieces are
+   * still attacking other squares.
+   *
+   * Returns a :class:`set of squares <chess.SquareSet>`.
+   */
+  attacks(square: Square): SquareSet {
+    return new SquareSet(this.attacksMask(square));
+  }
+
+  _attackersMask(color: Color, square: Square, occupied: Bitboard): Bitboard {
+    const rankPieces = BB_RANK_MASKS[square] & occupied;
+    const filePieces = BB_FILE_MASKS[square] & occupied;
+    const diagPieces = BB_DIAG_MASKS[square] & occupied;
+
+    const queensAndRooks = this.queens | this.rooks;
+    const queensAndBishops = this.queens | this.bishops;
+
+    const attackers =
+      (BB_KING_ATTACKS[square] & this.kings) |
+      (BB_KNIGHT_ATTACKS[square] & this.knights) |
+      ((BB_RANK_ATTACKS[square].get(rankPieces) as Bitboard) & queensAndRooks) |
+      ((BB_FILE_ATTACKS[square].get(filePieces) as Bitboard) & queensAndRooks) |
+      ((BB_DIAG_ATTACKS[square].get(diagPieces) as Bitboard) &
+        queensAndBishops) |
+      (BB_PAWN_ATTACKS[colorIdx(!color)][square] & this.pawns);
+
+    return attackers & this.occupiedCo[colorIdx(color)];
+  }
+
+  attackersMask(color: Color, square: Square): Bitboard {
+    return this._attackersMask(color, square, this.occupied);
+  }
+
+  /**
+   * Checks if the given side attacks the given square.
+   *
+   * Pinned pieces still count as attackers. Pawns that can be captured
+   * en passant are **not** considered attacked.
+   */
+  isAttackedBy(color: Color, square: Square): boolean {
+    return bool(this.attackersMask(color, square));
+  }
+
+  /**
+   * Gets the set of attackers of the given color for the given square.
+   *
+   * Pinned pieces still count as attackers.
+   *
+   * Returns a :class:`set of squares <chess.SquareSet>`.
+   */
+  attackers(color: Color, square: Square): SquareSet {
+    return new SquareSet(this.attackersMask(color, square));
+  }
+
+  pinMask(color: Color, square: Square): Bitboard {
+    const king = this.king(color);
+    if (king === null) {
+      return BB_ALL;
+    }
+
+    const squareMask = BB_SQUARES[square];
+
+    for (const [attacks, sliders] of [
+      [BB_FILE_ATTACKS, this.rooks | this.queens],
+      [BB_RANK_ATTACKS, this.rooks | this.queens],
+      [BB_DIAG_ATTACKS, this.bishops | this.queens],
+    ] as [Map<Bitboard, Bitboard>[], Bitboard][]) {
+      const rays = attacks[king].get(0n) as Bitboard;
+      if (rays & squareMask) {
+        const snipers = rays & sliders & this.occupiedCo[colorIdx(!color)];
+        for (const sniper of scanReversed(snipers)) {
+          if (
+            (between(sniper, king) & (this.occupied | squareMask)) ===
+            squareMask
+          ) {
+            return ray(king, sniper);
+          }
+        }
+
+        break;
+      }
+    }
+
+    return BB_ALL;
+  }
+
+  /**
+   * Detects an absolute pin (and its direction) of the given square to
+   * the king of the given color.
+   *
+   *      >>> import chess
+   *      >>>
+   *      >>> board = chess.Board("rnb1k2r/ppp2ppp/5n2/3q4/1b1P4/2N5/PP3PPP/R1BQKBNR w KQkq - 3 7")
+   *      >>> board.is_pinned(chess.WHITE, chess.C3)
+   *      True
+   *      >>> direction = board.pin(chess.WHITE, chess.C3)
+   *      >>> direction
+   *      SquareSet(0x0000_0001_0204_0810)
+   *      >>> print(direction)
+   *      . . . . . . . .
+   *      . . . . . . . .
+   *      . . . . . . . .
+   *      1 . . . . . . .
+   *      . 1 . . . . . .
+   *      . . 1 . . . . .
+   *      . . . 1 . . . .
+   *      . . . . 1 . . .
+   *
+   * Returns a :class:`set of squares <chess.SquareSet>` that mask the rank,
+   * file or diagonal of the pin. If there is no pin, then a mask of the
+   * entire board is returned.
+   */
+  pin(color: Color, square: Square): SquareSet {
+    return new SquareSet(this.pinMask(color, square));
+  }
+
+  /**
+   * Detects if the given square is pinned to the king of the given color.
+   */
+  isPinned(color: Color, square: Square): boolean {
+    return this.pinMask(color, square) !== BB_ALL;
+  }
+
+  _removePieceAt(square: Square): PieceType | null {
+    const pieceType = this.pieceTypeAt(square);
+    const mask = BB_SQUARES[square];
+
+    // prettier-ignore
+    switch (pieceType) {
+      case PAWN:
+        this.pawns ^= mask; break;
+      case KNIGHT:
+        this.knights ^= mask; break;
+      case BISHOP:
+        this.bishops ^= mask; break;
+      case ROOK:
+        this.rooks ^= mask; break;
+      case QUEEN:
+        this.queens ^= mask; break;
+      case KING:
+        this.kings ^= mask; break;
+      default:
+        return null;
+    }
+
+    this.occupied ^= mask;
+    this.occupiedCo[colorIdx(WHITE)] &= ~mask;
+    this.occupiedCo[colorIdx(BLACK)] &= ~mask;
+
+    this.promoted &= ~mask;
+
+    return pieceType;
+  }
+
+  /**
+   * Removes the piece from the given square. Returns the
+   * :class:`Piece` or `null` if the square was already empty.
+   *
+   * :class:`Board` also clears the move stack.
+   */
+  removePieceAt(square: Square): Piece | null {
+    const color = bool(this.occupiedCo[colorIdx(WHITE)] & BB_SQUARES[square]);
+    const pieceType = this._removePieceAt(square);
+    return pieceType !== null ? new Piece(pieceType, color) : null;
+  }
+
+  _setPieceAt(
+    square: Square,
+    pieceType: PieceType,
+    color: Color,
+    promoted: boolean = false,
+  ): void {
+    this._removePieceAt(square);
+
+    const mask = BB_SQUARES[square];
+
+    // prettier-ignore
+    switch (pieceType) {
+      case PAWN:
+        this.pawns |= mask; break;
+      case KNIGHT:
+        this.knights |= mask; break;
+      case BISHOP:
+        this.bishops |= mask; break;
+      case ROOK:
+        this.rooks |= mask; break;
+      case QUEEN:
+        this.queens |= mask; break;
+      case KING:
+        this.kings |= mask; break;
+      default:
+        return;
+    }
+
+    this.occupied ^= mask;
+    this.occupiedCo[colorIdx(color)] ^= mask;
+
+    if (promoted) {
+      this.promoted ^= mask;
+    }
+  }
+
+  /**
+   * Sets a piece at the given square.
+   *
+   * An existing piece is replaced. Setting *piece* to `null` is
+   * equivalent to :func:`~chess.Board.removePieceAt()`.
+   *
+   * :class:`~chess.Board` also clears the move stack.
+   */
+  setPieceAt(square: Square, piece: Piece | null, promoted: boolean = false) {
+    if (piece === null) {
+      this._removePieceAt(square);
+    } else {
+      this._setPieceAt(square, piece.pieceType, piece.color, promoted);
+    }
+  }
+
+  /**
+   * Gets the board FEN (e.g.,
+   * ``rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR``).
+   */
+  boardFen(
+    { promoted = false }: { promoted: boolean } = { promoted: false },
+  ): string {
+    const builder: string[] = [];
+    let empty = 0;
+
+    for (const square of SQUARES_180) {
+      const piece = this.pieceAt(square);
+
+      if (!piece) {
+        empty++;
+      } else {
+        if (empty) {
+          builder.push(empty.toString());
+          empty = 0;
+        }
+        builder.push(piece.symbol());
+        if (promoted && BB_SQUARES[square] & this.promoted) {
+          builder.push('~');
+        }
+      }
+
+      if (BB_SQUARES[square] & BB_FILE_H) {
+        if (empty) {
+          builder.push(empty.toString());
+          empty = 0;
+        }
+
+        if (square !== H1) {
+          builder.push('/');
+        }
+      }
+    }
+
+    return builder.join('');
+  }
+
+  _setBoardFen(fen: string): void {
+    // Compatibility with setFen().
+    fen = fen.trim();
+    if (fen.includes(' ')) {
+      throw new Error(
+        `ValueError: expected position part of fen, got multiple parts: ${fen}`,
+      );
+    }
+
+    // Ensure the FEN is valid.
+    const rows = fen.split('/');
+    if (rows.length !== 8) {
+      throw new Error(
+        `ValueError: expected 8 rows in position part of fen: ${fen}`,
+      );
+    }
+
+    // Validate each row.
+    for (const row of rows) {
+      let fieldSum = 0;
+      let previousWasDigit = false;
+      let previousWasPiece = false;
+
+      for (const c of row) {
+        if (['1', '2', '3', '4', '5', '6', '7', '8'].includes(c)) {
+          if (previousWasDigit) {
+            throw new Error(
+              `ValueError: two subsequent digits in position part of fen: ${fen}`,
+            );
+          }
+          fieldSum += parseInt(c);
+          previousWasDigit = true;
+          previousWasPiece = false;
+        } else if (c === '~') {
+          if (!previousWasPiece) {
+            throw new Error(
+              `ValueError: '~' not after piece in position part of fen: ${fen}`,
+            );
+          }
+          previousWasDigit = false;
+          previousWasPiece = false;
+        } else if (PIECE_SYMBOLS.includes(c.toLowerCase())) {
+          fieldSum += 1;
+          previousWasDigit = false;
+          previousWasPiece = true;
+        } else {
+          throw new Error(
+            `ValueError: invalid character in position part of fen: ${fen}`,
+          );
+        }
+      }
+
+      if (fieldSum !== 8) {
+        throw new Error(
+          `ValueError: expected 8 columns per row in position part of fen: ${fen}`,
+        );
+      }
+    }
+
+    // Clear the board.
+    this._clearBoard();
+
+    // Put pieces on the board.
+    let squareIndex = 0;
+    for (const c of fen) {
+      if (['1', '2', '3', '4', '5', '6', '7', '8'].includes(c)) {
+        squareIndex += parseInt(c);
+      } else if (PIECE_SYMBOLS.includes(c.toLowerCase())) {
+        const piece = Piece.fromSymbol(c);
+        this._setPieceAt(
+          SQUARES_180[squareIndex],
+          piece.pieceType,
+          piece.color,
+        );
+        squareIndex += 1;
+      } else if (c === '~') {
+        this.promoted |= BB_SQUARES[SQUARES_180[squareIndex - 1]];
+      }
+    }
+  }
+
+  /**
+   * Parses *fen* and sets up the board, where *fen* is the board part of
+   * a FEN.
+   *
+   * :class:`~chess.Board` also clears the move stack.
+   *
+   * @throws Error if syntactically invalid.
+   */
+  setBoardFen(fen: string): void {
+    this._setBoardFen(fen);
+  }
+
+  /**
+   * Gets a dictionary of :class:`pieces <chess.Piece>` by square index.
+   */
+  pieceMap({ mask = BB_ALL }: { mask?: Bitboard } = {}): Map<Square, Piece> {
+    const result: Map<Square, Piece> = new Map();
+    for (const square of scanReversed(this.occupied & mask)) {
+      result.set(square, this.pieceAt(square) as Piece);
+    }
+    return result;
+  }
+
+  _setPieceMap(pieceMap: Map<Square, Piece>): void {
+    this._clearBoard();
+    for (const [square, piece] of pieceMap) {
+      this._setPieceAt(square, piece.pieceType, piece.color);
+    }
+  }
+
+  /**
+   * Sets up the board from a dictionary of :class:`pieces <chess.Piece>`
+   * by square index.
+   *
+   * :class:`~chess.Board` also clears the move stack.
+   */
+  setPieceMap(pieceMap: Map<Square, Piece>): void {
+    this._setPieceMap(pieceMap);
+  }
+
+  _set_chess960_pos(scharnagl: number): void {
+    if (!(0 <= scharnagl && scharnagl <= 959)) {
+      throw new Error(
+        `ValueError: chess960 position index not 0 <= {scharnagl} <= 959`,
+      );
+    }
+
+    // See http://www.russellcottrell.com/Chess/Chess960.htm for
+    // a description of the algorithm.
+    let n: number, bw: number, bb: number, q: number;
+    [n, bw] = divmod(scharnagl, 4);
+    [n, bb] = divmod(n, 4);
+    [n, q] = divmod(n, 6);
+
+    let n1: number = 0;
+    let n2: number = 0;
+    for (n1 of range(0, 4)) {
+      n2 = n + Math.floor(((3 - n1) * (4 - n1)) / 2) - 5;
+      if (n1 < n2 && 1 <= n2 && n2 <= 4) {
+        break;
+      }
+    }
+
+    // Bishops.
+    const bw_file = bw * 2 + 1;
+    const bb_file = bb * 2;
+    this.bishops = (BB_FILES[bw_file] | BB_FILES[bb_file]) & BB_BACKRANKS;
+
+    // Queens.
+    let q_file = q;
+    q_file += intFromBool(Math.min(bw_file, bb_file) <= q_file);
+    q_file += intFromBool(Math.max(bw_file, bb_file) <= q_file);
+    this.queens = BB_FILES[q_file] & BB_BACKRANKS;
+
+    const used = [bw_file, bb_file, q_file];
+
+    // Knights.
+    this.knights = BB_EMPTY;
+    for (const i of range(0, 8)) {
+      if (!used.includes(i)) {
+        if (n1 == 0 || n2 == 0) {
+          this.knights |= BB_FILES[i] & BB_BACKRANKS;
+          used.push(i);
+        }
+        n1 -= 1;
+        n2 -= 1;
+      }
+    }
+
+    // RKR.
+    for (const i of range(0, 8)) {
+      if (!used.includes(i)) {
+        this.rooks = BB_FILES[i] & BB_BACKRANKS;
+        used.push(i);
+        break;
+      }
+    }
+    for (const i of range(1, 8)) {
+      if (~used.includes(i)) {
+        this.kings = BB_FILES[i] & BB_BACKRANKS;
+        used.push(i);
+        break;
+      }
+    }
+    for (const i of range(2, 8)) {
+      if (!used.includes(i)) {
+        this.rooks |= BB_FILES[i] & BB_BACKRANKS;
+        break;
+      }
+    }
+
+    // Finalize.
+    this.pawns = BB_RANK_2 | BB_RANK_7;
+    this.occupiedCo[colorIdx(WHITE)] = BB_RANK_1 | BB_RANK_2;
+    this.occupiedCo[colorIdx(BLACK)] = BB_RANK_7 | BB_RANK_8;
+    this.occupied = BB_RANK_1 | BB_RANK_2 | BB_RANK_7 | BB_RANK_8;
+    this.promoted = BB_EMPTY;
+  }
+
+  /**
+   * Sets up a Chess960 starting position given its index between 0 and 959.
+   * Also see :func:`~chess.BaseBoard.from_chess960_pos()`.
+   */
+  setChess960Pos(scharnagl: number): void {
+    this._set_chess960_pos(scharnagl);
+  }
+
+  /**
+   * Gets the Chess960 starting position index between 0 and 959,
+   * or ``None``.
+   */
+  chess960_pos(): number | null {
+    if (this.occupiedCo[colorIdx(WHITE)] !== (BB_RANK_1 | BB_RANK_2)) {
+      return null;
+    }
+    if (this.occupiedCo[colorIdx(BLACK)] !== (BB_RANK_7 | BB_RANK_8)) {
+      return null;
+    }
+    if (this.pawns !== (BB_RANK_2 | BB_RANK_7)) {
+      return null;
+    }
+    if (this.promoted) {
+      return null;
+    }
+
+    // # Piece counts.
+    const brnqk = [
+      this.bishops,
+      this.rooks,
+      this.knights,
+      this.queens,
+      this.kings,
+    ];
+    if (
+      brnqk.some((pieces, index) => popcount(pieces) !== [4, 4, 4, 2, 2][index])
+    ) {
+      return null;
+    }
+
+    // Symmetry.
+    if (
+      brnqk.some(pieces => (BB_RANK_1 & pieces) << 56n !== (BB_RANK_8 & pieces))
+    ) {
+      return null;
+    }
+
+    // Algorithm from ChessX, src/database/bitboard.cpp, r2254.
+    let x = this.bishops & (2n + 8n + 32n + 128n);
+    if (!x) {
+      return null;
+    }
+    const bs1 = Math.floor((lsb(x) - 1) / 2);
+    let cc_pos = bs1;
+    x = this.bishops & (1n + 4n + 16n + 64n);
+    if (!x) {
+      return null;
+    }
+    const bs2 = lsb(x) * 2;
+    cc_pos += bs2;
+
+    let q = 0;
+    let qf = false;
+    let n0 = 0;
+    let n1 = 0;
+    let n0f = false;
+    let n1f = false;
+    let rf = 0;
+    const n0s = [0, 4, 7, 9];
+    for (const square of range(A1, H1 + 1)) {
+      const bb = BB_SQUARES[square];
+      if (bb & this.queens) {
+        qf = true;
+      } else if (bb & this.rooks || bb & this.kings) {
+        if (bb & this.kings) {
+          if (rf !== 1) {
+            return null;
+          }
+        } else {
+          rf += 1;
+        }
+
+        if (!qf) {
+          q += 1;
+        }
+
+        if (!n0f) {
+          n0 += 1;
+        } else if (!n1f) {
+          n1 += 1;
+        }
+      } else if (bb & this.knights) {
+        if (!qf) {
+          q += 1;
+        }
+
+        if (!n0f) {
+          n0f = true;
+        } else if (!n1f) {
+          n1f = true;
+        }
+      }
+    }
+
+    if (n0 < 4 && n1f && qf) {
+      cc_pos += q * 16;
+      const krn = n0s[n0] + n1;
+      cc_pos += krn * 96;
+      return cc_pos;
+    } else {
+      return null;
+    }
+  }
+
+  toRepr(): string {
+    return `${typeof this}(${this.boardFen()})`;
+  }
+
+  toString(): string {
+    const builder: string[] = [];
+
+    for (const square of SQUARES_180) {
+      const piece = this.pieceAt(square);
+
+      if (piece !== null) {
+        builder.push(piece.symbol());
+      } else {
+        builder.push('.');
+      }
+
+      if (BB_SQUARES[square] & BB_FILE_H) {
+        if (square != H1) {
+          builder.push('\n');
+        }
+      } else {
+        builder.push(' ');
+      }
+    }
+
+    return builder.join('');
+  }
+
+  /**
+   * Returns a string representation of the board with Unicode pieces.
+   * Useful for pretty-printing to a terminal.
+   *
+   * @param invertColor: Invert color of the Unicode pieces.
+   * @param borders: Show borders and a coordinate margin.
+   */
+  unicode(
+    {
+      invertColor,
+      borders,
+      emptySquare,
+      orientation,
+    }: {
+      invertColor: boolean;
+      borders: boolean;
+      emptySquare: string;
+      orientation: Color;
+    } = {
+      invertColor: false,
+      borders: true,
+      emptySquare: '⭘',
+      orientation: WHITE,
+    },
+  ): string {
+    const builder: string[] = [];
+    for (const rank_index of (orientation
+      ? range(7, -1, -1)
+      : range(8)) as IterableIterator<RankOrFileIndex>) {
+      if (borders) {
+        builder.push('  ');
+        builder.push('-'.repeat(17));
+        builder.push('\n');
+
+        builder.push(RANK_NAMES[rank_index]);
+        builder.push(' ');
+      }
+
+      for (const [i, file_index] of enumerate(
+        (orientation
+          ? range(8)
+          : range(7, -1, -1)) as IterableIterator<RankOrFileIndex>,
+      )) {
+        const square_index = square(file_index, rank_index);
+
+        if (borders) {
+          builder.push('|');
+        } else if (i > 0) {
+          builder.push(' ');
+        }
+
+        const piece = this.pieceAt(square_index);
+
+        if (piece) {
+          builder.push(piece.unicodeSymbol({ invertColor: invertColor }));
+        } else {
+          builder.push(emptySquare);
+        }
+      }
+
+      if (borders) {
+        builder.push('|');
+      }
+
+      if (borders || (orientation ? rank_index > 0 : rank_index < 7)) {
+        builder.push('\n');
+      }
+    }
+
+    if (borders) {
+      builder.push('  ');
+      builder.push('-'.repeat(17));
+      builder.push('\n');
+      const letters = orientation ? 'a b c d e f g h' : 'h g f e d c b a';
+      builder.push('   ' + letters);
+    }
+
+    return builder.join('');
+  }
+
+  _reprSvg(): string {
+    return ''; // TODO
+  }
+
+  eq(board: any) {
+    if (board instanceof BaseBoard) {
+      return (
+        this.occupied == board.occupied &&
+        this.occupiedCo[colorIdx(WHITE)] == board.occupiedCo[colorIdx(WHITE)] &&
+        this.pawns == board.pawns &&
+        this.knights == board.knights &&
+        this.bishops == board.bishops &&
+        this.rooks == board.rooks &&
+        this.queens == board.queens &&
+        this.kings == board.kings
+      );
+    } else {
+      return false;
+    }
+  }
+
+  applyTransform(f: (board: Bitboard) => Bitboard): void {
+    this.pawns = f(this.pawns);
+    this.knights = f(this.knights);
+    this.bishops = f(this.bishops);
+    this.rooks = f(this.rooks);
+    this.queens = f(this.queens);
+    this.kings = f(this.kings);
+
+    this.occupiedCo[colorIdx(WHITE)] = f(this.occupiedCo[colorIdx(WHITE)]);
+    this.occupiedCo[colorIdx(BLACK)] = f(this.occupiedCo[colorIdx(BLACK)]);
+    this.occupied = f(this.occupied);
+    this.promoted = f(this.promoted);
+  }
+
+  /**
+   * Returns a transformed copy of the board (without move stack)
+   * by applying a bitboard transformation function.
+   *
+   * Available transformations include :func:`chess.flipVertical()`,
+   * :func:`chess.flipHorizontal()`, :func:`chess.flipDiagonal()`,
+   * :func:`chess.flipAntiDiagonal()`, :func:`chess.shiftDown()`,
+   * :func:`chess.shiftUp()`, :func:`chess.shiftLeft()`, and
+   * :func:`chess.shiftRight()`.
+   *
+   * Alternatively, :func:`~chess.BaseBoard.applyTransform()` can be used
+   * to apply the transformation on the board.
+   */
+  transform<T extends BaseBoard>(f: (board: Bitboard) => Bitboard): T {
+    const board = this.copy<T>();
+    board.applyTransform(f);
+    return board;
+  }
+
+  applyMirror<T extends BaseBoard>() {
+    this.applyTransform(flipVertical);
+    [this.occupiedCo[colorIdx(WHITE)], this.occupiedCo[colorIdx(BLACK)]] = [
+      this.occupiedCo[colorIdx(BLACK)],
+      this.occupiedCo[colorIdx(WHITE)],
+    ];
+  }
+
+  /**
+   * Returns a mirrored copy of the board (without move stack).
+   *
+   * The board is mirrored vertically and piece colors are swapped, so that
+   * the position is equivalent modulo color.
+   *
+   * Alternatively, :func:`~chess.BaseBoard.apply_mirror()` can be used
+   * to mirror the board.
+   */
+  mirror<T extends BaseBoard>(): T {
+    const board = this.copy<T>();
+    board.applyMirror();
+    return board;
+  }
+
+  /**
+   * Creates a copy of the board.
+   */
+  copy<T extends BaseBoard>(): T {
+    const board = new (this.constructor as new () => T)();
+
+    board.pawns = this.pawns;
+    board.knights = this.knights;
+    board.bishops = this.bishops;
+    board.rooks = this.rooks;
+    board.queens = this.queens;
+    board.kings = this.kings;
+
+    board.occupiedCo[colorIdx(WHITE)] = this.occupiedCo[colorIdx(WHITE)];
+    board.occupiedCo[colorIdx(BLACK)] = this.occupiedCo[colorIdx(BLACK)];
+    board.occupied = this.occupied;
+    board.promoted = this.promoted;
+
+    return board;
+  }
+
+  // copy() already implemented
+
+  // deepcopy() skipped
+
+  /**
+   * Creates a new empty board. Also see
+   * :func:`~chess.BaseBoard.clear_board()`.
+   */
+  static empty() {
+    return new BaseBoard(null);
+  }
+
+  /**
+   * Creates a new board, initialized with a Chess960 starting position.
+   *
+   *      >>> import chess
+   *      >>> import random
+   *      >>>
+   *      >>> board = chess.Board.from_chess960_pos(random.randint(0, 959))
+   */
+  static fromChess960Pos(scharnagl: number): BaseBoard {
+    const board = this.empty();
+    board.setChess960Pos(scharnagl);
+    return board;
+  }
 }
 
-class _BoardState<BoardT> {}
+class _BoardState<BoardT extends Board> {
+  pawns: Bitboard;
+  knights: Bitboard;
+  bishops: Bitboard;
+  rooks: Bitboard;
+  queens: Bitboard;
+  kings: Bitboard;
+  occupiedW: Bitboard;
+  occupiedB: Bitboard;
+  occupied: Bitboard;
+  promoted: Bitboard;
+  turn: Color;
+  castlingRights: number;
+  epSquare: Square;
+  halfmoveClock: number;
+  fullmoveNumber: number;
+
+  constructor(board: BoardT) {
+    this.pawns = board.pawns;
+    this.knights = board.knights;
+    this.bishops = board.bishops;
+    this.rooks = board.rooks;
+    this.queens = board.queens;
+    this.kings = board.kings;
+
+    this.occupiedW = board.occupiedCo[colorIdx(WHITE)];
+    this.occupiedB = board.occupiedCo[colorIdx(BLACK)];
+    this.occupied = board.occupied;
+
+    this.promoted = board.promoted;
+
+    this.turn = board.turn;
+    this.castlingRights = board.castlingRights;
+    this.epSquare = board.epSquare;
+    this.halfmoveClock = board.halfmoveClock;
+    this.fullmoveNumber = board.fullmoveNumber;
+  }
+
+  restore(board: BoardT) {
+    board.pawns = this.pawns;
+    board.knights = this.knights;
+    board.bishops = this.bishops;
+    board.rooks = this.rooks;
+    board.queens = this.queens;
+    board.kings = this.kings;
+
+    board.occupiedCo[colorIdx(WHITE)] = this.occupiedW;
+    board.occupiedCo[colorIdx(BLACK)] = this.occupiedB;
+    board.occupied = this.occupied;
+
+    board.promoted = this.promoted;
+
+    board.turn = this.turn;
+    board.castlingRights = this.castlingRights;
+    board.epSquare = this.epSquare;
+    board.halfmoveClock = this.halfmoveClock;
+    board.fullmoveNumber = this.fullmoveNumber;
+  }
+}
 
 class Board extends BaseBoard {}
 
@@ -1114,17 +2004,17 @@ type IntoSquareSet = Bitboard | Iterable<Square>;
 
 /**
  * A set of squares.
- * 
+ *
  * >>> import chess
  * >>>
  * >>> squares = chess.SquareSet([chess.A8, chess.A1])
  * >>> squares
  * SquareSet(0x0100_0000_0000_0001)
- * 
+ *
  * >>> squares = chess.SquareSet(chess.BB_A8 | chess.BB_RANK_1)
  * >>> squares
  * SquareSet(0x0100_0000_0000_00ff)
- * 
+ *
  * >>> print(squares)
  * 1 . . . . . . .
  * . . . . . . . .
@@ -1134,16 +2024,16 @@ type IntoSquareSet = Bitboard | Iterable<Square>;
  * . . . . . . . .
  * . . . . . . . .
  * 1 1 1 1 1 1 1 1
- * 
+ *
  * >>> len(squares)
  * 9
- * 
+ *
  * >>> bool(squares)
  * True
- * 
+ *
  * >>> chess.B1 in squares
  * True
- * 
+ *
  * >>> for square in squares:
  * ...     # 0 -- chess.A1
  * ...     # 1 -- chess.B1
@@ -1165,17 +2055,17 @@ type IntoSquareSet = Bitboard | Iterable<Square>;
  * 6
  * 7
  * 56
- * 
+ *
  * >>> list(squares)
  * [0, 1, 2, 3, 4, 5, 6, 7, 56]
- * 
+ *
  * Square sets are internally represented by 64-bit integer masks of the
  * included squares. Bitwise operations can be used to compute unions,
  * intersections and shifts.
- * 
+ *
  * >>> int(squares)
  * 72057594037928191
- * 
+ *
  * Also supports common set operations like
  * :func:`~chess.SquareSet.issubset()`, :func:`~chess.SquareSet.issuperset()`,
  * :func:`~chess.SquareSet.union()`, :func:`~chess.SquareSet.intersection()`,
@@ -1358,7 +2248,7 @@ class SquareSet {
 
   /**
    * Removes and returns a square from the set.
-   * 
+   *
    * @throws :exc:`KeyError` if the set is empty.
    */
   pop() {
@@ -1479,7 +2369,7 @@ class SquareSet {
   /**
    * All squares on the rank, file or diagonal with the two squares, if they
    * are aligned.
-   * 
+   *
    * >>> import chess
    * >>>
    * >>> print(chess.SquareSet.ray(chess.E2, chess.B5))
@@ -1499,7 +2389,7 @@ class SquareSet {
   /**
    * All squares on the rank, file or diagonal between the two squares
    * (bounds not included), if they are aligned.
-   * 
+   *
    * >>> import chess
    * >>>
    * >>> print(chess.SquareSet.between(chess.E2, chess.B5))
@@ -1518,7 +2408,7 @@ class SquareSet {
 
   /**
    * Creates a :class:`~chess.SquareSet` from a single square.
-   * 
+   *
    * >>> import chess
    * >>>
    * >>> chess.SquareSet.from_square(chess.A1) == chess.BB_A1
