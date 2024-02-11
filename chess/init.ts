@@ -99,7 +99,7 @@ const COLOR_NAMES: ColorName[] = ['white', 'black'];
 
 const enum PieceType {
   PAWN = 1,
-  KNIGHT,  // = 2, etc.
+  KNIGHT, // = 2, etc.
   BISHOP,
   ROOK,
   QUEEN,
@@ -298,9 +298,7 @@ const [
   A8, B8, C8, D8, E8, F8, G8, H8,
 ] = SQUARES;
 
-const SQUARE_NAMES = RANK_NAMES.flatMap((r) =>
-  FILE_NAMES.map((f) => f + r),
-);
+const SQUARE_NAMES = RANK_NAMES.flatMap(r => FILE_NAMES.map(f => f + r));
 
 /**
  * Gets the square index for the given square *name*
@@ -402,7 +400,7 @@ type Bitboard = bigint;
 const BB_EMPTY = 0n;
 const BB_ALL = 0xffff_ffff_ffff_ffffn;
 
-const BB_SQUARES = SQUARES.map((s) => 1n << BigInt(s));
+const BB_SQUARES = SQUARES.map(s => 1n << BigInt(s));
 // prettier-ignore
 const [
   BB_A1, BB_B1, BB_C1, BB_D1, BB_E1, BB_F1, BB_G1, BB_H1,
@@ -422,7 +420,7 @@ const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan;
 const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n;
 
 const BB_FILES = Array.from(range(8)).map(
-  (i) => 0x0101_0101_0101_0101n << BigInt(i),
+  i => 0x0101_0101_0101_0101n << BigInt(i),
 );
 const [
   BB_FILE_A,
@@ -435,7 +433,7 @@ const [
   BB_FILE_H,
 ] = BB_FILES;
 
-const BB_RANKS = Array.from(range(8)).map((i) => 0xffn << BigInt(8 * i));
+const BB_RANKS = Array.from(range(8)).map(i => 0xffn << BigInt(8 * i));
 const [
   BB_RANK_1,
   BB_RANK_2,
@@ -602,16 +600,16 @@ const _stepAttacks = (square: Square, deltas: number[]): Bitboard => {
   return _slidingAttacks(square, BB_ALL, deltas);
 };
 
-const BB_KNIGHT_ATTACKS = SQUARES.map((sq) =>
+const BB_KNIGHT_ATTACKS = SQUARES.map(sq =>
   _stepAttacks(sq, [17, 15, 10, 6, -17, -15, -10, -6]),
 );
-const BB_KING_ATTACKS = SQUARES.map((sq) =>
+const BB_KING_ATTACKS = SQUARES.map(sq =>
   _stepAttacks(sq, [9, 8, 7, 1, -9, -8, -7, -1]),
 );
 const BB_PAWN_ATTACKS = [
   [-7, -9],
   [7, 9],
-].map((deltas) => SQUARES.map((sq) => _stepAttacks(sq, deltas)));
+].map(deltas => SQUARES.map(sq => _stepAttacks(sq, deltas)));
 
 const _edges = (square: Square): Bitboard => {
   return (
@@ -728,7 +726,9 @@ class Piece {
   /**
    * Gets the Unicode character for the piece.
    */
-  unicodeSymbol({ invertColor }: { invertColor: boolean } = { invertColor: false }): string {
+  unicodeSymbol(
+    { invertColor }: { invertColor: boolean } = { invertColor: false },
+  ): string {
     const swapcase = (symbol: string) =>
       symbol === symbol.toUpperCase()
         ? symbol.toLowerCase()
@@ -830,7 +830,7 @@ class Move {
       this.fromSquare ||
       this.toSquare ||
       this.promotion !== null ||
-      this.drop !== null
+        this.drop !== null,
     );
   }
 
@@ -1110,8 +1110,7 @@ class PseudoLegalMoveGenerator {}
 
 class LegalMoveGenerator {}
 
-
-type IntoSquareSet = Bitboard | Iterable<Square>
+type IntoSquareSet = Bitboard | Iterable<Square>;
 
 /**
  * A set of squares.
@@ -1368,7 +1367,7 @@ class SquareSet {
     }
 
     const square = lsb(this.mask);
-    this.mask &= (this.mask - 1n);
+    this.mask &= this.mask - 1n;
     return square;
   }
 
@@ -1385,14 +1384,14 @@ class SquareSet {
    * Iterator over the subsets of this set.
    */
   carryRippler() {
-    return _carryRippler(this.mask)
+    return _carryRippler(this.mask);
   }
 
   /**
    * Returns a vertically mirrored copy of this square set.
    */
   mirror() {
-    return new SquareSet(flipVertical(this.mask))
+    return new SquareSet(flipVertical(this.mask));
   }
 
   /**
@@ -1401,76 +1400,80 @@ class SquareSet {
   tolist() {
     const result = new Array(64).fill(false);
     for (const square of this.iter()) {
-      result[square] = true
+      result[square] = true;
     }
-    return result
+    return result;
   }
 
   bool() {
-    return bool(this.mask)
+    return bool(this.mask);
   }
 
   eq(other: object) {
     try {
-      return this.mask == new SquareSet(other as any).mask
+      return this.mask == new SquareSet(other as any).mask;
     } catch (e) {
-      return false
+      return false;
     }
   }
 
   lshift(shift: bigint) {
-    return new SquareSet((this.mask << shift) & BB_ALL)
+    return new SquareSet((this.mask << shift) & BB_ALL);
   }
 
   rshift(shift: bigint) {
-    return new SquareSet(this.mask >> shift)
+    return new SquareSet(this.mask >> shift);
   }
 
   ilshift(shift: bigint) {
-    this.mask = (this.mask << shift) & BB_ALL
-    return this
+    this.mask = (this.mask << shift) & BB_ALL;
+    return this;
   }
 
   irshift(shift: bigint) {
-    this.mask >>= shift
-    return self
+    this.mask >>= shift;
+    return self;
   }
 
   invert() {
-    return new SquareSet(~this.mask & BB_ALL)
+    return new SquareSet(~this.mask & BB_ALL);
   }
 
   int() {
-    return this.mask
+    return this.mask;
   }
 
   index() {
-    return this.mask
+    return this.mask;
   }
 
   toRepr() {
-    return `SquareSet(${this.mask.toString(16).padStart(16, '0').match(/.{1,4}/g)!.join('_')})`
+    return `SquareSet(${this.mask
+      .toString(16)
+      .padStart(16, '0')
+      .match(/.{1,4}/g)!
+      .join('_')})`;
   }
 
   str() {
-    const builder: string[] = []
+    const builder: string[] = [];
 
     for (const square of SQUARES_180) {
-      const mask = BB_SQUARES[square]
-      builder.push(this.mask & mask ? "1" : ".")
+      const mask = BB_SQUARES[square];
+      builder.push(this.mask & mask ? '1' : '.');
 
       if (!(mask & BB_FILE_H)) {
-        builder.push(" ")
+        builder.push(' ');
       } else if (square != H1) {
-        builder.push("\n")
+        builder.push('\n');
       }
     }
 
-    return builder.join("");
+    return builder.join('');
   }
 
   _reprSvg_() {
-    return '';  // TODO
+    return ''; // TODO
   }
 
   /**
@@ -1490,7 +1493,7 @@ class SquareSet {
    * . . . . . 1 . .
    */
   ray(a: Square, b: Square) {
-    return new SquareSet(ray(a, b))
+    return new SquareSet(ray(a, b));
   }
 
   /**
@@ -1510,7 +1513,7 @@ class SquareSet {
    * . . . . . . . .
    */
   between(a: Square, b: Square) {
-    return new SquareSet(between(a, b))
+    return new SquareSet(between(a, b));
   }
 
   /**
@@ -1524,5 +1527,4 @@ class SquareSet {
   static fromSquare(square: Square) {
     return new SquareSet(BB_SQUARES[square]);
   }
-
 }
