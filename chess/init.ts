@@ -9,6 +9,27 @@
  */
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
+/**
+ * A mirror of Python's `range()` function.
+ */
+function* range(
+  start: number,
+  stop?: number,
+  step?: number,
+): IterableIterator<number> {
+  if (stop === undefined) {
+    stop = start;
+    start = 0;
+  }
+  if (step === undefined) {
+    step = 1;
+  }
+  for (let i = start; i < stop; i += step) {
+    yield i;
+  }
+}
+
+/**
 type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /**
@@ -264,7 +285,7 @@ const enum Square { // Instead of `Square = number`
   A7, B7, C7, D7, E7, F7, G7, H7,
   A8, B8, C8, D8, E8, F8, G8, H8,
 }
-const SQUARES = Array.from({ length: 64 }, (_, i) => i) as Square[];
+const SQUARES = Array.from(range(64)) as Square[];
 // prettier-ignore
 const [
   A1, B1, C1, D1, E1, F1, G1, H1,
@@ -400,7 +421,7 @@ const BB_CENTER = BB_D4 | BB_E4 | BB_D5 | BB_E5;
 const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan;
 const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n;
 
-const BB_FILES = Array.from({ length: 8 }, (_, i) => i).map(
+const BB_FILES = Array.from(range(8)).map(
   (i) => 0x0101_0101_0101_0101n << BigInt(i),
 );
 const [
@@ -414,9 +435,7 @@ const [
   BB_FILE_H,
 ] = BB_FILES;
 
-const BB_RANKS = Array.from({ length: 8 }, (_, i) => i).map(
-  (i) => 0xffn << BigInt(8 * i),
-);
+const BB_RANKS = Array.from(range(8)).map((i) => 0xffn << BigInt(8 * i));
 const [
   BB_RANK_1,
   BB_RANK_2,
