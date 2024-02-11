@@ -925,7 +925,7 @@ class BaseBoard {
     }
   }
 
-  _resetBoard() {
+  _resetBoard(): void {
     this.pawns = BB_RANK_2 | BB_RANK_7;
     this.knights = BB_B1 | BB_G1 | BB_B8 | BB_G8;
     this.bishops = BB_C1 | BB_F1 | BB_C8 | BB_F8;
@@ -947,11 +947,11 @@ class BaseBoard {
    * castling rights and move counters. Use :func:`chess.Board.reset()` to
    * fully restore the starting position.
    */
-  resetBoard() {
+  resetBoard(): void {
     this._resetBoard();
   }
 
-  _clearBoard() {
+  _clearBoard(): void {
     this.pawns = BB_EMPTY;
     this.knights = BB_EMPTY;
     this.bishops = BB_EMPTY;
@@ -971,7 +971,7 @@ class BaseBoard {
    *
    * :class:`~chess.Board` also clears the move stack.
    */
-  clearBoard() {
+  clearBoard(): void {
     this._clearBoard();
   }
 
