@@ -89,10 +89,10 @@ const bool = (x: any) => {
 /**
  * Convert a boolean to 1 if true, 0 if false.
  */
-const intFromBool = (b: boolean): 1 | 0 => (b ? 1 : 0);
+const numberFromBool = (b: boolean): 1 | 0 => (b ? 1 : 0);
 
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
-const colorIdx = (color: Color): 1 | 0 => intFromBool(color);
+const colorIdx = (color: Color): 1 | 0 => numberFromBool(color);
 
 /**
  * Return the quotient and remainder of the division of `x` by `y`.
@@ -105,15 +105,123 @@ function divmod(x: number, y: number): [number, number] {
   return [quotient, remainder];
 }
 
+/**
+ * Return `true` if `value` is in the iterable.
+ */
+const iterIncludes = <T>(iterable: Iterable<T>, value: T): boolean => {
+  for (const item of iterable) {
+    if (item === value) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Return `true` if any element of the iterable is truthy according to `isTruthy`.
+ * If none are true or the iterable is empty, return `false`.
+ */
+const iterAny = <T>(
+  iterable: Iterable<T>,
+  isTruthy: (value: T) => boolean = bool,
+): boolean => {
+  for (const item of iterable) {
+    if (isTruthy(item)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+/**
+ * Return `true` if all elements of the iterable are true (or if the iterable is empty).
+ */
+const iterAll = (iterable: Iterable<any>): boolean => {
+  for (const item of iterable) {
+    if (!item) {
+      return false;
+    }
+  }
+  return true;
+};
+
+/**
+ * Yield the elements of `iterable` that are truthy against `predicate`.
+ */
+function* iterFilter<T>(
+  iterable: Iterable<T>,
+  predicate: (value: T) => boolean,
+): IterableIterator<T> {
+  for (const item of iterable) {
+    if (predicate(item)) {
+      yield item;
+    }
+  }
+}
+
+function* iterMap<T1, T2>(
+  iterable: IterableIterator<T1>,
+  callback: (value: T1) => T2,
+): IterableIterator<T2> {
+  for (let x of iterable) {
+    yield callback(x);
+  }
+}
+
+class StopIteration extends Error {
+  constructor(message?: string) {
+    super(message);
+    this.name = 'StopIteration';
+    Object.setPrototypeOf(this, StopIteration.prototype);
+  }
+}
+
+const iterNext = <T>(iterable: IterableIterator<T>): T => {
+  const next = iterable.next();
+  if (next.done) {
+    throw new StopIteration();
+  }
+  return next.value;
+};
+
+class Counter<T> extends Map<T, number> {
+  constructor(iterable?: Iterable<readonly [T, number]>) {
+    super(iterable);
+    if (iterable) {
+      // Set initial counts
+      for (const [key, value] of iterable) {
+        this.set(key, value);
+      }
+    }
+  }
+
+  update(iterable: Iterable<T>): void {
+    for (const item of iterable) {
+      this.set(item, (this.get(item) || 0) + 1);
+    }
+  }
+}
+
+/**
+ * Parse a string to an integer, throwing an error if the entire string
+ * is not formatted as an integer.
+ */
+const parseIntStrict = (str: string): number => {
+  if (str.match(/^-?(0|[1-9]\d*)$/) === null) {
+    throw new Error(`ValueError: ${str} is not an integer`);
+  }
+  return parseInt(str, 10);
+};
+
 /** ========== Direct transpilation ========== */
 
 const __author__ = 'Niklas Fiekas';
 const __email__ = 'niklas.fiekas@backscattering.de';
 const __version__ = '1.10.0';
 
-const __transpiler_author__ = 'Jackson Hall';
-const __transpiler_email__ = 'jacksonthall22@gmail.com';
-const __transpiled_version__ = '0.0.1';
+const __transpilerAuthor__ = 'Jackson Hall';
+const __transpilerEmail__ = 'jacksonthall22@gmail.com';
+const __transpiledVersion__ = '0.0.1';
 
 type EnPassantSpec = 'legal' | 'fen' | 'xfen';
 
@@ -685,25 +793,25 @@ const [BB_RANK_MASKS, BB_RANK_ATTACKS] = _attackTable([-1, 1]);
 
 const _rays = (): Bitboard[][] => {
   let rays: Bitboard[][] = [];
-  BB_SQUARES.forEach((bb_a, a) => {
-    let rays_row: Bitboard[] = [];
-    BB_SQUARES.forEach((bb_b, b) => {
-      if (BB_DIAG_ATTACKS[a][0] & bb_b) {
-        rays_row.push(
+  BB_SQUARES.forEach((bbA, a) => {
+    let raysRow: Bitboard[] = [];
+    BB_SQUARES.forEach((bbB, b) => {
+      if ((BB_DIAG_ATTACKS[a].get(0n) as Bitboard) & bbB) {
+        raysRow.push(
           ((BB_DIAG_ATTACKS[a].get(0n) as Bitboard) &
             (BB_DIAG_ATTACKS[b].get(0n) as Bitboard)) |
-            bb_a |
-            bb_b, // TODO Check if prettier adding a comma here matters (CGPT says no)
+            bbA |
+            bbB, // TODO Check if prettier adding a comma here matters (CGPT says no)
         );
-      } else if (BB_RANK_ATTACKS[a][0] & bb_b) {
-        rays_row.push(BB_RANK_ATTACKS[a][0] | bb_a);
-      } else if (BB_FILE_ATTACKS[a][0] & bb_b) {
-        rays_row.push(BB_FILE_ATTACKS[a][0] | bb_a);
+      } else if ((BB_RANK_ATTACKS[a].get(0n) as Bitboard) & bbB) {
+        raysRow.push((BB_RANK_ATTACKS[a].get(0n) as Bitboard) | bbA);
+      } else if ((BB_FILE_ATTACKS[a].get(0n) as Bitboard) & bbB) {
+        raysRow.push((BB_FILE_ATTACKS[a].get(0n) as Bitboard) | bbA);
       } else {
-        rays_row.push(BB_EMPTY);
+        raysRow.push(BB_EMPTY);
       }
     });
-    rays.push(rays_row);
+    rays.push(raysRow);
   });
 
   return rays;
@@ -775,9 +883,9 @@ class Piece {
     return `Piece.fromSymbol(${this.symbol()})`;
   }
 
-  _repr_svg_(): string {
+  _reprSvg_(): string {
     // todo
-    return '';
+    throw new Error('Not implemented');
   }
 
   static fromSymbol(symbol: string): Piece {
@@ -868,6 +976,14 @@ class Move {
     return this.uci();
   }
 
+  copy(): Move {
+    // NOTE: No python-chess mirror, included for convenience
+    return new Move(this.fromSquare, this.toSquare, {
+      promotion: this.promotion,
+      drop: this.drop,
+    });
+  }
+
   /**
    * Parses a UCI string.
    *
@@ -877,25 +993,30 @@ class Move {
     if (uci == '0000') {
       return Move.null();
     } else if (uci.length == 4 && '@' == uci[1]) {
-      const drop = PIECE_SYMBOLS.indexOf(uci[0].toLowerCase());
-      const square = SQUARE_NAMES.indexOf(uci.slice(2));
+      const drop = PIECE_SYMBOLS.indexOf(uci[0].toLowerCase()) as
+        | PieceType
+        | -1;
+      const square = SQUARE_NAMES.indexOf(uci.slice(2)) as Square | -1;
       if (drop === -1 || square === -1) {
         throw new InvalidMoveError(`invalid uci: ${uci}`);
       }
-      return new Move(square, square, { drop: drop });
+      return new Move(square, square, { drop });
     } else if (4 <= uci.length && uci.length <= 5) {
-      const from_square = SQUARE_NAMES.indexOf(uci.slice(0, 2));
-      const to_square = SQUARE_NAMES.indexOf(uci.slice(2, 4));
-      const promotion = uci.length == 5 ? PIECE_SYMBOLS.indexOf(uci[4]) : null;
-      if (from_square === -1 || to_square === -1 || promotion === -1) {
+      const fromSquare = SQUARE_NAMES.indexOf(uci.slice(0, 2));
+      const toSquare = SQUARE_NAMES.indexOf(uci.slice(2, 4));
+      const promotion =
+        uci.length == 5
+          ? (PIECE_SYMBOLS.indexOf(uci[4]) as PieceType | -1)
+          : null;
+      if (fromSquare === -1 || toSquare === -1 || promotion === -1) {
         throw new InvalidMoveError(`invalid uci: {$uci}`);
       }
-      if (from_square == to_square) {
+      if (fromSquare == toSquare) {
         throw new InvalidMoveError(
           `invalid uci (use 0000 for null moves): ${uci}`,
         );
       }
-      return new Move(from_square, to_square, { promotion: promotion });
+      return new Move(fromSquare, toSquare, { promotion });
     } else {
       throw new InvalidMoveError(
         `expected uci string to be of length 4 or 5: ${uci}`,
@@ -910,10 +1031,10 @@ class Move {
    * forfeits en passant capturing). Null moves evaluate to ``False`` in
    * boolean contexts.
    *
-   * > import chess from 'chess.ts'
-   * >
-   * > bool(chess.Move.null())
-   * False
+   *      >>> import chess
+   *      >>>
+   *      >>> bool(chess.Move.null())
+   *      False
    */
   static null(): Move {
     return new Move(0, 0);
@@ -925,7 +1046,7 @@ class Move {
  * :class:`~chess.Board` for a full board with move generation.
  *
  * The board is initialized with the standard chess starting position, unless
- * otherwise specified in the optional *board_fen* argument. If *board_fen*
+ * otherwise specified in the optional *boardFen* argument. If *boardFen*
  * is ``null``, an empty board is created.
  */
 class BaseBoard {
@@ -941,6 +1062,17 @@ class BaseBoard {
 
   constructor(boardFen: string | null = null) {
     this.occupiedCo = [BB_EMPTY, BB_EMPTY];
+
+    // NOTE: We have to initialize these to avoid TS errors.
+    //       The calls below will set them to the correct values.
+    this.occupied = null!;
+    this.pawns = null!;
+    this.knights = null!;
+    this.bishops = null!;
+    this.rooks = null!;
+    this.queens = null!;
+    this.kings = null!;
+    this.promoted = null!;
 
     if (boardFen === null) {
       this._clearBoard();
@@ -1096,23 +1228,23 @@ class BaseBoard {
   }
 
   attacksMask(square: Square): Bitboard {
-    const bb_square = BB_SQUARES[square];
+    const bbSquare = BB_SQUARES[square];
 
-    if (bb_square & this.pawns) {
-      const color = bool(bb_square & this.occupiedCo[colorIdx(WHITE)]);
+    if (bbSquare & this.pawns) {
+      const color = bool(bbSquare & this.occupiedCo[colorIdx(WHITE)]);
       return BB_PAWN_ATTACKS[colorIdx(color)][square];
-    } else if (bb_square & this.knights) {
+    } else if (bbSquare & this.knights) {
       return BB_KNIGHT_ATTACKS[square];
-    } else if (bb_square & this.kings) {
+    } else if (bbSquare & this.kings) {
       return BB_KING_ATTACKS[square];
     } else {
       let attacks = 0n;
-      if (bb_square & this.bishops || bb_square & this.queens) {
+      if (bbSquare & this.bishops || bbSquare & this.queens) {
         attacks = BB_DIAG_ATTACKS[square].get(
           BB_DIAG_MASKS[square] & this.occupied,
         ) as Bitboard;
       }
-      if (bb_square & this.rooks || bb_square & this.queens) {
+      if (bbSquare & this.rooks || bbSquare & this.queens) {
         attacks |=
           (BB_RANK_ATTACKS[square].get(
             BB_RANK_MASKS[square] & this.occupied,
@@ -1221,7 +1353,7 @@ class BaseBoard {
    *      >>> import chess
    *      >>>
    *      >>> board = chess.Board("rnb1k2r/ppp2ppp/5n2/3q4/1b1P4/2N5/PP3PPP/R1BQKBNR w KQkq - 3 7")
-   *      >>> board.is_pinned(chess.WHITE, chess.C3)
+   *      >>> board.isPinned(chess.WHITE, chess.C3)
    *      True
    *      >>> direction = board.pin(chess.WHITE, chess.C3)
    *      >>> direction
@@ -1350,9 +1482,7 @@ class BaseBoard {
    * Gets the board FEN (e.g.,
    * ``rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR``).
    */
-  boardFen(
-    { promoted = false }: { promoted: boolean } = { promoted: false },
-  ): string {
+  boardFen({ promoted = false }: { promoted?: boolean | null } = {}): string {
     const builder: string[] = [];
     let empty = 0;
 
@@ -1508,7 +1638,7 @@ class BaseBoard {
     this._setPieceMap(pieceMap);
   }
 
-  _set_chess960_pos(scharnagl: number): void {
+  _setChess960Pos(scharnagl: number): void {
     if (!(0 <= scharnagl && scharnagl <= 959)) {
       throw new Error(
         `ValueError: chess960 position index not 0 <= {scharnagl} <= 959`,
@@ -1532,17 +1662,17 @@ class BaseBoard {
     }
 
     // Bishops.
-    const bw_file = bw * 2 + 1;
-    const bb_file = bb * 2;
-    this.bishops = (BB_FILES[bw_file] | BB_FILES[bb_file]) & BB_BACKRANKS;
+    const bwFile = bw * 2 + 1;
+    const bbFile = bb * 2;
+    this.bishops = (BB_FILES[bwFile] | BB_FILES[bbFile]) & BB_BACKRANKS;
 
     // Queens.
-    let q_file = q;
-    q_file += intFromBool(Math.min(bw_file, bb_file) <= q_file);
-    q_file += intFromBool(Math.max(bw_file, bb_file) <= q_file);
-    this.queens = BB_FILES[q_file] & BB_BACKRANKS;
+    let qFile = q;
+    qFile += numberFromBool(Math.min(bwFile, bbFile) <= qFile);
+    qFile += numberFromBool(Math.max(bwFile, bbFile) <= qFile);
+    this.queens = BB_FILES[qFile] & BB_BACKRANKS;
 
-    const used = [bw_file, bb_file, q_file];
+    const used = [bwFile, bbFile, qFile];
 
     // Knights.
     this.knights = BB_EMPTY;
@@ -1589,17 +1719,17 @@ class BaseBoard {
 
   /**
    * Sets up a Chess960 starting position given its index between 0 and 959.
-   * Also see :func:`~chess.BaseBoard.from_chess960_pos()`.
+   * Also see :func:`~chess.BaseBoard.fromChess960Pos()`.
    */
   setChess960Pos(scharnagl: number): void {
-    this._set_chess960_pos(scharnagl);
+    this._setChess960Pos(scharnagl);
   }
 
   /**
    * Gets the Chess960 starting position index between 0 and 959,
    * or ``None``.
    */
-  chess960_pos(): number | null {
+  chess960Pos(): number | null {
     if (this.occupiedCo[colorIdx(WHITE)] !== (BB_RANK_1 | BB_RANK_2)) {
       return null;
     }
@@ -1640,13 +1770,13 @@ class BaseBoard {
       return null;
     }
     const bs1 = Math.floor((lsb(x) - 1) / 2);
-    let cc_pos = bs1;
+    let ccPos = bs1;
     x = this.bishops & (1n + 4n + 16n + 64n);
     if (!x) {
       return null;
     }
     const bs2 = lsb(x) * 2;
-    cc_pos += bs2;
+    ccPos += bs2;
 
     let q = 0;
     let qf = false;
@@ -1692,10 +1822,10 @@ class BaseBoard {
     }
 
     if (n0 < 4 && n1f && qf) {
-      cc_pos += q * 16;
+      ccPos += q * 16;
       const krn = n0s[n0] + n1;
-      cc_pos += krn * 96;
-      return cc_pos;
+      ccPos += krn * 96;
+      return ccPos;
     } else {
       return null;
     }
@@ -1736,26 +1866,19 @@ class BaseBoard {
    * @param invertColor: Invert color of the Unicode pieces.
    * @param borders: Show borders and a coordinate margin.
    */
-  unicode(
-    {
-      invertColor,
-      borders,
-      emptySquare,
-      orientation,
-    }: {
-      invertColor: boolean;
-      borders: boolean;
-      emptySquare: string;
-      orientation: Color;
-    } = {
-      invertColor: false,
-      borders: true,
-      emptySquare: '⭘',
-      orientation: WHITE,
-    },
-  ): string {
+  unicode({
+    invertColor = false,
+    borders = true,
+    emptySquare = '⭘',
+    orientation = WHITE,
+  }: {
+    invertColor?: boolean;
+    borders?: boolean;
+    emptySquare?: string;
+    orientation?: Color;
+  } = {}): string {
     const builder: string[] = [];
-    for (const rank_index of (orientation
+    for (const rankIndex of (orientation
       ? range(7, -1, -1)
       : range(8)) as IterableIterator<RankOrFileIndex>) {
       if (borders) {
@@ -1763,16 +1886,16 @@ class BaseBoard {
         builder.push('-'.repeat(17));
         builder.push('\n');
 
-        builder.push(RANK_NAMES[rank_index]);
+        builder.push(RANK_NAMES[rankIndex]);
         builder.push(' ');
       }
 
-      for (const [i, file_index] of enumerate(
+      for (const [i, fileIndex] of enumerate(
         (orientation
           ? range(8)
           : range(7, -1, -1)) as IterableIterator<RankOrFileIndex>,
       )) {
-        const square_index = square(file_index, rank_index);
+        const squareIndex = square(fileIndex, rankIndex);
 
         if (borders) {
           builder.push('|');
@@ -1780,7 +1903,7 @@ class BaseBoard {
           builder.push(' ');
         }
 
-        const piece = this.pieceAt(square_index);
+        const piece = this.pieceAt(squareIndex);
 
         if (piece) {
           builder.push(piece.unicodeSymbol({ invertColor: invertColor }));
@@ -1793,7 +1916,7 @@ class BaseBoard {
         builder.push('|');
       }
 
-      if (borders || (orientation ? rank_index > 0 : rank_index < 7)) {
+      if (borders || (orientation ? rankIndex > 0 : rankIndex < 7)) {
         builder.push('\n');
       }
     }
@@ -1810,7 +1933,8 @@ class BaseBoard {
   }
 
   _reprSvg(): string {
-    return ''; // TODO
+    // TODO
+    throw new Error('Not implemented');
   }
 
   eq(board: any) {
@@ -1857,13 +1981,13 @@ class BaseBoard {
    * Alternatively, :func:`~chess.BaseBoard.applyTransform()` can be used
    * to apply the transformation on the board.
    */
-  transform<T extends BaseBoard>(f: (board: Bitboard) => Bitboard): T {
-    const board = this.copy<T>();
+  transform(f: (board: Bitboard) => Bitboard): this {
+    const board = this.copy();
     board.applyTransform(f);
     return board;
   }
 
-  applyMirror<T extends BaseBoard>() {
+  applyMirror() {
     this.applyTransform(flipVertical);
     [this.occupiedCo[colorIdx(WHITE)], this.occupiedCo[colorIdx(BLACK)]] = [
       this.occupiedCo[colorIdx(BLACK)],
@@ -1877,11 +2001,11 @@ class BaseBoard {
    * The board is mirrored vertically and piece colors are swapped, so that
    * the position is equivalent modulo color.
    *
-   * Alternatively, :func:`~chess.BaseBoard.apply_mirror()` can be used
+   * Alternatively, :func:`~chess.BaseBoard.applyMirror()` can be used
    * to mirror the board.
    */
-  mirror<T extends BaseBoard>(): T {
-    const board = this.copy<T>();
+  mirror(): this {
+    const board = this.copy();
     board.applyMirror();
     return board;
   }
@@ -1889,8 +2013,8 @@ class BaseBoard {
   /**
    * Creates a copy of the board.
    */
-  copy<T extends BaseBoard>(): T {
-    const board = new (this.constructor as new () => T)();
+  copy(): this {
+    const board = new (this.constructor as new () => this)();
 
     board.pawns = this.pawns;
     board.knights = this.knights;
@@ -1913,7 +2037,7 @@ class BaseBoard {
 
   /**
    * Creates a new empty board. Also see
-   * :func:`~chess.BaseBoard.clear_board()`.
+   * :func:`~chess.BaseBoard.clearBoard()`.
    */
   static empty() {
     return new BaseBoard(null);
@@ -1925,7 +2049,7 @@ class BaseBoard {
    *      >>> import chess
    *      >>> import random
    *      >>>
-   *      >>> board = chess.Board.from_chess960_pos(random.randint(0, 959))
+   *      >>> board = chess.Board.fromChess960Pos(random.randint(0, 959))
    */
   static fromChess960Pos(scharnagl: number): BaseBoard {
     const board = this.empty();
@@ -1946,8 +2070,8 @@ class _BoardState<BoardT extends Board> {
   occupied: Bitboard;
   promoted: Bitboard;
   turn: Color;
-  castlingRights: number;
-  epSquare: Square;
+  castlingRights: Bitboard;
+  epSquare: Square | null;
   halfmoveClock: number;
   fullmoveNumber: number;
 
@@ -1994,11 +2118,3046 @@ class _BoardState<BoardT extends Board> {
   }
 }
 
-class Board extends BaseBoard {}
+interface IUciVariant {
+  uciVariant: string | null;
+}
 
-class PseudoLegalMoveGenerator {}
+/**
+ * A :class:`~chess.BaseBoard`, additional information representing
+ * a chess position, and a :data:`move stack <chess.Board.moveStack>`.
+ *
+ * Provides :data:`move generation <chess.Board.legalMoves>`, validation,
+ * :func:`parsing <chess.Board.parseSan()>`, attack generation,
+ * :func:`game end detection <chess.Board.isGameOver()>`,
+ * and the capability to :func:`make <chess.Board.push()>` and
+ * :func:`unmake <chess.Board.pop()>` moves.
+ *
+ * The board is initialized to the standard chess starting position,
+ * unless otherwise specified in the optional *fen* argument.
+ * If *fen* is ``None``, an empty board is created.
+ *
+ * Optionally supports *chess960*. In Chess960, castling moves are encoded
+ * by a king move to the corresponding rook square.
+ * Use :func:`chess.Board.fromChess960Pfos()` to create a board with one
+ * of the Chess960 starting positions.
+ *
+ * It's safe to set :data:`~Board.turn`, :data:`~Board.castlingRights`,
+ * :data:`~Board.epSquare`, :data:`~Board.halfmoveClock` and
+ * :data:`~Board.fullmoveNumber` directly.
+ *
+ * .. warning::
+ *     It is possible to set up and work with invalid positions. In this
+ *     case, :class:`~chess.Board` implements a kind of "pseudo-chess"
+ *     (useful to gracefully handle errors or to implement chess variants).
+ *     Use :func:`~chess.Board.isValid()` to detect invalid positions.
+ */
+class Board extends BaseBoard implements IUciVariant {
+  static aliases: string[] = [
+    'Standard',
+    'Chess',
+    'Classical',
+    'Normal',
+    'Illegal',
+    'From Position',
+  ];
 
-class LegalMoveGenerator {}
+  /*
+  NOTE:
+  Currently it seems impossible to make `uciVariant` static while guaranteeing
+  type safety. The problem is that transpiling Python's `Board.__eq__()` method
+  requires a dynamic comparison: `type(self).uci_variant == type(board).uci_variant`.
+  If we could include static members in an interface or abstract class, this would be
+  possible, but that is currently not supported in TS and the discussion seems to be
+  ongoing: https://github.com/microsoft/TypeScript/issues/34516#issue-507967613
+  */
+  uciVariant: string | null = 'chess';
+
+  static xboardVariant: string | null = 'normal';
+  static startingFen: string = STARTING_FEN;
+
+  static tbwSuffix: string | null = '.rtbw';
+  static tbzSuffix: string | null = '.rtbz';
+  static tbwMagic: Uint8Array | null = new Uint8Array([0x71, 0xe8, 0x23, 0x5d]);
+  static tbzMagic: Uint8Array | null = new Uint8Array([0xd7, 0x66, 0x0c, 0xa5]);
+  static pawnlessTbwSuffix: string | null = null;
+  static pawnlessTbzSuffix: string | null = null;
+  static pawnlessTbwMagic: Uint8Array | null = null;
+  static pawnlessTbzMagic: Uint8Array | null = null;
+  static connectedKings: boolean = false;
+  static oneKing: boolean = true;
+  static capturesCompulsory: boolean = false;
+
+  /** The side to move (``chess.WHITE`` or ``chess.BLACK``). */
+  turn: Color;
+
+  /**
+   * Bitmask of the rooks with castling rights.
+   *
+   * To test for specific squares:
+   *
+   *       >>> import chess
+   *       >>>
+   *       >>> board = chess.Board()
+   *       >>> bool(board.castlingRights & chess.BB_H1)  // White can castle with the h1 rook
+   *       True
+   *
+   * To add a specific square:
+   *
+   * >>> board.castlingRights |= chess.BB_A1
+   *
+   * Use :func:`~chess.Board.setCastlingFen()` to set multiple castling
+   * rights. Also see :func:`~chess.Board.hasCastlingRights()`,
+   * :func:`~chess.Board.hasKingsideCastlingRights()`,
+   * :func:`~chess.Board.hasQueensideCastlingRights()`,
+   * :func:`~chess.Board.hasChess960_castlingRights()`,
+   * :func:`~chess.Board.cleanCastlingRights()`.
+   */
+  castlingRights: Bitboard;
+
+  /**
+   * The potential en passant square on the third or sixth rank or ``null``.
+   *
+   * Use :func:`~chess.Board.hasLegalEnPassant()` to test if en passant
+   * capturing would actually be possible on the next move.
+   */
+  epSquare: Square | null;
+
+  /**
+   * Counts move pairs. Starts at `1` and is incremented after every move
+   * of the black side.
+   */
+  fullmoveNumber: number;
+
+  /** The number of half-moves since the last capture or pawn move. */
+  halfmoveClock: number;
+
+  /** A bitmask of pieces that have been promoted. */
+  promoted: Bitboard;
+
+  /**
+   * Whether the board is in Chess960 mode. In Chess960 castling moves are
+   * represented as king moves to the corresponding rook square.
+   */
+  chess960: boolean;
+
+  /**
+   * The move stack. Use :func:`Board.push() <chess.Board.push()>`,
+   * :func:`Board.pop() <chess.Board.pop()>`,
+   * :func:`Board.peek() <chess.Board.peek()>` and
+   * :func:`Board.clearStack() <chess.Board.clearStack()>` for
+   * manipulation.
+   */
+  moveStack: Move[];
+
+  _stack: _BoardState<this>[];
+
+  constructor(
+    fen: string | null = STARTING_FEN,
+    { chess960 = false }: { chess960?: boolean } = {},
+  ) {
+    super(fen);
+
+    this.chess960 = chess960;
+    
+    this.epSquare = null;
+    this.moveStack = [];
+    
+    this._stack = [];
+    
+    // NOTE: We have to initialize these to avoid TS errors.
+    //       The calls below will set them to the correct values.
+    this.turn = null!;
+    this.castlingRights = null!;
+    this.fullmoveNumber = null!;
+    this.halfmoveClock = null!;
+    this.promoted = null!;
+
+    if (fen === null) {
+      this.clear();
+    } else if (fen === (this.constructor as typeof Board).startingFen) {
+      this.reset();
+    } else {
+      this.setFen(fen);
+    }
+  }
+
+  /**
+   * A dynamic list of legal moves.
+   *
+   *      >>> import chess
+   *      >>>
+   *      >>> board = chess.Board()
+   *      >>> board.legalMoves.count()
+   *      20
+   *      >>> bool(board.legalMoves)
+   *      True
+   *      >>> move = chess.Move.fromUci("g1f3")
+   *      >>> move in board.legalMoves
+   *      True
+   *
+   * Wraps :func:`~chess.Board.generateLegalMoves()` and
+   * :func:`~chess.Board.isLegal()`.
+   */
+  get legalMoves(): LegalMoveGenerator {
+    return new LegalMoveGenerator(this);
+  }
+
+  /**
+   * A dynamic list of pseudo-legal moves, much like the legal move list.
+   *
+   * Pseudo-legal moves might leave or put the king in check, but are
+   * otherwise valid. Null moves are not pseudo-legal. Castling moves are
+   * only included if they are completely legal.
+   *
+   * Wraps :func:`~chess.Board.generatePseudoLegalMoves()` and
+   * :func:`~chess.Board.isPseudoLegal()`.
+   */
+  get pseudoLegalMoves(): PseudoLegalMoveGenerator {
+    return new PseudoLegalMoveGenerator(this);
+  }
+
+  /**
+   * Restores the starting position.
+   */
+  reset(): void {
+    this.turn = WHITE;
+    this.castlingRights = BB_CORNERS;
+    this.epSquare = null;
+    this.halfmoveClock = 0;
+    this.fullmoveNumber = 1;
+
+    this.resetBoard();
+  }
+
+  resetBoard(): void {
+    super.resetBoard();
+    this.clearStack();
+  }
+
+  /**
+   * Clears the board.
+   *
+   * Resets move stack and move counters. The side to move is white. There
+   * are no rooks or kings, so castling rights are removed.
+   *
+   * In order to be in a valid :func:`~chess.Board.status()`, at least kings
+   * need to be put on the board.
+   */
+  clear(): void {
+    this.turn = WHITE;
+    this.castlingRights = BB_EMPTY;
+    this.epSquare = null;
+    this.halfmoveClock = 0;
+    this.fullmoveNumber = 1;
+
+    this.clearBoard();
+  }
+
+  clearBoard(): void {
+    super.clearBoard();
+    this.clearStack();
+  }
+
+  /**
+   * Clears the move stack.
+   */
+  clearStack(): void {
+    this.moveStack = [];
+    this._stack = [];
+  }
+
+  /**
+   * Returns a copy of the root position.
+   */
+  root<T extends typeof Board>(this: InstanceType<T>): InstanceType<T> {
+    if (this._stack.length > 0) {
+      const board = new (this.constructor as { new (chess960: boolean): InstanceType<T> })(
+        this.chess960,
+      );
+      this._stack[0].restore(board);
+      return board;
+    } else {
+      return this.copy({ stack: false });
+    }
+  }
+
+  /**
+   * Returns the number of half-moves since the start of the game, as
+   * indicated by :data:`~chess.Board.fullmoveNumber` and
+   * :data:`~chess.Board.turn`.
+   *
+   * If moves have been pushed from the beginning, this is usually equal to
+   * ``len(board.moveStack)``. But note that a board can be set up with
+   * arbitrary starting positions, and the stack can be cleared.
+   */
+  ply(): number {
+    return 2 * (this.fullmoveNumber - 1) + numberFromBool(this.turn === BLACK);
+  }
+
+  removePieceAt(square: Square): Piece | null {
+    const piece = super.removePieceAt(square);
+    this.clearStack();
+    return piece;
+  }
+
+  setPieceAt(
+    square: Square,
+    piece: Piece | null,
+    promoted: boolean = false,
+  ): void {
+    super.setPieceAt(square, piece, promoted);
+    this.clearStack();
+  }
+
+  *generatePseudoLegalMoves(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    const ourPieces = this.occupiedCo[colorIdx(this.turn)];
+
+    // Generate piece moves.
+    const nonPawns = ourPieces & ~this.pawns & fromMask;
+    for (const fromSquare of scanReversed(nonPawns)) {
+      const moves = this.attacksMask(fromSquare) & ~ourPieces & toMask;
+      for (const toSquare of scanReversed(moves)) {
+        yield new Move(fromSquare, toSquare);
+      }
+    }
+
+    // Generate castling moves.
+    if (fromMask & this.kings) {
+      yield* this.generateCastlingMoves(fromMask, toMask);
+    }
+
+    // The remaining moves are all pawn moves.
+    const pawns = this.pawns & this.occupiedCo[colorIdx(this.turn)] & fromMask;
+    if (!pawns) {
+      return;
+    }
+
+    // Generate pawn captures.
+    const capturers = pawns;
+    for (const fromSquare of scanReversed(capturers)) {
+      const targets =
+        BB_PAWN_ATTACKS[colorIdx(this.turn)][fromSquare] &
+        this.occupiedCo[colorIdx(!this.turn)] &
+        toMask;
+
+      for (const toSquare of scanReversed(targets)) {
+        if ([0, 7].includes(squareRank(toSquare))) {
+          yield new Move(fromSquare, toSquare, { promotion: QUEEN });
+          yield new Move(fromSquare, toSquare, { promotion: ROOK });
+          yield new Move(fromSquare, toSquare, { promotion: BISHOP });
+          yield new Move(fromSquare, toSquare, { promotion: KNIGHT });
+        } else {
+          yield new Move(fromSquare, toSquare);
+        }
+      }
+    }
+
+    // Prepare pawn advance generation.
+    let singleMoves, doubleMoves;
+    if (this.turn === WHITE) {
+      singleMoves = (pawns << 8n) & ~this.occupied;
+      doubleMoves =
+        (singleMoves << 8n) & ~this.occupied & (BB_RANK_3 | BB_RANK_4);
+    } else {
+      singleMoves = (pawns >> 8n) & ~this.occupied;
+      doubleMoves =
+        (singleMoves >> 8n) & ~this.occupied & (BB_RANK_6 | BB_RANK_5);
+    }
+
+    singleMoves &= toMask;
+    doubleMoves &= toMask;
+
+    // Generate single pawn moves.
+    for (let toSquare of scanReversed(singleMoves)) {
+      let fromSquare = toSquare + (this.turn === BLACK ? 8 : -8);
+
+      if ([0, 7].includes(squareRank(toSquare))) {
+        yield new Move(fromSquare, toSquare, { promotion: QUEEN });
+        yield new Move(fromSquare, toSquare, { promotion: ROOK });
+        yield new Move(fromSquare, toSquare, { promotion: BISHOP });
+        yield new Move(fromSquare, toSquare, { promotion: KNIGHT });
+      } else {
+        yield new Move(fromSquare, toSquare);
+      }
+    }
+
+    // Generate double pawn moves.
+    for (const toSquare of scanReversed(doubleMoves)) {
+      const fromSquare = toSquare + (this.turn === BLACK ? 16 : -16);
+      yield new Move(fromSquare, toSquare);
+    }
+
+    // Generate en passant captures.
+    if (this.epSquare) {
+      yield* this.generatePseudoLegalEp(fromMask, toMask);
+    }
+  }
+
+  *generatePseudoLegalEp(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    if (!this.epSquare || !(BB_SQUARES[this.epSquare] & toMask)) {
+      return;
+    }
+
+    if (BB_SQUARES[this.epSquare] & this.occupied) {
+      return;
+    }
+
+    const capturers =
+      this.pawns &
+      this.occupiedCo[colorIdx(this.turn)] &
+      fromMask &
+      BB_PAWN_ATTACKS[colorIdx(!this.turn)][this.epSquare] &
+      BB_RANKS[this.turn ? 4 : 3];
+
+    for (const capturer of scanReversed(capturers)) {
+      yield new Move(capturer, this.epSquare);
+    }
+  }
+
+  *generatePseudoLegalCaptures(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    yield* this.generatePseudoLegalMoves(
+      fromMask,
+      toMask & this.occupiedCo[colorIdx(!this.turn)],
+    );
+    yield* this.generatePseudoLegalEp(fromMask, toMask);
+  }
+
+  checkersMask(): Bitboard {
+    const king = this.king(this.turn);
+    return king === null ? BB_EMPTY : this.attackersMask(!this.turn, king);
+  }
+
+  /**
+   * Gets the pieces currently giving check.
+   *
+   * Returns a :class:`set of squares <chess.SquareSet>`.
+   */
+  checkers(): SquareSet {
+    return new SquareSet(this.checkersMask());
+  }
+
+  isCheck(): boolean {
+    return bool(this.checkersMask());
+  }
+
+  givesCheck(move: Move): boolean {
+    this.push(move);
+    try {
+      return this.isCheck();
+    } finally {
+      this.pop();
+    }
+  }
+
+  isIntoCheck(move: Move): boolean {
+    const king = this.king(this.turn);
+    if (king === null) {
+      return false;
+    }
+
+    // If already in check, look if it is an evasion.
+    const checkers = this.attackersMask(!this.turn, king);
+    if (
+      checkers &&
+      !iterIncludes(
+        this._generateEvasions(
+          king,
+          checkers,
+          BB_SQUARES[move.fromSquare],
+          BB_SQUARES[move.toSquare],
+        ),
+        move,
+      )
+    ) {
+      return true;
+    }
+
+    return !this._isSafe(king, this._sliderBlockers(king), move);
+  }
+
+  wasIntoCheck(): boolean {
+    const king = this.king(!this.turn);
+    return king !== null && this.isAttackedBy(this.turn, king);
+  }
+
+  isPseudoLegal(move: Move): boolean {
+    // Null moves are not pseudo-legal.
+    if (!move.bool()) {
+      return false;
+    }
+
+    // Drops are not pseudo-legal.
+    if (move.drop !== null) {
+      return false;
+    }
+
+    // Source square must not be vacant.
+    const piece = this.pieceTypeAt(move.fromSquare);
+    if (piece === null) {
+      return false;
+    }
+
+    // Get square masks.
+    const fromMask = BB_SQUARES[move.fromSquare];
+    const toMask = BB_SQUARES[move.toSquare];
+
+    // Check turn.
+    if (!(this.occupiedCo[colorIdx(this.turn)] & fromMask)) {
+      return false;
+    }
+
+    // Only pawns can promote and only on the backrank.
+    if (move.promotion !== null) {
+      if (piece !== PAWN) {
+        return false;
+      }
+
+      if (this.turn === WHITE && squareRank(move.toSquare) !== 7) {
+        return false;
+      } else if (this.turn === BLACK && squareRank(move.toSquare) !== 0) {
+        return false;
+      }
+    }
+
+    // Handle castling.
+    if (piece === KING) {
+      move = this._fromChess960(this.chess960, move.fromSquare, move.toSquare);
+      if (iterIncludes(this.generateCastlingMoves(), move)) {
+        return true;
+      }
+    }
+
+    // Destination square can not be occupied.
+    if (this.occupiedCo[colorIdx(this.turn)] & toMask) {
+      return false;
+    }
+
+    // Handle pawn moves.
+    if (piece === PAWN) {
+      return iterIncludes(
+        this.generatePseudoLegalMoves(fromMask, toMask),
+        move,
+      );
+    }
+
+    // Handle all other pieces.
+    return bool(this.attacksMask(move.fromSquare) & toMask);
+  }
+
+  isLegal(move: Move): boolean {
+    return (
+      !this.isVariantEnd() &&
+      this.isPseudoLegal(move) &&
+      !this.isIntoCheck(move)
+    );
+  }
+
+  /**
+   * Checks if the game is over due to a special variant end condition.
+   *
+   * Note, for example, that stalemate is not considered a variant-specific
+   * end condition (this method will return ``False``), yet it can have a
+   * special **result** in suicide chess (any of
+   * :func:`~chess.Board.isVariantLoss()`,
+   * :func:`~chess.Board.isVariantWin()`,
+   * :func:`~chess.Board.isVariantDraw()` might return ``True``).
+   */
+  isVariantEnd(): boolean {
+    return false;
+  }
+
+  /**
+   * Checks if the current side to move lost due to a variant-specific
+   * condition.
+   */
+  isVariantLoss(): boolean {
+    return false;
+  }
+
+  /**
+   * Checks if the current side to move won due to a variant-specific
+   * condition.
+   */
+  isVariantWin(): boolean {
+    return false;
+  }
+
+  /**
+   * Checks if a variant-specific drawing condition is fulfilled.
+   */
+  isVariantDraw(): boolean {
+    return false;
+  }
+
+  isGameOver({ claimDraw = false }: { claimDraw?: boolean } = {}): boolean {
+    return this.outcome({ claimDraw: claimDraw }) !== null;
+  }
+
+  result({ claimDraw = false }: { claimDraw?: boolean } = {}): string {
+    const outcome = this.outcome({ claimDraw });
+    return outcome !== null ? outcome.result() : '*';
+  }
+
+  /**
+   * Checks if the game is over due to
+   * :func:`checkmate <chess.Board.isCheckmate()>`,
+   * :func:`stalemate <chess.Board.isStalemate()>`,
+   * :func:`insufficient material <chess.Board.isInsufficientMaterial()>`,
+   * the :func:`seventyfive-move rule <chess.Board.isSeventyfiveMoves()>`,
+   * :func:`fivefold repetition <chess.Board.isFivefoldRepetition()>`,
+   * or a :func:`variant end condition <chess.Board.isVariantEnd()>`.
+   * Returns the :class:`chess.Outcome` if the game has ended, otherwise
+   * ``None``.
+   *
+   * Alternatively, use :func:`~chess.Board.isGameOver()` if you are not
+   * interested in who won the game and why.
+   *
+   * The game is not considered to be over by the
+   * :func:`fifty-move rule <chess.Board.canClaimFiftyMoves()>` or
+   * :func:`threefold repetition <chess.Board.canClaimThreefoldRepetition()>`,
+   * unless *claimDraw* is given. Note that checking the latter can be
+   * slow.
+   */
+  outcome({ claimDraw = false }: { claimDraw?: boolean } = {}): Outcome | null {
+    // Variant support.
+    if (this.isVariantLoss()) {
+      return new Outcome(Termination.VARIANT_LOSS, !this.turn);
+    }
+    if (this.isVariantWin()) {
+      return new Outcome(Termination.VARIANT_WIN, this.turn);
+    }
+    if (this.isVariantDraw()) {
+      return new Outcome(Termination.VARIANT_DRAW, null);
+    }
+
+    // Normal game end.
+    if (this.isCheckmate()) {
+      return new Outcome(Termination.CHECKMATE, !this.turn);
+    }
+    if (this.isInsufficientMaterial()) {
+      return new Outcome(Termination.INSUFFICIENT_MATERIAL, null);
+    }
+    if (!iterAny(this.generateLegalMoves())) {
+      return new Outcome(Termination.STALEMATE, null);
+    }
+
+    // Automatic draws.
+    if (this.isSeventyfiveMoves()) {
+      return new Outcome(Termination.SEVENTYFIVE_MOVES, null);
+    }
+    if (this.isFivefoldRepetition()) {
+      return new Outcome(Termination.FIVEFOLD_REPETITION, null);
+    }
+
+    // Claimable draws.
+    if (claimDraw) {
+      if (this.canClaimFiftyMoves()) {
+        return new Outcome(Termination.FIFTY_MOVES, null);
+      }
+      if (this.canClaimThreefoldRepetition()) {
+        return new Outcome(Termination.THREEFOLD_REPETITION, null);
+      }
+    }
+
+    return null;
+  }
+
+  /**
+   * Checks if the current position is a checkmate.
+   */
+  isCheckmate(): boolean {
+    if (!this.isCheck()) {
+      return false;
+    }
+    return !iterAny(this.generateLegalMoves());
+  }
+
+  /**
+   * Checks if the current position is a stalemate.
+   */
+  isStalemate(): boolean {
+    if (this.isCheck()) {
+      return false;
+    }
+
+    if (this.isVariantEnd()) {
+      return false;
+    }
+
+    return !iterAny(this.generateLegalMoves());
+  }
+
+  /**
+   * Checks if neither side has sufficient winning material
+   * (:func:`~chess.Board.hasInsufficientMaterial()`).
+   */
+  isInsufficientMaterial(): boolean {
+    return iterAll(COLORS.map(color => this.hasInsufficientMaterial(color)));
+  }
+
+  /**
+   * Checks if *color* has insufficient winning material.
+   *
+   * This is guaranteed to return ``False`` if *color* can still win the
+   * game.
+   *
+   * The converse does not necessarily hold:
+   * The implementation only looks at the material, including the colors
+   * of bishops, but not considering piece positions. So fortress
+   * positions or positions with forced lines may return ``False``, even
+   * though there is no possible winning line.
+   */
+  hasInsufficientMaterial(color: Color): boolean {
+    if (
+      this.occupiedCo[colorIdx(color)] &
+      (this.pawns | this.rooks | this.queens)
+    ) {
+      return false;
+    }
+
+    // Knights are only insufficient material if:
+    // (1) We do not have any other pieces, including more than one knight.
+    // (2) The opponent does not have pawns, knights, bishops or rooks.
+    //     These would allow selfmate.
+    if (this.occupiedCo[colorIdx(color)] & this.knights) {
+      return (
+        popcount(this.occupiedCo[colorIdx(color)]) <= 2 &&
+        !(this.occupiedCo[colorIdx(!color)] & ~this.kings & ~this.queens)
+      );
+    }
+
+    // Bishops are only insufficient material if:
+    // (1) We do not have any other pieces, including bishops of the
+    //     opposite color.
+    // (2) The opponent does not have bishops of the opposite color,
+    //     pawns or knights. These would allow selfmate.
+    if (this.occupiedCo[colorIdx(color)] & this.bishops) {
+      const sameColor =
+        !(this.bishops & BB_DARK_SQUARES) || !(this.bishops & BB_LIGHT_SQUARES);
+      return sameColor && !this.pawns && !this.knights;
+    }
+
+    return true;
+  }
+
+  _isHalfmoves(n: number): boolean {
+    return this.halfmoveClock >= n && iterAny(this.generateLegalMoves());
+  }
+
+  /**
+   * Since the 1st of July 2014, a game is automatically drawn (without
+   * a claim by one of the players) if the half-move clock since a capture
+   * or pawn move is equal to or greater than 150. Other means to end a game
+   * take precedence.
+   */
+  isSeventyfiveMoves(): boolean {
+    return this._isHalfmoves(150);
+  }
+
+  /**
+   * Since the 1st of July 2014 a game is automatically drawn (without
+   * a claim by one of the players) if a position occurs for the fifth time.
+   * Originally this had to occur on consecutive alternating moves, but
+   * this has since been revised.
+   */
+  isFivefoldRepetition(): boolean {
+    return this.isRepetition(5);
+  }
+
+  /**
+   * Checks if the player to move can claim a draw by the fifty-move rule or
+   * by threefold repetition.
+   *
+   * Note that checking the latter can be slow.
+   */
+  canClaimDraw(): boolean {
+    return this.canClaimFiftyMoves() || this.canClaimThreefoldRepetition();
+  }
+
+  /**
+   * Checks that the clock of halfmoves since the last capture or pawn move
+   * is greater or equal to 100, and that no other means of ending the game
+   * (like checkmate) take precedence.
+   */
+  isFiftyMoves(): boolean {
+    return this._isHalfmoves(100);
+  }
+
+  /**
+   * Checks if the player to move can claim a draw by the fifty-move rule.
+   *
+   * In addition to :func:`~chess.Board.isFiftyMoves()`, the fifty-move
+   * rule can also be claimed if there is a legal move that achieves this
+   * condition.
+   */
+  canClaimFiftyMoves(): boolean {
+    if (this.isFiftyMoves()) {
+      return true;
+    }
+
+    if (this.halfmoveClock >= 99) {
+      for (const move of this.generatePseudoLegalMoves()) {
+        if (!this.isZeroing(move)) {
+          this.push(move);
+          try {
+            if (this.isFiftyMoves()) {
+              return true;
+            }
+          } finally {
+            this.pop();
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if the player to move can claim a draw by threefold repetition.
+   *
+   * Draw by threefold repetition can be claimed if the position on the
+   * board occurred for the third time or if such a repetition is reached
+   * with one of the possible legal moves.
+   *
+   * Note that checking this can be slow: In the worst case
+   * scenario, every legal move has to be tested and the entire game has to
+   * be replayed because there is no incremental transposition table.
+   */
+  canClaimThreefoldRepetition(): boolean {
+    // TODO check this function's logic (straight outta ChatGPT)
+    const transpositionKey = this._transpositionKey();
+    const transpositions = new Counter<bigint>();
+    transpositions.update([transpositionKey]);
+
+    // Count positions.
+    const switchyard: Move[] = [];
+    while (this.moveStack.length > 0) {
+      const move = this.pop();
+      switchyard.push(move);
+
+      if (this.isIrreversible(move)) {
+        break;
+      }
+
+      transpositions.update([this._transpositionKey()]);
+    }
+
+    while (switchyard.length > 0) {
+      this.push(switchyard.pop() as Move);
+    }
+
+    // Threefold repetition occurred.
+    if ((transpositions.get(transpositionKey) as number) >= 3) {
+      return true;
+    }
+
+    // The next legal move is a threefold repetition.
+    for (const move of this.generateLegalMoves()) {
+      this.push(move);
+      try {
+        if ((transpositions.get(this._transpositionKey()) as number) >= 2) {
+          return true;
+        }
+      } finally {
+        this.pop();
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if the current position has repeated 3 (or a given number of)
+   * times.
+   *
+   * Unlike :func:`~chess.Board.canClaimThreefoldRepetition()`,
+   * this does not consider a repetition that can be played on the next
+   * move.
+   *
+   * Note that checking this can be slow: In the worst case, the entire
+   * game has to be replayed because there is no incremental transposition
+   * table.
+   */
+  isRepetition(count: number = 3): boolean {
+    // Fast check, based on occupancy only.
+    let maybeRepetitions = 1;
+    for (const state of [...this._stack].reverse()) {
+      if (state.occupied == this.occupied) {
+        maybeRepetitions += 1;
+        if (maybeRepetitions >= count) {
+          break;
+        }
+      }
+    }
+    if (maybeRepetitions < count) {
+      return false;
+    }
+
+    // Check full replay.
+    const transpositionKey = this._transpositionKey();
+    const switchyard: Move[] = [];
+
+    try {
+      while (true) {
+        if (count <= 1) {
+          return true;
+        }
+
+        if (this.moveStack.length < count - 1) {
+          break;
+        }
+
+        const move = this.pop();
+        switchyard.push(move);
+
+        if (this.isIrreversible(move)) {
+          break;
+        }
+
+        if (this._transpositionKey() === transpositionKey) {
+          count -= 1;
+        }
+      }
+    } finally {
+      while (switchyard.length > 0) {
+        this.push(switchyard.pop() as Move);
+      }
+    }
+
+    return false;
+  }
+
+  _boardState(): _BoardState<this> {
+    return new _BoardState(this);
+  }
+
+  _pushCapture(
+    move: Move,
+    captureSquare: Square,
+    pieceType: PieceType,
+    wasPromoted: boolean,
+  ): void {
+    // pass
+  }
+
+  /**
+   * Updates the position with the given *move* and puts it onto the
+   * move stack.
+   *
+   *      >>> import chess
+   *      >>>
+   *      >>> board = chess.Board()
+   *      >>>
+   *      >>> Nf3 = chess.Move.fromUci("g1f3")
+   *      >>> board.push(Nf3)  # Make the move
+   *
+   *      >>> board.pop()  # Unmake the last move
+   *      Move.fromUci('g1f3')
+   *
+   * Null moves just increment the move counters, switch turns and forfeit
+   * en passant capturing.
+   *
+   * .. warning::
+   *     Moves are not checked for legality. It is the caller's
+   *     responsibility to ensure that the move is at least pseudo-legal or
+   *     a null move.
+   */
+  push(move: Move): void {
+    // Push move and remember board state.
+    move = this._toChess960(move);
+    const boardState = this._boardState();
+    this.castlingRights = this.cleanCastlingRights(); // Before pushing stack
+    this.moveStack.push(
+      this._fromChess960(
+        this.chess960,
+        move.fromSquare,
+        move.toSquare,
+        move.promotion,
+        move.drop,
+      ),
+    );
+    this._stack.push(boardState);
+
+    // Reset en passant square.
+    const epSquare = this.epSquare;
+    this.epSquare = null;
+
+    // Increment move counters.
+    this.halfmoveClock += 1;
+    if (this.turn === BLACK) {
+      this.fullmoveNumber += 1;
+    }
+
+    // On a null move, simply swap turns and reset the en passant square.
+    if (!move.bool()) {
+      this.turn = !this.turn;
+      return;
+    }
+
+    // Drops.
+    if (move.drop !== null) {
+      this._setPieceAt(move.toSquare, move.drop, this.turn);
+      this.turn = !this.turn;
+      return;
+    }
+
+    // Zero the half-move clock.
+    if (this.isZeroing(move)) {
+      this.halfmoveClock = 0;
+    }
+
+    const fromBb = BB_SQUARES[move.fromSquare];
+    const toBb = BB_SQUARES[move.toSquare];
+
+    const promoted = bool(this.promoted & fromBb);
+    const pieceType = this._removePieceAt(move.fromSquare);
+    if (pieceType === null) {
+      throw new Error(
+        `push() expects move to be pseudo-legal, but got ${move} in ${this.boardFen()}`,
+      );
+    }
+    const captureSquare = move.toSquare;
+    const capturedPieceType = this.pieceTypeAt(captureSquare);
+
+    // Update castling rights.
+    this.castlingRights &= ~toBb & ~fromBb;
+    if (pieceType === KING && !promoted) {
+      if (this.turn === WHITE) {
+        this.castlingRights &= ~BB_RANK_1;
+      } else {
+        this.castlingRights &= ~BB_RANK_8;
+      }
+    } else if (capturedPieceType === KING && !(this.promoted & toBb)) {
+      if (this.turn === WHITE && squareRank(move.toSquare) === 7) {
+        this.castlingRights &= ~BB_RANK_8;
+      } else if (this.turn === BLACK && squareRank(move.toSquare) === 0) {
+        this.castlingRights &= ~BB_RANK_1;
+      }
+    }
+
+    // Handle special pawn moves.
+    if (pieceType === PAWN) {
+      const diff = move.toSquare - move.fromSquare;
+
+      if (diff === 16 && squareRank(move.fromSquare) === 1) {
+        this.epSquare = move.fromSquare + 8;
+      } else if (diff === -16 && squareRank(move.fromSquare) === 6) {
+        this.epSquare = move.fromSquare - 8;
+      } else if (
+        move.toSquare === epSquare &&
+        [7, 9].includes(Math.abs(diff)) &&
+        !capturedPieceType
+      ) {
+        // Remove pawns captured en passant.
+        const down = this.turn == WHITE ? -8 : 8;
+        const captureSquare = epSquare + down;
+        const capturedPieceType = this._removePieceAt(captureSquare);
+      }
+    }
+
+    // Promotion.
+    if (move.promotion != null) {
+      const promoted = true;
+      const pieceType = move.promotion;
+    }
+
+    // Castling.
+    const castling =
+      pieceType === KING && bool(this.occupiedCo[colorIdx(this.turn)] & toBb);
+    if (castling) {
+      const aSide = squareFile(move.toSquare) < squareFile(move.fromSquare);
+
+      this._removePieceAt(move.fromSquare);
+      this._removePieceAt(move.toSquare);
+
+      if (aSide) {
+        this._setPieceAt(this.turn == WHITE ? C1 : C8, KING, this.turn);
+        this._setPieceAt(this.turn == WHITE ? D1 : D8, ROOK, this.turn);
+      } else {
+        this._setPieceAt(this.turn == WHITE ? G1 : G8, KING, this.turn);
+        this._setPieceAt(this.turn == WHITE ? F1 : F8, ROOK, this.turn);
+      }
+    }
+
+    // Put the piece on the target square.
+    if (!castling) {
+      const wasPromoted = bool(this.promoted & toBb);
+      this._setPieceAt(move.toSquare, pieceType, this.turn, promoted);
+
+      if (capturedPieceType !== null) {
+        this._pushCapture(move, captureSquare, capturedPieceType, wasPromoted);
+      }
+    }
+
+    // Swap turn.
+    this.turn = !this.turn;
+  }
+
+  /**
+   * Restores the previous position and returns the last move from the stack.
+   *
+   * @throws :exc:`IndexError` if the move stack is empty.
+   */
+  pop(): Move {
+    if (this.moveStack.length === 0 || this._stack.length === 0) {
+      throw new Error('IndexError');
+    }
+    const move = this.moveStack.pop() as Move;
+    (this._stack.pop() as _BoardState<this>).restore(this);
+    return move;
+  }
+
+  /**
+   * Gets the last move from the move stack.
+   *
+   * @throws :exc:`IndexError` if the move stack is empty.
+   */
+  peek(): Move {
+    if (this.moveStack.length === 0) {
+      throw new Error('IndexError');
+    }
+    return this.moveStack[this.moveStack.length - 1];
+  }
+
+  /**
+   * Finds a matching legal move for an origin square, a target square, and
+   * an optional promotion piece type.
+   *
+   * For pawn moves to the backrank, the promotion piece type defaults to
+   * :data:`chess.QUEEN`, unless otherwise specified.
+   *
+   * Castling moves are normalized to king moves by two steps, except in
+   * Chess960.
+   *
+   * @throws :exc:`IllegalMoveError` if no matching legal move is found.
+   */
+  findMove(
+    fromSquare: Square,
+    toSquare: Square,
+    promotion: PieceType | null = null,
+  ): Move {
+    if (
+      promotion === null &&
+      this.pawns & BB_SQUARES[fromSquare] &&
+      BB_SQUARES[toSquare] & BB_BACKRANKS
+    ) {
+      promotion = QUEEN;
+    }
+
+    const move = this._fromChess960(
+      this.chess960,
+      fromSquare,
+      toSquare,
+      promotion,
+    );
+    if (!this.isLegal(move)) {
+      throw new IllegalMoveError(
+        `no matching legal move for ${move.uci()} (${
+          SQUARE_NAMES[fromSquare]
+        } -> ${SQUARE_NAMES[toSquare]}) in ${this.fen()}`,
+      );
+    }
+
+    return move;
+  }
+
+  castlingShredderFen(): string {
+    const castlingRights = this.cleanCastlingRights();
+    if (!castlingRights) {
+      return '-';
+    }
+
+    const builder: string[] = [];
+
+    for (const square of scanReversed(castlingRights & BB_RANK_1)) {
+      builder.push(FILE_NAMES[squareFile(square)].toUpperCase());
+    }
+
+    for (const square of scanReversed(castlingRights & BB_RANK_8)) {
+      builder.push(FILE_NAMES[squareFile(square)]);
+    }
+
+    return builder.join('');
+  }
+
+  castlingXfen(): string {
+    const builder: string[] = [];
+
+    for (const color of COLORS) {
+      const king = this.king(color);
+      if (king === null) {
+        continue;
+      }
+
+      const kingFile = squareFile(king);
+      const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8;
+
+      for (const rookSquare of scanReversed(
+        this.cleanCastlingRights() & backrank,
+      )) {
+        const rookFile = squareFile(rookSquare);
+        const aSide = rookFile < kingFile;
+
+        const otherRooks =
+          this.occupiedCo[colorIdx(color)] &
+          this.rooks &
+          backrank &
+          ~BB_SQUARES[rookSquare];
+
+        let ch;
+        if (
+          iterAny(
+            iterMap(
+              scanReversed(otherRooks),
+              other => squareFile(other) < rookFile === aSide,
+            ),
+          )
+        ) {
+          ch = FILE_NAMES[rookFile];
+        } else {
+          ch = aSide ? 'q' : 'k';
+        }
+
+        builder.push(color === WHITE ? ch.toUpperCase() : ch);
+      }
+    }
+
+    if (builder.length !== 0) {
+      return builder.join('');
+    } else {
+      return '-';
+    }
+  }
+
+  /**
+   * Checks if there is a pseudo-legal en passant capture.
+   */
+  hasPseudoLegalEnPassant(): boolean {
+    return this.epSquare !== null && iterAny(this.generatePseudoLegalEp());
+  }
+
+  /**
+   * Checks if there is a legal en passant capture.
+   */
+  hasLegalEnPassant(): boolean {
+    return this.epSquare !== null && iterAny(this.generateLegalEp());
+  }
+
+  /**
+   * Gets a FEN representation of the position.
+   *
+   * A FEN string (e.g.,
+   * ``rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1``) consists
+   * of the board part :func:`~chess.Board.boardFen()`, the
+   * :data:`~chess.Board.turn`, the castling part
+   * (:data:`~chess.Board.castlingRights`),
+   * the en passant square (:data:`~chess.Board.epSquare`),
+   * the :data:`~chess.Board.halfmoveClock`
+   * and the :data:`~chess.Board.fullmoveNumber`.
+   *
+   * :param shredder: Use :func:`~chess.Board.castlingShredderFen()`
+   *     and encode castling rights by the file of the rook
+   *     (like ``HAha``) instead of the default
+   *     :func:`~chess.Board.castlingXfen()` (like ``KQkq``).
+   * :param enPassant: By default, only fully legal en passant squares
+   *     are included (:func:`~chess.Board.hasLegalEnPassant()`).
+   *     Pass ``fen`` to strictly follow the FEN specification
+   *     (always include the en passant square after a two-step pawn move)
+   *     or ``xfen`` to follow the X-FEN specification
+   *     (:func:`~chess.Board.hasPseudoLegalEnPassant()`).
+   * :param promoted: Mark promoted pieces like ``Q~``. By default, this is
+   *     only enabled in chess variants where this is relevant.
+   */
+  fen({
+    shredder = false,
+    enPassant = 'legal',
+    promoted = null,
+  }: {
+    shredder?: boolean;
+    enPassant?: EnPassantSpec;
+    promoted?: boolean | null;
+  } = {}): string {
+    return [
+      this.epd({ shredder, enPassant, promoted }),
+      this.halfmoveClock.toString(),
+      this.fullmoveNumber.toString(),
+    ].join(' ');
+  }
+
+  shredderFen({
+    enPassant = 'legal',
+    promoted = null,
+  }: { enPassant?: EnPassantSpec; promoted?: boolean | null } = {}): string {
+    return [
+      this.epd({ shredder: true, enPassant, promoted }),
+      this.halfmoveClock.toString(),
+      this.fullmoveNumber.toString(),
+    ].join(' ');
+  }
+
+  /**
+   * Parses a FEN and sets the position from it.
+   *
+   * :raises: :exc:`ValueError` if syntactically invalid. Use
+   *     :func:`~chess.Board.isValid()` to detect invalid positions.
+   */
+  setFen(fen: string): void {
+    const parts = fen.split(' ');
+
+    // Board part.
+    const boardPart = parts.shift();
+    if (boardPart === undefined) {
+      throw new Error('ValueError: empty fen');
+    }
+
+    // Turn.
+    let turn: Color;
+    const turnPart = parts.shift();
+    if (turnPart === undefined) {
+      turn = WHITE;
+    } else {
+      if (turnPart == 'w') {
+        turn = WHITE;
+      } else if (turnPart == 'b') {
+        turn = BLACK;
+      } else {
+        throw new Error(
+          `ValueError: expected 'w' or 'b' for turn part of fen: ${fen}`,
+        );
+      }
+    }
+
+    // Validate castling part.
+    let castlingPart = parts.shift();
+    if (castlingPart === undefined) {
+      castlingPart = '-';
+    } else {
+      if (castlingPart.match(FEN_CASTLING_REGEX) === null) {
+        throw new Error(`ValueError: invalid castling part in fen: ${fen}`);
+      }
+    }
+
+    // En passant square.
+    let epSquare: Square | null;
+    const epPart = parts.shift();
+    if (epPart === undefined) {
+      epSquare = null;
+    } else {
+      const squareIdx = SQUARE_NAMES.indexOf(epPart);
+
+      if (squareIdx === -1) {
+        throw new Error(`ValueError: invalid en passant part in fen: ${fen}`);
+      }
+      epSquare = epPart === '-' ? null : squareIdx;
+    }
+
+    // Check that the half-move part is valid.
+    let halfmoveClock: number;
+    const halfmovePart = parts.shift();
+    if (halfmovePart === undefined) {
+      halfmoveClock = 0;
+    } else {
+      try {
+        halfmoveClock = parseIntStrict(halfmovePart);
+      } catch (e) {
+        throw new Error(`ValueError: invalid half-move clock in fen: ${fen}`);
+      }
+
+      if (halfmoveClock < 0) {
+        throw new Error(
+          `ValueError: half-move clock cannot be negative: ${fen}`,
+        );
+      }
+    }
+
+    // Check that the full-move number part is valid.
+    // 0 is allowed for compatibility, but later replaced with 1.
+    let fullmoveNumber: number;
+    const fullmovePart = parts.shift();
+    if (fullmovePart === undefined) {
+      fullmoveNumber = 1;
+    } else {
+      try {
+        fullmoveNumber = parseIntStrict(fullmovePart);
+      } catch (e) {
+        throw new Error(`ValueError: invalid fullmove number in fen: ${fen}`);
+      }
+
+      if (fullmoveNumber < 0) {
+        throw new Error(
+          `ValueError: fullmove number cannot be negative: ${fen}`,
+        );
+      }
+
+      fullmoveNumber = Math.max(fullmoveNumber, 1);
+    }
+
+    // All parts should be consumed now.
+    if (parts.length !== 0) {
+      throw new Error(
+        `ValueError: fen string has more parts than expected: ${fen}`,
+      );
+    }
+
+    // Validate the board part and set it.
+    this._setBoardFen(boardPart);
+
+    // Apply.
+    this.turn = turn;
+    this._setCastlingFen(castlingPart);
+    this.epSquare = epSquare;
+    this.halfmoveClock = halfmoveClock;
+    this.fullmoveNumber = fullmoveNumber;
+    this.clearStack();
+  }
+
+  _setCastlingFen(castlingFen: string): void {
+    if (!castlingFen || castlingFen === '-') {
+      this.castlingRights = BB_EMPTY;
+      return;
+    }
+
+    if (castlingFen.match(FEN_CASTLING_REGEX) === null) {
+      throw new Error(`ValueError: invalid castling fen: ${castlingFen}`);
+    }
+
+    this.castlingRights = BB_EMPTY;
+
+    for (let flag of castlingFen) {
+      const color = flag === flag.toUpperCase() ? WHITE : BLACK;
+      flag = flag.toLowerCase();
+      const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8;
+      const rooks = this.occupiedCo[colorIdx(color)] & this.rooks & backrank;
+      const king = this.king(color);
+
+      if (flag === 'q') {
+        // Select the leftmost rook.
+        if (king !== null && lsb(rooks) < king) {
+          this.castlingRights |= rooks & -rooks;
+        } else {
+          this.castlingRights |= BB_FILE_A & backrank;
+        }
+      } else if (flag === 'k') {
+        // # Select the rightmost rook.
+        const rook = msb(rooks);
+        if (king !== null && king < rook) {
+          this.castlingRights |= BB_SQUARES[rook];
+        } else {
+          this.castlingRights |= BB_FILE_H & backrank;
+        }
+      } else {
+        this.castlingRights |= BB_FILES[FILE_NAMES.indexOf(flag)] & backrank;
+      }
+    }
+  }
+
+  /**
+   * Sets castling rights from a string in FEN notation like ``Qqk``.
+   *
+   * Also clears the move stack.
+   *
+   * :raises: :exc:`ValueError` if the castling FEN is syntactically
+   *     invalid.
+   */
+  setCastlingFen(castlingFen: string): void {
+    this._setCastlingFen(castlingFen);
+    this.clearStack();
+  }
+
+  setBoardFen(fen: string): void {
+    super.setBoardFen(fen);
+    this.clearStack();
+  }
+
+  setPieceMap(pieces: Map<Square, Piece>): void {
+    super.setPieceMap(pieces);
+    this.clearStack();
+  }
+
+  setChess960Pos(scharnagl: number): void {
+    super.setChess960Pos(scharnagl);
+    this.chess960 = true;
+    this.turn = WHITE;
+    this.castlingRights = this.rooks;
+    this.epSquare = null;
+    this.halfmoveClock = 0;
+    this.fullmoveNumber = 1;
+
+    this.clearStack();
+  }
+
+  /**
+   * Gets the Chess960 starting position index between 0 and 956,
+   * or ``None`` if the current position is not a Chess960 starting
+   * position.
+   *
+   * By default, white to move (**ignoreTurn**) and full castling rights
+   * (**ignoreCastling**) are required, but move counters
+   * (**ignoreCounters**) are ignored.
+   */
+  chess960Pos({
+    ignoreTurn = false,
+    ignoreCastling = false,
+    ignoreCounters = true,
+  }: {
+    ignoreTurn?: boolean;
+    ignoreCastling?: boolean;
+    ignoreCounters?: boolean;
+  } = {}): number | null {
+    if (this.epSquare !== null) {
+      return null;
+    }
+
+    if (!ignoreTurn) {
+      if (this.turn !== WHITE) {
+        return null;
+      }
+    }
+
+    if (!ignoreCastling) {
+      if (this.cleanCastlingRights() != this.rooks) {
+        return null;
+      }
+    }
+
+    if (!ignoreCounters) {
+      if (this.fullmoveNumber !== 1 || this.halfmoveClock != 0) {
+        return null;
+      }
+    }
+
+    return super.chess960Pos();
+  }
+
+  _epdOperations(
+    operations: Map<
+      string,
+      null | string | number | Move | IterableIterator<Move>
+    >,
+  ): string {
+    // TODO
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * Gets an EPD representation of the current position.
+   *
+   * See :func:`~chess.Board.fen()` for FEN formatting options (*shredder*,
+   * *epSquare* and *promoted*).
+   *
+   * EPD operations can be given as keyword arguments. Supported operands
+   * are strings, integers, finite floats, legal moves and ``None``.
+   * Additionally, the operation ``pv`` accepts a legal variation as
+   * a list of moves. The operations ``am`` and ``bm`` accept a list of
+   * legal moves in the current position.
+   *
+   * The name of the field cannot be a lone dash and cannot contain spaces,
+   * newlines, carriage returns or tabs.
+   *
+   * *hmvc* and *fmvn* are not included by default. You can use:
+   *
+   *      >>> import chess
+   *      >>>
+   *      >>> board = chess.Board()
+   *      >>> board.epd(hmvc=board.halfmoveClock, fmvn=board.fullmoveNumber)
+   *      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - hmvc 0; fmvn 1;'
+   */
+  epd(
+    {
+      shredder = false,
+      enPassant = 'legal',
+      promoted = null,
+    }: {
+      shredder?: boolean;
+      enPassant?: EnPassantSpec;
+      promoted?: boolean | null;
+    } = {},
+    operations?: Map<
+      string,
+      null | string | number | Move | IterableIterator<Move>
+    >,
+  ): string {
+    let epSquare;
+    if (enPassant === 'fen') {
+      epSquare = this.epSquare;
+    } else if (enPassant === 'xfen') {
+      epSquare = this.hasPseudoLegalEnPassant() ? this.epSquare : null;
+    } else {
+      epSquare = this.hasLegalEnPassant() ? this.epSquare : null;
+    }
+
+    const test = promoted;
+
+    let epd = [
+      this.boardFen({ promoted }),
+      this.turn === WHITE ? 'w' : 'b',
+      shredder ? this.castlingShredderFen() : this.castlingXfen(),
+      epSquare !== null ? SQUARE_NAMES[epSquare] : '-',
+    ];
+
+    if (operations?.size !== 0) {
+      epd.push(
+        this._epdOperations(
+          operations as Map<
+            string,
+            null | string | number | Move | IterableIterator<Move>
+          >,
+        ),
+      );
+    }
+
+    return epd.join(' ');
+  }
+
+  _parseEpdOps(
+    operationPart: string,
+    makeBoard: () => Board,
+  ): Map<string, null | string | number | Move | Move[]> {
+    // TODO
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * Parses the given EPD string and uses it to set the position.
+   *
+   * If present, ``hmvc`` and ``fmvn`` are used to set the half-move
+   * clock and the full-move number. Otherwise, ``0`` and ``1`` are used.
+   *
+   * Returns a dictionary of parsed operations. Values can be strings,
+   * integers, floats, move objects, or lists of moves.
+   *
+   * :raises: :exc:`ValueError` if the EPD string is invalid.
+   */
+  setEpd(
+    epd: string,
+  ): Map<string, null | string | number | Move | Array<Move>> {
+    // TODO
+    throw new Error('Not implemented');
+  }
+
+  /**
+   * Gets the standard algebraic notation of the given move in the context
+   * of the current position.
+   */
+  san(move: Move): string {
+    return this._algebraic(move);
+  }
+
+  /**
+   * Gets the long algebraic notation of the given move in the context of
+   * the current position.
+   */
+  lan(move: Move): string {
+    return this._algebraic(move, { long: true });
+  }
+
+  sanAndPush(move: Move): string {
+    return this._algebraicAndPush(move);
+  }
+
+  _algebraic(move: Move, { long = false }: { long?: boolean } = {}): string {
+    const san = this._algebraicAndPush(move, { long });
+    this.pop();
+    return san;
+  }
+
+  _algebraicAndPush(
+    move: Move,
+    { long = false }: { long?: boolean } = {},
+  ): string {
+    const san = this._algebraicWithoutSuffix(move, { long });
+
+    // Look ahead for check or checkmate.
+    this.push(move);
+    const isCheck = this.isCheck();
+    const isCheckmate =
+      (isCheck && this.isCheckmate()) ||
+      this.isVariantLoss() ||
+      this.isVariantWin();
+
+    // Add check or checkmate suffix.
+    if (isCheckmate && move.bool()) {
+      return san + '#';
+    } else if (isCheck && move.bool()) {
+      return san + '+';
+    } else {
+      return san;
+    }
+  }
+
+  _algebraicWithoutSuffix(
+    move: Move,
+    { long = false }: { long?: boolean } = {},
+  ): string {
+    // Null move.
+    if (!move) {
+      return '--';
+    }
+
+    // Drops.
+    if (move.drop) {
+      let san = '';
+      if (move.drop !== PAWN) {
+        san = pieceSymbol(move.drop).toUpperCase();
+      }
+      san += '@' + SQUARE_NAMES[move.toSquare];
+      return san;
+    }
+
+    // Castling.
+    if (this.isCastling(move)) {
+      if (squareFile(move.toSquare) < squareFile(move.fromSquare)) {
+        return 'O-O-O';
+      } else {
+        return 'O-O';
+      }
+    }
+
+    const pieceType = this.pieceTypeAt(move.fromSquare);
+    if (pieceType === null) {
+      throw new Error(
+        `san() and lan() expect move to be legal or null, but got ${move} in ${this.fen()}`,
+      );
+    }
+    const capture = this.isCapture(move);
+
+    let san: string;
+    if (pieceType === PAWN) {
+      san = '';
+    } else {
+      san = pieceSymbol(pieceType).toUpperCase();
+    }
+
+    if (long) {
+      san += SQUARE_NAMES[move.fromSquare];
+    } else if (pieceType !== PAWN) {
+      // Get ambiguous move candidates.
+      // Relevant candidates: not exactly the current move,
+      // but to the same square.
+      let others: Bitboard = 0n;
+      let fromMask: Bitboard = this.piecesMask(pieceType, this.turn);
+      fromMask &= ~BB_SQUARES[move.fromSquare];
+      const toMask = BB_SQUARES[move.toSquare];
+      for (const candidate of this.generateLegalMoves(fromMask, toMask)) {
+        others |= BB_SQUARES[candidate.fromSquare];
+      }
+
+      // Disambiguate.
+      if (others) {
+        let row = false;
+        let column = false;
+
+        if (others & BB_RANKS[squareRank(move.fromSquare)]) {
+          column = true;
+        }
+
+        if (others & BB_FILES[squareFile(move.fromSquare)]) {
+          row = true;
+        } else {
+          column = true;
+        }
+
+        if (column) {
+          san += FILE_NAMES[squareFile(move.fromSquare)];
+        }
+        if (row) {
+          san += RANK_NAMES[squareRank(move.fromSquare)];
+        }
+      }
+    } else if (capture) {
+      san += FILE_NAMES[squareFile(move.fromSquare)];
+    }
+
+    // Captures.
+    if (capture) {
+      san += 'x';
+    } else if (long) {
+      san += '-';
+    }
+
+    // Destination square.
+    san += SQUARE_NAMES[move.toSquare];
+
+    // Promotion.
+    if (move.promotion) {
+      san += '=' + pieceSymbol(move.promotion).toUpperCase();
+    }
+
+    return san;
+  }
+
+  /**
+   * Given a sequence of moves, returns a string representing the sequence
+   * in standard algebraic notation (e.g., ``1. e4 e5 2. Nf3 Nc6`` or
+   * ``37...Bg6 38. fxg6``).
+   *
+   * The board will not be modified as a result of calling this.
+   *
+   * :raises: :exc:`IllegalMoveError` if any moves in the sequence are illegal.
+   */
+  variationSan(variation: Iterable<Move>): string {
+    const board: this = this.copy({ stack: false }); // TODO remove ": this", should be inferred when copy() implemented
+    const san: string[] = [];
+
+    for (const move of variation) {
+      if (!board.isLegal(move)) {
+        throw new IllegalMoveError(
+          `illegal move ${move} in position ${board.fen()}`,
+        );
+      }
+
+      if (board.turn == WHITE) {
+        san.push(`${board.fullmoveNumber}. ${board.sanAndPush(move)}`);
+      } else if (san.length === 0) {
+        san.push(`${board.fullmoveNumber}...${board.sanAndPush(move)}`);
+      } else {
+        san.push(board.sanAndPush(move));
+      }
+    }
+
+    return san.join(' ');
+  }
+
+  /**
+   * Uses the current position as the context to parse a move in standard
+   * algebraic notation and returns the corresponding move object.
+   *
+   * Ambiguous moves are rejected. Overspecified moves (including long
+   * algebraic notation) are accepted. Some common syntactical deviations
+   * are also accepted.
+   *
+   * The returned move is guaranteed to be either legal or a null move.
+   *
+   * @throws :exc:Error if the SAN is invalid, illegal or ambiguous.
+   *            - `InvalidMoveError` if the SAN is syntactically invalid.
+   *            - `IllegalMoveError` if the SAN is illegal.
+   *            - `AmbiguousMoveError` if the SAN is ambiguous.
+   */
+  parseSan(san: string): Move {
+    // Castling.
+    try {
+      if (['O-O', 'O-O+', 'O-O#', '0-0', '0-0+', '0-0#'].includes(san)) {
+        return iterNext(
+          iterFilter(this.generateCastlingMoves(), move =>
+            this.isKingsideCastling(move),
+          ),
+        );
+      } else if (
+        ['O-O-O', 'O-O-O+', 'O-O-O#', '0-0-0', '0-0-0+', '0-0-0#'].includes(san)
+      ) {
+        return iterNext(
+          iterFilter(this.generateCastlingMoves(), move =>
+            this.isQueensideCastling(move),
+          ),
+        );
+      }
+    } catch (error) {
+      if (error instanceof StopIteration) {
+        throw new IllegalMoveError(`illegal san: ${san} in ${this.fen()}`);
+      }
+    }
+
+    // Match normal moves.
+    const match = san.match(SAN_REGEX);
+    if (!match) {
+      // Null moves.
+      if (['--', 'Z0', '0000', '@@@@'].includes(san)) {
+        return Move.null();
+      } else if (san.includes(',')) {
+        throw new InvalidMoveError(`unsupported multi-leg move: ${san}`);
+      } else {
+        throw new InvalidMoveError(`invalid san: ${san}`);
+      }
+    }
+
+    // Get target square. Mask our own pieces to exclude castling moves.
+    const toSquare = SQUARE_NAMES.indexOf(match[4]);
+    const toMask = BB_SQUARES[toSquare] & ~this.occupiedCo[colorIdx(this.turn)];
+
+    // Get the promotion piece type.
+    const p = match[5];
+    const promotion = p
+      ? PIECE_SYMBOLS.indexOf(p[p.length - 1].toLowerCase())
+      : null;
+
+    // Filter by original square.
+    let fromMask = BB_ALL;
+    let fromFile: RankOrFileIndex | null = null;
+    let fromRank: RankOrFileIndex | null = null;
+    if (match[2]) {
+      fromFile = FILE_NAMES.indexOf(match[2]) as RankOrFileIndex;
+      fromMask &= BB_FILES[fromFile];
+    }
+    if (match[3]) {
+      fromRank = (parseInt(match[3]) - 1) as RankOrFileIndex;
+      fromMask &= BB_RANKS[fromRank];
+    }
+
+    // Filter by piece type.
+    if (match[1]) {
+      const pieceType = PIECE_SYMBOLS.indexOf(match[1].toLowerCase());
+      fromMask &= this.piecesMask(pieceType, this.turn);
+    } else if (match[2] && match[3]) {
+      // Allow fully specified moves, even if they are not pawn moves,
+      // including castling moves.
+      const move = this.findMove(
+        square(fromFile as RankOrFileIndex, fromRank as RankOrFileIndex),
+        toSquare,
+        promotion,
+      );
+      if (move.promotion === promotion) {
+        return move;
+      } else {
+        throw new IllegalMoveError(
+          `missing promotion piece type: ${san} in ${this.fen()}`,
+        );
+      }
+    } else {
+      fromMask &= this.pawns;
+
+      // Do not allow pawn captures if file is not specified.
+      if (!match[2]) {
+        fromMask &= BB_FILES[squareFile(toSquare)];
+      }
+    }
+
+    // Match legal moves.
+    let matchedMove: Move | null = null;
+    for (const move of this.generateLegalMoves(fromMask, toMask)) {
+      if (move.promotion !== promotion) {
+        continue;
+      }
+
+      if (matchedMove) {
+        throw new AmbiguousMoveError(`ambiguous san: ${san} in ${this.fen()}`);
+      }
+
+      matchedMove = move;
+    }
+
+    if (!matchedMove) {
+      throw new IllegalMoveError(`illegal san: ${san} in ${this.fen()}`);
+    }
+
+    return matchedMove;
+  }
+
+  /**
+   * Parses a move in standard algebraic notation, makes the move and puts
+   * it onto the move stack.
+   *
+   * Returns the move.
+   *
+   * :raises:
+   *     :exc:`ValueError` (specifically an exception specified below) if neither legal nor a null move.
+   *
+   *     - :exc:`InvalidMoveError` if the SAN is syntactically invalid.
+   *     - :exc:`IllegalMoveError` if the SAN is illegal.
+   *     - :exc:`AmbiguousMoveError` if the SAN is ambiguous.
+   */
+  pushSan(san: string): Move {
+    const move = this.parseSan(san);
+    this.push(move);
+    return move;
+  }
+
+  /**
+   * Gets the UCI notation of the move.
+   *
+   * *chess960* defaults to the mode of the board. Pass ``True`` to force
+   * Chess960 mode.
+   */
+  uci(
+    move: Move,
+    { chess960 = null }: { chess960?: boolean | null } = {},
+  ): string {
+    if (chess960 === null) {
+      chess960 = this.chess960;
+    }
+
+    move = this._toChess960(move);
+    move = this._fromChess960(
+      chess960,
+      move.fromSquare,
+      move.toSquare,
+      move.promotion,
+      move.drop,
+    );
+    return move.uci();
+  }
+
+  /**
+   * Parses the given move in UCI notation.
+   *
+   * Supports both Chess960 and standard UCI notation.
+   *
+   * The returned move is guaranteed to be either legal or a null move.
+   *
+   * :raises:
+   *     :exc:`ValueError` (specifically an exception specified below) if the move is invalid or illegal in the
+   *     current position (but not a null move).
+   *
+   *     - :exc:`InvalidMoveError` if the UCI is syntactically invalid.
+   *     - :exc:`IllegalMoveError` if the UCI is illegal.
+   */
+  parseUci(uci: string): Move {
+    let move = Move.fromUci(uci);
+
+    move = this._toChess960(move);
+    move = this._fromChess960(
+      this.chess960,
+      move.fromSquare,
+      move.toSquare,
+      move.promotion,
+      move.drop,
+    );
+
+    if (!this.isLegal(move)) {
+      throw new IllegalMoveError(`illegal uci: ${uci} in ${this.fen()}`);
+    }
+
+    return move;
+  }
+
+  /**
+   * Parses a move in UCI notation and puts it on the move stack.
+   *
+   * Returns the move.
+   *
+   * :raises:
+   *     :exc:`ValueError` (specifically an exception specified below) if the move is invalid or illegal in the
+   *     current position (but not a null move).
+   *
+   *     - :exc:`InvalidMoveError` if the UCI is syntactically invalid.
+   *     - :exc:`IllegalMoveError` if the UCI is illegal.
+   */
+  pushUci(uci: string): Move {
+    const move = this.parseUci(uci);
+    this.push(move);
+    return move;
+  }
+
+  xboard(move: Move, chess960: boolean | null = null): string {
+    if (chess960 === null) {
+      chess960 = this.chess960;
+    }
+
+    if (!chess960 || !this.isCastling(move)) {
+      return move.xboard();
+    } else if (this.isKingsideCastling(move)) {
+      return 'O-O';
+    } else {
+      return 'O-O-O';
+    }
+  }
+
+  parseXboard(xboard: string): Move {
+    return this.parseSan(xboard);
+  }
+
+  pushXboard = this.pushSan;
+
+  /**
+   * Checks if the given pseudo-legal move is an en passant capture.
+   */
+  isEnPassant(move: Move): boolean {
+    return (
+      this.epSquare === move.toSquare &&
+      bool(this.pawns & BB_SQUARES[move.fromSquare]) &&
+      [7, 9].includes(Math.abs(move.toSquare - move.fromSquare)) &&
+      !(this.occupied & BB_SQUARES[move.toSquare])
+    );
+  }
+
+  /**
+   * Checks if the given pseudo-legal move is a capture.
+   */
+  isCapture(move: Move): boolean {
+    const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare];
+    return (
+      bool(touched & this.occupiedCo[colorIdx(!this.turn)]) ||
+      this.isEnPassant(move)
+    );
+  }
+
+  /**
+   * Checks if the given pseudo-legal move is a capture or pawn move.
+   */
+  isZeroing(move: Move): boolean {
+    const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare];
+    return bool(
+      touched & this.pawns ||
+        touched & this.occupiedCo[colorIdx(!this.turn)] ||
+        move.drop === PAWN,
+    );
+  }
+
+  _reducesCastlingRights(move: Move): boolean {
+    const cr = this.cleanCastlingRights();
+    const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare];
+    return bool(
+      touched & cr ||
+        (cr & BB_RANK_1 &&
+          touched &
+            this.kings &
+            this.occupiedCo[colorIdx(WHITE)] &
+            ~this.promoted) ||
+        (cr & BB_RANK_8 &&
+          touched &
+            this.kings &
+            this.occupiedCo[colorIdx(BLACK)] &
+            ~this.promoted),
+    );
+  }
+
+  /**
+   * Checks if the given pseudo-legal move is irreversible.
+   *
+   * In standard chess, pawn moves, captures, moves that destroy castling
+   * rights and moves that cede en passant are irreversible.
+   *
+   * This method has false-negatives with forced lines. For example, a check
+   * that will force the king to lose castling rights is not considered
+   * irreversible. Only the actual king move is.
+   */
+  isIrreversible(move: Move): boolean {
+    return (
+      this.isZeroing(move) ||
+      this._reducesCastlingRights(move) ||
+      this.hasLegalEnPassant()
+    );
+  }
+
+  /**
+   * Checks if the given pseudo-legal move is a castling move.
+   */
+  isCastling(move: Move): boolean {
+    if (this.kings & BB_SQUARES[move.fromSquare]) {
+      const diff = squareFile(move.fromSquare) - squareFile(move.toSquare);
+      return (
+        Math.abs(diff) > 1 ||
+        bool(
+          this.rooks &
+            this.occupiedCo[colorIdx(this.turn)] &
+            BB_SQUARES[move.toSquare],
+        )
+      );
+    }
+    return false;
+  }
+
+  /**
+   * Checks if the given pseudo-legal move is a kingside castling move.
+   */
+  isKingsideCastling(move: Move): boolean {
+    return (
+      this.isCastling(move) &&
+      squareFile(move.toSquare) > squareFile(move.fromSquare)
+    );
+  }
+
+  /**
+   * Checks if the given pseudo-legal move is a queenside castling move.
+   */
+  isQueensideCastling(move: Move): boolean {
+    return (
+      this.isCastling(move) &&
+      squareFile(move.toSquare) < squareFile(move.fromSquare)
+    );
+  }
+
+  /**
+   * Returns valid castling rights filtered from
+   * :data:`~chess.Board.castlingRights`.
+   */
+  cleanCastlingRights(): Bitboard {
+    if (this._stack) {
+      // No new castling rights are assigned in a game, so we can assume
+      // they were filtered already.
+      return this.castlingRights;
+    }
+
+    const castling = this.castlingRights & this.rooks;
+    let whiteCastling = castling & BB_RANK_1 & this.occupiedCo[colorIdx(WHITE)];
+    let blackCastling = castling & BB_RANK_8 & this.occupiedCo[colorIdx(BLACK)];
+
+    if (!this.chess960) {
+      // The rooks must be on a1, h1, a8 or h8.
+      whiteCastling &= BB_A1 | BB_H1;
+      blackCastling &= BB_A8 | BB_H8;
+
+      // The kings must be on e1 or e8.
+      if (
+        !(
+          this.occupiedCo[colorIdx(WHITE)] &
+          this.kings &
+          ~this.promoted &
+          BB_E1
+        )
+      ) {
+        whiteCastling = 0n;
+      }
+      if (
+        !(
+          this.occupiedCo[colorIdx(BLACK)] &
+          this.kings &
+          ~this.promoted &
+          BB_E8
+        )
+      ) {
+        blackCastling = 0n;
+      }
+
+      return whiteCastling | blackCastling;
+    } else {
+      // The kings must be on the back rank.
+      const whiteKingMask =
+        this.occupiedCo[colorIdx(WHITE)] &
+        this.kings &
+        BB_RANK_1 &
+        ~this.promoted;
+      const blackKingMask =
+        this.occupiedCo[colorIdx(BLACK)] &
+        this.kings &
+        BB_RANK_8 &
+        ~this.promoted;
+      if (!whiteKingMask) {
+        whiteCastling = 0n;
+      }
+      if (!blackKingMask) {
+        blackCastling = 0n;
+      }
+
+      // There are only two ways of castling, a-side and h-side, and the
+      // king must be between the rooks.
+      let whiteASide = whiteCastling & -whiteCastling;
+      let whiteHSide = whiteCastling ? BB_SQUARES[msb(whiteCastling)] : 0n;
+
+      if (whiteASide && msb(whiteASide) > msb(whiteKingMask)) {
+        whiteASide = 0n;
+      }
+      if (whiteHSide && msb(whiteHSide) < msb(whiteKingMask)) {
+        whiteHSide = 0n;
+      }
+
+      let blackASide = blackCastling & -blackCastling;
+      let blackHSide = blackCastling
+        ? BB_SQUARES[msb(blackCastling)]
+        : BB_EMPTY;
+
+      if (blackASide && msb(blackASide) > msb(blackKingMask)) {
+        blackASide = 0n;
+      }
+      if (blackHSide && msb(blackHSide) < msb(blackKingMask)) {
+        blackHSide = 0n;
+      }
+
+      // Done.
+      return blackASide | blackHSide | whiteASide | whiteHSide;
+    }
+  }
+
+  /**
+   * Checks if the given side has castling rights.
+   */
+  hasCastlingRights(color: Color): boolean {
+    const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8;
+    return bool(this.cleanCastlingRights() & backrank);
+  }
+
+  /**
+   * Checks if the given side has kingside (that is h-side in Chess960)
+   * castling rights.
+   */
+  hasKingsideCastlingRights(color: Color): boolean {
+    const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8;
+    const kingMask =
+      this.kings & this.occupiedCo[colorIdx(color)] & backrank & ~this.promoted;
+    if (!kingMask) {
+      return false;
+    }
+
+    let castlingRights = this.cleanCastlingRights() & backrank;
+    while (castlingRights) {
+      const rook = castlingRights & -castlingRights;
+
+      if (rook > kingMask) {
+        return true;
+      }
+
+      castlingRights &= castlingRights - 1n;
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if the given side has queenside (that is a-side in Chess960)
+   * castling rights.
+   */
+  hasQueensideCastlingRights(color: Color): boolean {
+    const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8;
+    const kingMask =
+      this.kings & this.occupiedCo[colorIdx(color)] & backrank & ~this.promoted;
+    if (!kingMask) {
+      return false;
+    }
+
+    let castlingRights = this.cleanCastlingRights() & backrank;
+    while (castlingRights) {
+      const rook = castlingRights & -castlingRights;
+
+      if (rook < kingMask) {
+        return true;
+      }
+
+      castlingRights &= castlingRights - 1n;
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks if there are castling rights that are only possible in Chess960.
+   */
+  hasChess960CastlingRights(): boolean {
+    // Get valid Chess960 castling rights.
+    const chess960 = this.chess960;
+    this.chess960 = true;
+    const castlingRights = this.cleanCastlingRights();
+    this.chess960 = chess960;
+
+    // Standard chess castling rights can only be on the standard
+    // starting rook squares.
+    if (castlingRights & ~BB_CORNERS) {
+      return true;
+    }
+
+    // If there are any castling rights in standard chess, the king must be
+    // on e1 or e8.
+    if (
+      castlingRights & BB_RANK_1 &&
+      !(this.occupiedCo[colorIdx(WHITE)] & this.kings & BB_E1)
+    ) {
+      return true;
+    }
+    if (
+      castlingRights & BB_RANK_8 &&
+      !(this.occupiedCo[colorIdx(BLACK)] & this.kings & BB_E8)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Gets a bitmask of possible problems with the position.
+   *
+   * :data:`~chess.STATUS_VALID` if all basic validity requirements are met.
+   * This does not imply that the position is actually reachable with a
+   * series of legal moves from the starting position.
+   *
+   * Otherwise, bitwise combinations of:
+   * :data:`~chess.STATUS_NO_WHITE_KING`,
+   * :data:`~chess.STATUS_NO_BLACK_KING`,
+   * :data:`~chess.STATUS_TOO_MANY_KINGS`,
+   * :data:`~chess.STATUS_TOO_MANY_WHITE_PAWNS`,
+   * :data:`~chess.STATUS_TOO_MANY_BLACK_PAWNS`,
+   * :data:`~chess.STATUS_PAWNS_ON_BACKRANK`,
+   * :data:`~chess.STATUS_TOO_MANY_WHITE_PIECES`,
+   * :data:`~chess.STATUS_TOO_MANY_BLACK_PIECES`,
+   * :data:`~chess.STATUS_BAD_CASTLING_RIGHTS`,
+   * :data:`~chess.STATUS_INVALID_EP_SQUARE`,
+   * :data:`~chess.STATUS_OPPOSITE_CHECK`,
+   * :data:`~chess.STATUS_EMPTY`,
+   * :data:`~chess.STATUS_RACE_CHECK`,
+   * :data:`~chess.STATUS_RACE_OVER`,
+   * :data:`~chess.STATUS_RACE_MATERIAL`,
+   * :data:`~chess.STATUS_TOO_MANY_CHECKERS`,
+   * :data:`~chess.STATUS_IMPOSSIBLE_CHECK`.
+   */
+  status(): Status {
+    let errors = STATUS_VALID;
+
+    // There must be at least one piece.
+    if (!this.occupied) {
+      errors |= STATUS_EMPTY;
+    }
+
+    // There must be exactly one king of each color.
+    if (!(this.occupiedCo[colorIdx(WHITE)] & this.kings)) {
+      errors |= STATUS_NO_WHITE_KING;
+    }
+    if (!(this.occupiedCo[colorIdx(BLACK)] & this.kings)) {
+      errors |= STATUS_NO_BLACK_KING;
+    }
+    if (popcount(this.occupied & this.kings) > 2) {
+      errors |= STATUS_TOO_MANY_KINGS;
+    }
+
+    // There can not be more than 16 pieces of any color.
+    if (popcount(this.occupiedCo[colorIdx(WHITE)]) > 16) {
+      errors |= STATUS_TOO_MANY_WHITE_PIECES;
+    }
+    if (popcount(this.occupiedCo[colorIdx(BLACK)]) > 16) {
+      errors |= STATUS_TOO_MANY_BLACK_PIECES;
+    }
+
+    // There can not be more than 8 pawns of any color.
+    if (popcount(this.occupiedCo[colorIdx(WHITE)] & this.pawns) > 8) {
+      errors |= STATUS_TOO_MANY_WHITE_PAWNS;
+    }
+    if (popcount(this.occupiedCo[colorIdx(BLACK)] & this.pawns) > 8) {
+      errors |= STATUS_TOO_MANY_BLACK_PAWNS;
+    }
+
+    // Pawns can not be on the back rank.
+    if (this.pawns & BB_BACKRANKS) {
+      errors |= STATUS_PAWNS_ON_BACKRANK;
+    }
+
+    // Castling rights.
+    if (this.castlingRights != this.cleanCastlingRights()) {
+      errors |= STATUS_BAD_CASTLING_RIGHTS;
+    }
+
+    // En passant.
+    const validEpSquare = this._validEpSquare();
+    if (this.epSquare != validEpSquare) {
+      errors |= STATUS_INVALID_EP_SQUARE;
+    }
+
+    // Side to move giving check.
+    if (this.wasIntoCheck()) {
+      errors |= STATUS_OPPOSITE_CHECK;
+    }
+
+    // More than the maximum number of possible checkers in the variant.
+    const checkers = this.checkersMask();
+    const ourKings =
+      this.kings & this.occupiedCo[colorIdx(this.turn)] & ~this.promoted;
+    if (checkers) {
+      if (popcount(checkers) > 2) {
+        errors |= STATUS_TOO_MANY_CHECKERS;
+      }
+
+      if (validEpSquare !== null) {
+        const pushedTo = validEpSquare ^ A2;
+        const pushedFrom = validEpSquare ^ A4;
+        const occupiedBefore =
+          (this.occupied & ~BB_SQUARES[pushedTo]) | BB_SQUARES[pushedFrom];
+        if (
+          popcount(checkers) > 1 ||
+          (msb(checkers) !== pushedTo &&
+            this._attackedForKing(ourKings, occupiedBefore))
+        ) {
+          errors |= STATUS_IMPOSSIBLE_CHECK;
+        }
+      } else {
+        if (
+          popcount(checkers) > 2 ||
+          (popcount(checkers) == 2 &&
+            ray(lsb(checkers), msb(checkers)) & ourKings)
+        ) {
+          errors |= STATUS_IMPOSSIBLE_CHECK;
+        }
+      }
+    }
+
+    return errors;
+  }
+
+  _validEpSquare(): Square | null {
+    if (!this.epSquare) {
+      return null;
+    }
+
+    let epRank: RankOrFileIndex;
+    let pawnMask: Bitboard;
+    let seventhRankMask: Bitboard;
+    if (this.turn == WHITE) {
+      epRank = 5;
+      pawnMask = shiftDown(BB_SQUARES[this.epSquare]);
+      seventhRankMask = shiftUp(BB_SQUARES[this.epSquare]);
+    } else {
+      epRank = 2;
+      pawnMask = shiftUp(BB_SQUARES[this.epSquare]);
+      seventhRankMask = shiftDown(BB_SQUARES[this.epSquare]);
+    }
+
+    // The en passant square must be on the third or sixth rank.
+    if (squareRank(this.epSquare) != epRank) {
+      return null;
+    }
+
+    // The last move must have been a double pawn push, so there must
+    // be a pawn of the correct color on the fourth or fifth rank.
+    if (!(this.pawns & this.occupiedCo[colorIdx(!this.turn)] & pawnMask)) {
+      return null;
+    }
+
+    // And the en passant square must be empty.
+    if (this.occupied & BB_SQUARES[this.epSquare]) {
+      return null;
+    }
+
+    // And the second rank must be empty.
+    if (this.occupied & seventhRankMask) {
+      return null;
+    }
+
+    return this.epSquare;
+  }
+
+  /**
+   * Checks some basic validity requirements.
+   *
+   * See :func:`~chess.Board.status()` for details.
+   */
+  isValid(): boolean {
+    return this.status() === STATUS_VALID;
+  }
+
+  _epSkewered(king: Square, capturer: Square): boolean {
+    // Handle the special case where the king would be in check if the
+    // pawn and its capturer disappear from the rank.
+
+    // Vertical skewers of the captured pawn are not possible. (Pins on
+    // the capturer are not handled here.)
+    if (this.epSquare === null) {
+      throw new Error('AssertionError');
+    }
+
+    const lastDouble: Square = this.epSquare + (this.turn == WHITE ? -8 : 8);
+
+    const occupancy =
+      (this.occupied & ~BB_SQUARES[lastDouble] & ~BB_SQUARES[capturer]) |
+      BB_SQUARES[this.epSquare];
+
+    // Horizontal attack on the fifth or fourth rank.
+    const horizontalAttackers =
+      this.occupiedCo[colorIdx(!this.turn)] & (this.rooks | this.queens);
+    if (
+      (BB_RANK_ATTACKS[king].get(BB_RANK_MASKS[king] & occupancy) as Bitboard) &
+      horizontalAttackers
+    ) {
+      return true;
+    }
+
+    // Diagonal skewers. These are not actually possible in a real game,
+    // because if the latest double pawn move covers a diagonal attack,
+    // then the other side would have been in check already.
+    const diagonalAttackers =
+      this.occupiedCo[colorIdx(!this.turn)] & (this.bishops | this.queens);
+    if (
+      (BB_DIAG_ATTACKS[king].get(BB_DIAG_MASKS[king] & occupancy) as Bitboard) &
+      diagonalAttackers
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  _sliderBlockers(king: Square): Bitboard {
+    const rooksAndQueens = this.rooks | this.queens;
+    const bishopsAndQueens = this.bishops | this.queens;
+
+    const snipers =
+      ((BB_RANK_ATTACKS[king].get(0n) as Bitboard) & rooksAndQueens) |
+      ((BB_FILE_ATTACKS[king].get(0n) as Bitboard) & rooksAndQueens) |
+      ((BB_DIAG_ATTACKS[king].get(0n) as Bitboard) & bishopsAndQueens);
+
+    let blockers = 0n;
+
+    for (const sniper of scanReversed(
+      snipers & this.occupiedCo[colorIdx(!this.turn)],
+    )) {
+      const b = between(king, sniper) & this.occupied;
+
+      // Add to blockers if exactly one piece in-between.
+      if (b && BB_SQUARES[msb(b)] === b) {
+        blockers |= b;
+      }
+    }
+
+    return blockers & this.occupiedCo[colorIdx(this.turn)];
+  }
+
+  _isSafe(king: Square, blockers: Bitboard, move: Move): boolean {
+    if (move.fromSquare === king) {
+      if (this.isCastling(move)) {
+        return true;
+      } else {
+        return !this.isAttackedBy(!this.turn, move.toSquare);
+      }
+    } else if (this.isEnPassant(move)) {
+      return bool(
+        this.pinMask(this.turn, move.fromSquare) & BB_SQUARES[move.toSquare] &&
+          !this._epSkewered(king, move.fromSquare),
+      );
+    } else {
+      return bool(
+        !(blockers & BB_SQUARES[move.fromSquare]) ||
+          ray(move.fromSquare, move.toSquare) & BB_SQUARES[king],
+      );
+    }
+  }
+
+  *_generateEvasions(
+    king: Square,
+    checkers: Bitboard,
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    const sliders = checkers & (this.bishops | this.rooks | this.queens);
+
+    let attacked = 0n;
+    for (const checker of scanReversed(sliders)) {
+      attacked |= ray(king, checker) & ~BB_SQUARES[checker];
+    }
+
+    if (BB_SQUARES[king] & fromMask) {
+      for (const toSquare of scanReversed(
+        BB_KING_ATTACKS[king] &
+          ~this.occupiedCo[colorIdx(this.turn)] &
+          ~attacked &
+          toMask,
+      )) {
+        yield new Move(king, toSquare);
+      }
+    }
+
+    const checker = msb(checkers);
+    if (BB_SQUARES[checker] == checkers) {
+      // Capture or block a single checker.
+      const target = between(king, checker) | checkers;
+
+      yield* this.generatePseudoLegalMoves(
+        ~this.kings & fromMask,
+        target & toMask,
+      );
+
+      // Capture the checking pawn en passant (but avoid yielding
+      // duplicate moves).
+      if (this.epSquare && !(BB_SQUARES[this.epSquare] & target)) {
+        const lastDouble = this.epSquare + (this.turn == WHITE ? -8 : 8);
+        if (lastDouble == checker) {
+          yield* this.generatePseudoLegalEp(fromMask, toMask);
+        }
+      }
+    }
+  }
+
+  *generateLegalMoves(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    if (this.isVariantEnd()) {
+      return;
+    }
+
+    const kingMask = this.kings & this.occupiedCo[colorIdx(this.turn)];
+    if (kingMask) {
+      const king = msb(kingMask);
+      const blockers = this._sliderBlockers(king);
+      const checkers = this.attackersMask(!this.turn, king);
+      if (checkers) {
+        for (const move of this._generateEvasions(
+          king,
+          checkers,
+          fromMask,
+          toMask,
+        )) {
+          if (this._isSafe(king, blockers, move)) {
+            yield move;
+          }
+        }
+      } else {
+        for (const move of this.generatePseudoLegalMoves(fromMask, toMask)) {
+          if (this._isSafe(king, blockers, move)) {
+            yield move;
+          }
+        }
+      }
+    } else {
+      yield* this.generatePseudoLegalMoves(fromMask, toMask);
+    }
+  }
+
+  *generateLegalEp(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    if (this.isVariantEnd()) {
+      return;
+    }
+
+    for (const move of this.generatePseudoLegalEp(fromMask, toMask)) {
+      if (!this.isIntoCheck(move)) {
+        yield move;
+      }
+    }
+  }
+
+  *generateLegalCaptures(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    yield* this.generateLegalMoves(
+      fromMask,
+      toMask & this.occupiedCo[colorIdx(!this.turn)],
+    );
+    yield* this.generateLegalEp(fromMask, toMask);
+  }
+
+  _attackedForKing(path: Bitboard, occupied: Bitboard): boolean {
+    return iterAny(
+      iterMap(scanReversed(path), sq =>
+        this._attackersMask(!this.turn, sq, occupied),
+      ),
+    );
+  }
+
+  *generateCastlingMoves(
+    fromMask: Bitboard = BB_ALL,
+    toMask: Bitboard = BB_ALL,
+  ): IterableIterator<Move> {
+    if (this.isVariantEnd()) {
+      return;
+    }
+
+    const backrank = this.turn == WHITE ? BB_RANK_1 : BB_RANK_8;
+    let king =
+      this.occupiedCo[colorIdx(this.turn)] &
+      this.kings &
+      ~this.promoted &
+      backrank &
+      fromMask;
+    king &= -king;
+    if (!king) {
+      return;
+    }
+
+    const bbC = BB_FILE_C & backrank;
+    const bbD = BB_FILE_D & backrank;
+    const bbF = BB_FILE_F & backrank;
+    const bbG = BB_FILE_G & backrank;
+
+    for (const candidate of scanReversed(
+      this.cleanCastlingRights() & backrank & toMask,
+    )) {
+      const rook = BB_SQUARES[candidate];
+
+      const aSide = rook < king;
+      const kingTo = aSide ? bbC : bbG;
+      const rookTo = aSide ? bbD : bbF;
+
+      const kingPath = between(msb(king), msb(kingTo));
+      const rookPath = between(candidate, msb(rookTo));
+
+      if (
+        !(
+          (this.occupied ^ king ^ rook) &
+            (kingPath | rookPath | kingTo | rookTo) ||
+          this._attackedForKing(kingPath | king, this.occupied ^ king) ||
+          this._attackedForKing(kingTo, this.occupied ^ king ^ rook ^ rookTo)
+        )
+      ) {
+        yield this._fromChess960(this.chess960, msb(king), candidate);
+      }
+    }
+  }
+
+  _fromChess960(
+    chess960: boolean,
+    fromSquare: Square,
+    toSquare: Square,
+    promotion: PieceType | null = null,
+    drop: PieceType | null = null,
+  ): Move {
+    if (!chess960 && promotion === null && drop === null) {
+      if (fromSquare === E1 && this.kings & BB_E1) {
+        if (toSquare === H1) {
+          return new Move(E1, G1);
+        } else if (toSquare === A1) {
+          return new Move(E1, C1);
+        }
+      } else if (fromSquare == E8 && this.kings & BB_E8) {
+        if (toSquare === H8) {
+          return new Move(E8, G8);
+        } else if (toSquare === A8) {
+          return new Move(E8, C8);
+        }
+      }
+    }
+
+    return new Move(fromSquare, toSquare, { promotion, drop });
+  }
+
+  _toChess960(move: Move): Move {
+    if (move.fromSquare == E1 && this.kings & BB_E1) {
+      if (move.toSquare == G1 && !(this.rooks & BB_G1)) {
+        return new Move(E1, H1);
+      } else if (move.toSquare == C1 && !(this.rooks & BB_C1)) {
+        return new Move(E1, A1);
+      }
+    } else if (move.fromSquare == E8 && this.kings & BB_E8) {
+      if (move.toSquare == G8 && !(this.rooks & BB_G8)) {
+        return new Move(E8, H8);
+      } else if (move.toSquare == C8 && !(this.rooks & BB_C8)) {
+        return new Move(E8, A8);
+      }
+    }
+
+    return move;
+  }
+
+  _transpositionKey(): bigint {
+    // NOTE: This function works a bit differently from the Python version.
+    //       Here we concatenate all items in the Python version's tuple into
+    //       a single bigint.
+    const KEY: (Bitboard | boolean | Square)[] = [
+      this.pawns,
+      this.knights,
+      this.bishops,
+      this.rooks,
+      this.queens,
+      this.kings,
+      this.occupiedCo[colorIdx(WHITE)],
+      this.occupiedCo[colorIdx(BLACK)],
+      this.turn,
+      this.cleanCastlingRights(),
+      this.hasLegalEnPassant() ? (this.epSquare as Square) : 0,
+    ];
+
+    // Concatenate all items into a single bigint.
+    let result = 0n;
+
+    for (const item of KEY) {
+      if (typeof item === 'bigint') {
+        result = (result << 64n) | item;
+      } else if (typeof item === 'boolean') {
+        result = (result << 1n) | BigInt(item);
+      } else {
+        result = (result << 6n) | BigInt(item);
+      }
+    }
+
+    return result;
+  }
+
+  toRepr(): string {
+    if (!this.chess960) {
+      return `${this.constructor.name}({self.fen()!r})`;
+    } else {
+      return `${this.constructor.name}({self.fen()!r}, chess960=True)`;
+    }
+  }
+
+  _reprSvg(): string {
+    // TODO
+    throw new Error('Not implemented');
+  }
+
+  eq(board: object): boolean {
+    if (board instanceof Board) {
+      return (
+        this.halfmoveClock === board.halfmoveClock &&
+        this.fullmoveNumber === board.fullmoveNumber &&
+        this.uciVariant === board.uciVariant &&
+        this._transpositionKey() === board._transpositionKey()
+      );
+    } else {
+      return false;
+    }
+  }
+
+  applyTransform(f: (board: Bitboard) => Bitboard): void {
+    super.applyTransform(f);
+    this.clearStack();
+    this.epSquare =
+      this.epSquare === null ? null : msb(f(BB_SQUARES[this.epSquare]));
+    this.castlingRights = f(this.castlingRights);
+  }
+
+  transform(f: (board: Bitboard) => Bitboard): this {
+    const board = this.copy({ stack: false });
+    board.applyTransform(f);
+    return board;
+  }
+
+  applyMirror(): void {
+    super.applyMirror();
+    this.turn = !this.turn;
+  }
+
+  /**
+   * Returns a mirrored copy of the board.
+   *
+   * The board is mirrored vertically and piece colors are swapped, so that
+   * the position is equivalent modulo color. Also swap the "en passant"
+   * square, castling rights and turn.
+   *
+   * Alternatively, :func:`~chess.Board.applyMirror()` can be used
+   * to mirror the board.
+   */
+  mirror(): this {
+    const board = this.copy();
+    board.applyMirror();
+    return board;
+  }
+
+  /**
+   * Creates a copy of the board.
+   *
+   * Defaults to copying the entire move stack. Alternatively, *stack* can
+   * be ``False``, or an integer to copy a limited number of moves.
+   */
+  copy({ stack = true }: { stack?: boolean | number } = {}): this {
+    const board = super.copy();
+
+    board.chess960 = this.chess960;
+
+    board.epSquare = this.epSquare;
+    board.castlingRights = this.castlingRights;
+    board.turn = this.turn;
+    board.fullmoveNumber = this.fullmoveNumber;
+    board.halfmoveClock = this.halfmoveClock;
+
+    if (stack) {
+      stack = stack === true ? this.moveStack.length : stack;
+      board.moveStack = this.moveStack.slice(-stack).map(move => move.copy());
+      board._stack = this._stack.slice(-stack);
+    }
+
+    return board;
+  }
+
+  /**
+   * Creates a new empty board. Also see :func:`~chess.Board.clear()`.
+   */
+  static empty<T extends typeof Board>(
+    this: T,
+    { chess960 = false }: { chess960?: boolean } = {},
+  ): InstanceType<T> {
+    return new this(null, { chess960 }) as InstanceType<T>;
+  }
+
+  /**
+   * Creates a new board from an EPD string. See
+   * :func:`~chess.Board.setEpd()`.
+   *
+   * Returns the board and the dictionary of parsed operations as a tuple.
+   */
+  static fromEpd<T extends typeof Board>(
+    this: T,
+    epd: string,
+    { chess960 = false }: { chess960?: boolean } = {},
+  ): [
+    InstanceType<T>,
+    Map<string, null | string | number | Move | Array<Move>>,
+  ] {
+    const board = this.empty({ chess960 });
+    return [board, board.setEpd(epd)];
+  }
+
+  static fromChess960Pos<T extends typeof Board>(
+    this: T,
+    scharnagl: number,
+  ): InstanceType<T> {
+    const board = this.empty({ chess960: true });
+    board.setChess960Pos(scharnagl);
+    return board;
+  }
+}
+
+class PseudoLegalMoveGenerator {
+  board: Board;
+
+  constructor(board: Board) {
+    this.board = board;
+  }
+
+  bool(): boolean {
+    return iterAny(this.board.generatePseudoLegalMoves());
+  }
+
+  count(): number {
+    // List conversion is faster than iterating.
+    return Array.from(this).length;
+  }
+
+  *[Symbol.iterator](): IterableIterator<Move> {
+    return this.board.generatePseudoLegalMoves();
+  }
+
+  contains(move: Move): boolean {
+    return this.board.isPseudoLegal(move);
+  }
+
+  toString(): string {
+    const builder: string[] = [];
+
+    for (const move of this) {
+      if (this.board.isLegal(move)) {
+        builder.push(this.board.san(move));
+      } else {
+        builder.push(this.board.uci(move));
+      }
+    }
+
+    const sans = builder.join(', ');
+    return `<PseudoLegalMoveGenerator (${sans})>`;
+  }
+}
+
+class LegalMoveGenerator {
+  board: Board;
+
+  constructor(board: Board) {
+    this.board = board;
+  }
+
+  bool(): boolean {
+    return iterAny(this.board.generateLegalMoves());
+  }
+
+  count(): number {
+    // List conversion is faster than iterating.
+    return Array.from(this).length;
+  }
+
+  *[Symbol.iterator](): IterableIterator<Move> {
+    return this.board.generateLegalMoves();
+  }
+
+  contains(move: Move): boolean {
+    return this.board.isLegal(move);
+  }
+
+  toString(): string {
+    const builder: string[] = [];
+
+    for (const move of this) {
+      builder.push(this.board.san(move));
+    }
+
+    const sans = builder.join(', ');
+    return `<LegalMoveGenerator (${sans})>`;
+  }
+}
 
 type IntoSquareSet = Bitboard | Iterable<Square>;
 
@@ -2070,12 +5229,12 @@ type IntoSquareSet = Bitboard | Iterable<Square>;
  * :func:`~chess.SquareSet.issubset()`, :func:`~chess.SquareSet.issuperset()`,
  * :func:`~chess.SquareSet.union()`, :func:`~chess.SquareSet.intersection()`,
  * :func:`~chess.SquareSet.difference()`,
- * :func:`~chess.SquareSet.symmetric_difference()` and
+ * :func:`~chess.SquareSet.symmetricDifference()` and
  * :func:`~chess.SquareSet.copy()` as well as
  * :func:`~chess.SquareSet.update()`,
- * :func:`~chess.SquareSet.intersection_update()`,
- * :func:`~chess.SquareSet.difference_update()`,
- * :func:`~chess.SquareSet.symmetric_difference_update()` and
+ * :func:`~chess.SquareSet.intersectionUpdate()`,
+ * :func:`~chess.SquareSet.differenceUpdate()`,
+ * :func:`~chess.SquareSet.symmetricDifferenceUpdate()` and
  * :func:`~chess.SquareSet.clear()`.
  */
 class SquareSet {
@@ -2322,7 +5481,7 @@ class SquareSet {
 
   irshift(shift: bigint) {
     this.mask >>= shift;
-    return self;
+    return this;
   }
 
   invert() {
@@ -2363,7 +5522,8 @@ class SquareSet {
   }
 
   _reprSvg_() {
-    return ''; // TODO
+    // TODO
+    throw new Error('Not implemented');
   }
 
   /**
@@ -2411,7 +5571,7 @@ class SquareSet {
    *
    * >>> import chess
    * >>>
-   * >>> chess.SquareSet.from_square(chess.A1) == chess.BB_A1
+   * >>> chess.SquareSet.fromSquare(chess.A1) == chess.BB_A1
    * True
    */
   static fromSquare(square: Square) {
