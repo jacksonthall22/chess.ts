@@ -6,7 +6,7 @@ A direct rewrite of [python-chess](https://github.com/niklasf/python-chess/tree/
 Ideally, this project will transpile everything from 
 [python-chess core copy](./python-chess%20core%20copy/) over to the 
 corresponding files in [chess](chess/). However, I think the most important files to start with for this library to be useful are:
-- [ ]  `__init__.py`
+- [x]  `__init__.py`
 - [ ] `pgn.py`
 - [ ] `engine.py`
 
