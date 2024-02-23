@@ -1,0 +1,13 @@
+    def xboard(self, move: Move, chess960: Optional[bool] = None) -> str:
+        if chess960 is None:
+            chess960 = self.chess960
+
+        if not chess960 or not self.is_castling(move):
+            return move.xboard()
+        elif self.is_kingside_castling(move):
+            return "O-O"
+        else:
+            return "O-O-O"
+
+    def parse_xboard(self, xboard: str) -> Move:
+        return self.parse_san(xboard)
