@@ -2258,12 +2258,12 @@ class Board extends BaseBoard implements IUciVariant {
     super(null);
 
     this.chess960 = chess960;
-    
+
     this.epSquare = null;
     this.moveStack = [];
-    
+
     this._stack = [];
-    
+
     // NOTE: We have to initialize these to avoid TS errors.
     //       The calls below will set them to the correct values.
     this.turn = null!;
@@ -3640,13 +3640,80 @@ class Board extends BaseBoard implements IUciVariant {
   }
 
   _epdOperations(
-    operations: Map<
-      string,
-      null | string | number | Move | IterableIterator<Move>
-    >,
+    operations: Map<string, string | number | null | Move | Iterable<Move>>,
   ): string {
-    // TODO
-    throw new Error('Not implemented');
+    let epd: string[] = [];
+    let firstOp = true;
+
+    operations.forEach((operand, opcode) => {
+      if (opcode === '-') {
+        throw new Error('dash (-) is not a valid epd opcode');
+      }
+      [' ', '\n', '\t', '\r'].forEach(blacklisted => {
+        if (opcode.includes(blacklisted)) {
+          throw new Error(
+            `invalid character ${blacklisted} in epd opcode: ${opcode}`,
+          );
+        }
+      });
+
+      if (!firstOp) {
+        epd.push(' ');
+      }
+      firstOp = false;
+      epd.push(opcode);
+
+      if (operand === null) {
+        epd.push(';');
+      } else if (operand instanceof Move) {
+        epd.push(' ');
+        epd.push(this.san(operand));
+        epd.push(';');
+      } else if (typeof operand === 'number') {
+        if (!isFinite(operand)) {
+          throw new Error(
+            `expected numeric epd operand to be finite, got: ${operand}`,
+          );
+        }
+        epd.push(` ${operand};`);
+      } else if (
+        opcode === 'pv' &&
+        typeof operand !== 'string' &&
+        Symbol.iterator in Object(operand)
+      ) {
+        let position = this.copy({ stack: false });
+        for (let move of operand) {
+          epd.push(' ');
+          epd.push(position.sanAndPush(move));
+        }
+        epd.push(';');
+      } else if (
+        (opcode === 'am' || opcode === 'bm') &&
+        typeof operand !== 'string' &&
+        Symbol.iterator in Object(operand)
+      ) {
+        let sans = Array.from(operand)
+          .map(move => this.san(move))
+          .sort();
+        sans.forEach(san => {
+          epd.push(' ');
+          epd.push(san);
+        });
+        epd.push(';');
+      } else {
+        // Append as escaped string.
+        epd.push(
+          ` "${String(operand)
+            .replace(/\\/g, '\\\\')
+            .replace(/\t/g, '\\t')
+            .replace(/\r/g, '\\r')
+            .replace(/\n/g, '\\n')
+            .replace(/\"/g, '\\"')}"`,
+        );
+      }
+    });
+
+    return epd.join('');
   }
 
   /**
@@ -3682,12 +3749,12 @@ class Board extends BaseBoard implements IUciVariant {
       enPassant?: EnPassantSpec;
       promoted?: boolean | null;
     } = {},
-    operations?: Map<
+    operations: Map<
       string,
       null | string | number | Move | IterableIterator<Move>
-    >,
+    > = new Map(),
   ): string {
-    let epSquare;
+    let epSquare: Square | null;
     if (enPassant === 'fen') {
       epSquare = this.epSquare;
     } else if (enPassant === 'xfen') {
@@ -3696,8 +3763,6 @@ class Board extends BaseBoard implements IUciVariant {
       epSquare = this.hasLegalEnPassant() ? this.epSquare : null;
     }
 
-    const test = promoted;
-
     let epd = [
       this.boardFen({ promoted }),
       this.turn === WHITE ? 'w' : 'b',
@@ -3705,7 +3770,7 @@ class Board extends BaseBoard implements IUciVariant {
       epSquare !== null ? SQUARE_NAMES[epSquare] : '-',
     ];
 
-    if (operations?.size !== 0) {
+    if (operations.size !== 0) {
       epd.push(
         this._epdOperations(
           operations as Map<
@@ -3719,12 +3784,161 @@ class Board extends BaseBoard implements IUciVariant {
     return epd.join(' ');
   }
 
-  _parseEpdOps(
+  _parseEpdOps<T extends Board>(
     operationPart: string,
-    makeBoard: () => Board,
-  ): Map<string, null | string | number | Move | Move[]> {
-    // TODO
-    throw new Error('Not implemented');
+    makeBoard: () => T,
+  ): Map<string, string | number | null | Move | Move[]> {
+    let operations: Map<string, string | number | null | Move | Move[]> =
+      new Map();
+    let state = 'opcode';
+    let opcode = '';
+    let operand = '';
+    let position: T | null = null;
+
+    for (let ch of [...operationPart, null]) {
+      switch (state) {
+        case 'opcode':
+          if (ch !== null && [' ', '\t', '\r', '\n'].includes(ch)) {
+            if (opcode === '-') {
+              opcode = '';
+            } else if (opcode) {
+              state = 'after_opcode';
+            }
+          } else if (ch === null || ch === ';') {
+            if (opcode === '-') {
+              opcode = '';
+            } else if (opcode) {
+              operations.set(
+                opcode,
+                ['pv', 'am', 'bm'].includes(opcode) ? [] : null,
+              );
+              opcode = '';
+            }
+          } else {
+            opcode += ch;
+          }
+          break;
+        case 'after_opcode':
+          if (ch !== null && [' ', '\t', '\r', '\n'].includes(ch)) {
+            // pass
+          } else if (ch === '"') {
+            state = 'string';
+          } else if (ch === null || ch === ';') {
+            if (opcode) {
+              operations.set(
+                opcode,
+                ['pv', 'am', 'bm'].includes(opcode) ? [] : null,
+              );
+              opcode = '';
+            }
+            state = 'opcode';
+          } else if ('+-0123456789.'.includes(ch)) {
+            operand = ch;
+            state = 'numeric';
+          } else {
+            operand = ch;
+            state = 'san';
+          }
+          break;
+        case 'numeric':
+          if (ch === null || ch === ';') {
+            let parsed: number;
+            if (
+              operand.includes('.') ||
+              operand.includes('e') ||
+              operand.includes('E')
+            ) {
+              parsed = parseFloat(operand);
+              if (!isFinite(parsed)) {
+                throw new Error(
+                  `Invalid numeric operand for epd operation ${opcode}: ${operand}`,
+                );
+              }
+            } else {
+              parsed = parseInt(operand);
+            }
+            operations.set(opcode, parsed);
+            opcode = '';
+            operand = '';
+            state = 'opcode';
+          } else {
+            operand += ch;
+          }
+          break;
+        case 'string':
+          if (ch === null || ch === '"') {
+            operations.set(opcode, operand);
+            opcode = '';
+            operand = '';
+            state = 'opcode';
+          } else if (ch === '\\') {
+            state = 'string_escape';
+          } else {
+            operand += ch;
+          }
+          break;
+        case 'string_escape':
+          if (ch === null) {
+            operations.set(opcode, operand);
+            opcode = '';
+            operand = '';
+            state = 'opcode';
+          } else if (ch === 'r') {
+            operand += '\r';
+            state = 'string';
+          } else if (ch === 'n') {
+            operand += '\n';
+            state = 'string';
+          } else if (ch === 't') {
+            operand += '\t';
+            state = 'string';
+          } else {
+            operand += ch;
+            state = 'string';
+          }
+          break;
+        case 'san':
+          if (ch === null || ch === ';') {
+            if (position === null) {
+              position = makeBoard();
+            }
+
+            if (opcode === 'pv') {
+              let variation: Move[] = [];
+              for (let token of operand.split(' ')) {
+                let move = position.parseXboard(token);
+                variation.push(move);
+                position.push(move);
+              }
+
+              while (position.moveStack.length) {
+                position.pop();
+              }
+
+              operations.set(opcode, variation);
+            } else if (['bm', 'am'].includes(opcode)) {
+              operations.set(
+                opcode,
+                operand.split(' ').map(token => (position as T).parseXboard(token)),
+              );
+            } else {
+              operations.set(opcode, position.parseXboard(operand));
+            }
+
+            opcode = '';
+            operand = '';
+            state = 'opcode';
+          } else {
+            operand += ch;
+          }
+          break;
+      }
+    }
+
+    if (state !== 'opcode') {
+      throw new Error('Unexpected state at the end of parsing');
+    }
+    return operations;
   }
 
   /**
@@ -3738,11 +3952,20 @@ class Board extends BaseBoard implements IUciVariant {
    *
    * :raises: :exc:`ValueError` if the EPD string is invalid.
    */
-  setEpd(
-    epd: string,
-  ): Map<string, null | string | number | Move | Array<Move>> {
-    // TODO
-    throw new Error('Not implemented');
+  setEpd(epd: string): Map<string, string | number | null | Move | Move[]> {
+    let parts = epd.trim().split(/\s+/).slice(0, 4);
+
+    // Parse ops.
+    if (parts.length > 4) {
+      let operations = this._parseEpdOps(parts.pop() as string, () => new (this.constructor as new (...args: any[]) => typeof this)(parts.join(" ") + " 0 1"));
+      parts.push(operations.has("hmvc") ? String(operations.get("hmvc")) : "0");
+      parts.push(operations.has("fmvn") ? String(operations.get("fmvn")) : "1");
+      this.setFen(parts.join(" "));
+      return operations;
+    } else {
+      this.setFen(epd);
+      return new Map();
+    }
   }
 
   /**
