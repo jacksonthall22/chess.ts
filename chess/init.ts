@@ -3453,7 +3453,7 @@ class Board extends BaseBoard implements IUciVariant {
     if (epPart === undefined) {
       epSquare = null;
     } else {
-      const squareIdx = SQUARE_NAMES.indexOf(epPart);
+      const squareIdx = epPart === '-' ? null : SQUARE_NAMES.indexOf(epPart);
 
       if (squareIdx === -1) {
         throw new Error(`ValueError: invalid en passant part in fen: ${fen}`);
