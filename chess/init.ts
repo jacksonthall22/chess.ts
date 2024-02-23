@@ -2255,7 +2255,7 @@ class Board extends BaseBoard implements IUciVariant {
     fen: string | null = STARTING_FEN,
     { chess960 = false }: { chess960?: boolean } = {},
   ) {
-    super(fen);
+    super(null);
 
     this.chess960 = chess960;
     
