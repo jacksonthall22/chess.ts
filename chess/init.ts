@@ -2371,9 +2371,9 @@ class Board extends BaseBoard implements IUciVariant {
    */
   root<T extends typeof Board>(this: InstanceType<T>): InstanceType<T> {
     if (this._stack.length > 0) {
-      const board = new (this.constructor as { new (chess960: boolean): InstanceType<T> })(
-        this.chess960,
-      );
+      const board = new (this.constructor as {
+        new (chess960: boolean): InstanceType<T>;
+      })(this.chess960);
       this._stack[0].restore(board);
       return board;
     } else {
