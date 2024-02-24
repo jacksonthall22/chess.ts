@@ -219,8 +219,7 @@ const __author__ = 'Niklas Fiekas';
 const __email__ = 'niklas.fiekas@backscattering.de';
 const __version__ = '1.10.0';
 
-const __transpilerAuthor__ = 'Jackson Hall';
-const __transpilerEmail__ = 'jacksonthall22@gmail.com';
+const __transpilerAuthor__ = 'Jackson Thurner Hall';
 const __transpiledVersion__ = '0.0.1';
 
 type EnPassantSpec = 'legal' | 'fen' | 'xfen';
