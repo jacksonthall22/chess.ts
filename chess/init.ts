@@ -1937,7 +1937,7 @@ class BaseBoard {
     throw new Error('Not implemented');
   }
 
-  eq(board: any) {
+  equals(board: any) {
     if (board instanceof BaseBoard) {
       return (
         this.occupied == board.occupied &&
@@ -5194,7 +5194,7 @@ class Board extends BaseBoard implements IUciVariant {
     throw new Error('Not implemented');
   }
 
-  eq(board: object): boolean {
+  equals(board: any): boolean {
     if (board instanceof Board) {
       return (
         this.halfmoveClock === board.halfmoveClock &&
@@ -5681,7 +5681,7 @@ class SquareSet {
     return bool(this.mask);
   }
 
-  eq(other: object) {
+  equals(other: any) {
     try {
       return this.mask == new SquareSet(other as any).mask;
     } catch (e) {
