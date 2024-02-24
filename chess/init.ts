@@ -5727,7 +5727,7 @@ class SquareSet {
       .join('_')})`;
   }
 
-  str() {
+  toString() {
     const builder: string[] = [];
 
     for (const square of SQUARES_180) {
