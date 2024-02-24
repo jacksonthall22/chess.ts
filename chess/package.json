@@ -1,0 +1,25 @@
+{
+  "name": "@jacksonthall22/chess.ts",
+  "version": "0.0.1",
+  "author": "Jackson Hall <jacksonthall22+chess.ts@gmail.com> (https://www.linkedin.com/in/jackson-t-hall/)",
+  "description": "A direct port of `python-chess` to TypeScript!",
+  "main": "index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jacksonthall22/chess.ts.git"
+  },
+  "keywords": [
+    "typescript",
+    "chess",
+    "python-chess",
+    "chess.ts"
+  ],
+  "license": "SEE LICENSE IN LICENSE.txt",
+  "bugs": {
+    "url": "https://github.com/jacksonthall22/chess.ts/issues"
+  },
+  "homepage": "https://github.com/jacksonthall22/chess.ts#readme"
+}
