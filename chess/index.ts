@@ -2117,10 +2117,6 @@ class _BoardState<BoardT extends Board> {
   }
 }
 
-interface IUciVariant {
-  uciVariant: string | null;
-}
-
 /**
  * A :class:`~chess.BaseBoard`, additional information representing
  * a chess position, and a :data:`move stack <chess.Board.moveStack>`.
@@ -2150,7 +2146,7 @@ interface IUciVariant {
  *     (useful to gracefully handle errors or to implement chess variants).
  *     Use :func:`~chess.Board.isValid()` to detect invalid positions.
  */
-class Board extends BaseBoard implements IUciVariant {
+class Board extends BaseBoard {
   static aliases: string[] = [
     'Standard',
     'Chess',
@@ -2159,18 +2155,7 @@ class Board extends BaseBoard implements IUciVariant {
     'Illegal',
     'From Position',
   ];
-
-  /*
-  NOTE:
-  Currently it seems impossible to make `uciVariant` static while guaranteeing
-  type safety. The problem is that transpiling Python's `Board.__eq__()` method
-  requires a dynamic comparison: `type(self).uci_variant == type(board).uci_variant`.
-  If we could include static members in an interface or abstract class, this would be
-  possible, but that is currently not supported in TS and the discussion seems to be
-  ongoing: https://github.com/microsoft/TypeScript/issues/34516#issue-507967613
-  */
-  uciVariant: string | null = 'chess';
-
+  static uciVariant: string | null = 'chess';
   static xboardVariant: string | null = 'normal';
   static startingFen: string = STARTING_FEN;
 
@@ -5198,7 +5183,7 @@ class Board extends BaseBoard implements IUciVariant {
       return (
         this.halfmoveClock === board.halfmoveClock &&
         this.fullmoveNumber === board.fullmoveNumber &&
-        this.uciVariant === board.uciVariant &&
+        (this.constructor as typeof Board).uciVariant === (board.constructor as typeof Board).uciVariant &&
         this._transpositionKey() === board._transpositionKey()
       );
     } else {
