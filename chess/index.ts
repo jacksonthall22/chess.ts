@@ -9,198 +9,15 @@
  */
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
-/**
- * A mirror of Python's `range()` function.
- */
-function* range(
-  start: number,
-  stop?: number,
-  step?: number,
-): IterableIterator<number> {
-  if (stop === undefined) {
-    stop = start;
-    start = 0;
-  }
-  if (step === undefined) {
-    step = 1;
-  }
-  for (let i = start; i < stop; i += step) {
-    yield i;
-  }
-}
 
-/**
- * A mirror of Python's `enumerate()` function.
- */
-function* enumerate<T>(
-  iterable: Iterable<T>,
-  start = 0,
-): IterableIterator<[number, T]> {
-  for (const value of iterable) {
-    yield [start++, value];
-  }
-}
+import * as utils from './utils';
 
 type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
-/**
- * Get the number of bits necessary to represent `n` in binary.
- */
-const bitLength = (n: number | bigint): number => {
-  let length = 0;
-  if (typeof n === 'number') {
-    while (n) {
-      n >>= 1;
-      length++;
-    }
-  } else {
-    while (n) {
-      n >>= 1n;
-      length++;
-    }
-  }
-  return length;
-};
-
-/**
- * Number of ones in the binary representation of the absolute value of `n`.
- * Also known as the population count.
- */
-const bitCount = (n: number | bigint): number => {
-  let count = 0;
-  if (typeof n === 'number') {
-    while (n) {
-      n &= n - 1;
-      count++;
-    }
-  } else {
-    while (n) {
-      n &= n - 1n;
-      count++;
-    }
-  }
-  return count;
-};
-
-const bool = (x: any) => {
-  return !!x;
-};
-
-/**
- * Convert a boolean to 1 if true, 0 if false.
- */
-const numberFromBool = (b: boolean): 1 | 0 => (b ? 1 : 0);
 
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
-const colorIdx = (color: Color): 1 | 0 => numberFromBool(color);
+const colorIdx = (color: Color): 1 | 0 => utils.boolToNumber(color);
 
-/**
- * Return the quotient and remainder of the division of `x` by `y`.
- *
- * A mirror of Python's `divmod()` function.
- */
-function divmod(x: number, y: number): [number, number] {
-  const quotient = Math.floor(x / y);
-  const remainder = x % y;
-  return [quotient, remainder];
-}
-
-/**
- * Return `true` if `value` is in the iterable.
- */
-const iterIncludes = <T>(iterable: Iterable<T>, value: T): boolean => {
-  for (const item of iterable) {
-    if (item === value) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
- * Return `true` if any element of the iterable is truthy according to `isTruthy`.
- * If none are true or the iterable is empty, return `false`.
- */
-const iterAny = <T>(
-  iterable: Iterable<T>,
-  isTruthy: (value: T) => boolean = bool,
-): boolean => {
-  for (const item of iterable) {
-    if (isTruthy(item)) {
-      return true;
-    }
-  }
-  return false;
-};
-
-/**
- * Return `true` if all elements of the iterable are true (or if the iterable is empty).
- */
-const iterAll = (iterable: Iterable<any>): boolean => {
-  for (const item of iterable) {
-    if (!item) {
-      return false;
-    }
-  }
-  return true;
-};
-
-/**
- * Yield the elements of `iterable` that are truthy against `predicate`.
- */
-function* iterFilter<T>(
-  iterable: Iterable<T>,
-  predicate: (value: T) => boolean,
-): IterableIterator<T> {
-  for (const item of iterable) {
-    if (predicate(item)) {
-      yield item;
-    }
-  }
-}
-
-function* iterMap<T1, T2>(
-  iterable: IterableIterator<T1>,
-  callback: (value: T1) => T2,
-): IterableIterator<T2> {
-  for (let x of iterable) {
-    yield callback(x);
-  }
-}
-
-class StopIteration extends Error {
-  constructor(message?: string) {
-    super(message);
-    this.name = 'StopIteration';
-    Object.setPrototypeOf(this, StopIteration.prototype);
-  }
-}
-
-const iterNext = <T>(iterable: IterableIterator<T>): T => {
-  const next = iterable.next();
-  if (next.done) {
-    throw new StopIteration();
-  }
-  return next.value;
-};
-
-class Counter<T> extends Map<T, number> {
-  constructor(iterable?: Iterable<readonly [T, number]>) {
-    super(iterable);
-    if (iterable) {
-      // Set initial counts
-      for (const [key, value] of iterable) {
-        this.set(key, value);
-      }
-    }
-  }
-
-  update(iterable: Iterable<T>): void {
-    for (const item of iterable) {
-      this.set(item, (this.get(item) || 0) + 1);
-    }
-  }
-}
 
 /**
  * Parse a string to an integer, throwing an error if the entire string
@@ -418,7 +235,7 @@ const enum Square { // Instead of `Square = number`
   A7, B7, C7, D7, E7, F7, G7, H7,
   A8, B8, C8, D8, E8, F8, G8, H8,
 }
-const SQUARES = Array.from(range(64)) as Square[];
+const SQUARES = Array.from(utils.range(64)) as Square[];
 // prettier-ignore
 const [
   A1, B1, C1, D1, E1, F1, G1, H1,
@@ -552,7 +369,7 @@ const BB_CENTER = BB_D4 | BB_E4 | BB_D5 | BB_E5;
 const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan;
 const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n;
 
-const BB_FILES = Array.from(range(8)).map(
+const BB_FILES = Array.from(utils.range(8)).map(
   i => 0x0101_0101_0101_0101n << BigInt(i),
 );
 const [
@@ -566,7 +383,7 @@ const [
   BB_FILE_H,
 ] = BB_FILES;
 
-const BB_RANKS = Array.from(range(8)).map(i => 0xffn << BigInt(8 * i));
+const BB_RANKS = Array.from(utils.range(8)).map(i => 0xffn << BigInt(8 * i));
 const [
   BB_RANK_1,
   BB_RANK_2,
@@ -581,30 +398,30 @@ const [
 const BB_BACKRANKS = BB_RANK_1 | BB_RANK_8;
 
 const lsb = (bb: Bitboard): Square => {
-  return bitLength(bb & -bb) - 1;
+  return utils.bitLength(bb & -bb) - 1;
 };
 
 function* scanForward(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
     let r = bb & -bb;
-    yield (bitLength(r) - 1) as Square;
+    yield (utils.bitLength(r) - 1) as Square;
     bb ^= r;
   }
 }
 
 const msb = (bb: Bitboard): Square => {
-  return (bitLength(bb) - 1) as Square;
+  return (utils.bitLength(bb) - 1) as Square;
 };
 
 function* scanReversed(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
-    let r = bitLength(bb) - 1;
+    let r = utils.bitLength(bb) - 1;
     yield r as Square;
     bb ^= BB_SQUARES[r];
   }
 }
 
-const popcount = (bb: Bitboard): number => bitCount(bb);
+const popcount = (bb: Bitboard): number => utils.bitCount(bb);
 
 const flipVertical = (bb: Bitboard): Bitboard => {
   // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#FlipVertically
@@ -959,7 +776,7 @@ class Move {
   }
 
   bool(): boolean {
-    return bool(
+    return utils.bool(
       this.fromSquare ||
         this.toSquare ||
         this.promotion !== null ||
@@ -1169,7 +986,7 @@ class BaseBoard {
     const pieceType = this.pieceTypeAt(square);
     if (pieceType !== null) {
       const mask = BB_SQUARES[square];
-      const color = bool(this.occupiedCo[colorIdx(WHITE)] & mask);
+      const color = utils.bool(this.occupiedCo[colorIdx(WHITE)] & mask);
       return new Piece(pieceType, color);
     } else {
       return null;
@@ -1230,7 +1047,7 @@ class BaseBoard {
     const bbSquare = BB_SQUARES[square];
 
     if (bbSquare & this.pawns) {
-      const color = bool(bbSquare & this.occupiedCo[colorIdx(WHITE)]);
+      const color = utils.bool(bbSquare & this.occupiedCo[colorIdx(WHITE)]);
       return BB_PAWN_ATTACKS[colorIdx(color)][square];
     } else if (bbSquare & this.knights) {
       return BB_KNIGHT_ATTACKS[square];
@@ -1299,7 +1116,7 @@ class BaseBoard {
    * en passant are **not** considered attacked.
    */
   isAttackedBy(color: Color, square: Square): boolean {
-    return bool(this.attackersMask(color, square));
+    return utils.bool(this.attackersMask(color, square));
   }
 
   /**
@@ -1420,7 +1237,7 @@ class BaseBoard {
    * :class:`Board` also clears the move stack.
    */
   removePieceAt(square: Square): Piece | null {
-    const color = bool(this.occupiedCo[colorIdx(WHITE)] & BB_SQUARES[square]);
+    const color = utils.bool(this.occupiedCo[colorIdx(WHITE)] & BB_SQUARES[square]);
     const pieceType = this._removePieceAt(square);
     return pieceType !== null ? new Piece(pieceType, color) : null;
   }
@@ -1647,13 +1464,13 @@ class BaseBoard {
     // See http://www.russellcottrell.com/Chess/Chess960.htm for
     // a description of the algorithm.
     let n: number, bw: number, bb: number, q: number;
-    [n, bw] = divmod(scharnagl, 4);
-    [n, bb] = divmod(n, 4);
-    [n, q] = divmod(n, 6);
+    [n, bw] = utils.divmod(scharnagl, 4);
+    [n, bb] = utils.divmod(n, 4);
+    [n, q] = utils.divmod(n, 6);
 
     let n1: number = 0;
     let n2: number = 0;
-    for (n1 of range(0, 4)) {
+    for (n1 of utils.range(0, 4)) {
       n2 = n + Math.floor(((3 - n1) * (4 - n1)) / 2) - 5;
       if (n1 < n2 && 1 <= n2 && n2 <= 4) {
         break;
@@ -1667,15 +1484,15 @@ class BaseBoard {
 
     // Queens.
     let qFile = q;
-    qFile += numberFromBool(Math.min(bwFile, bbFile) <= qFile);
-    qFile += numberFromBool(Math.max(bwFile, bbFile) <= qFile);
+    qFile += utils.boolToNumber(Math.min(bwFile, bbFile) <= qFile);
+    qFile += utils.boolToNumber(Math.max(bwFile, bbFile) <= qFile);
     this.queens = BB_FILES[qFile] & BB_BACKRANKS;
 
     const used = [bwFile, bbFile, qFile];
 
     // Knights.
     this.knights = BB_EMPTY;
-    for (const i of range(0, 8)) {
+    for (const i of utils.range(0, 8)) {
       if (!used.includes(i)) {
         if (n1 == 0 || n2 == 0) {
           this.knights |= BB_FILES[i] & BB_BACKRANKS;
@@ -1687,21 +1504,21 @@ class BaseBoard {
     }
 
     // RKR.
-    for (const i of range(0, 8)) {
+    for (const i of utils.range(0, 8)) {
       if (!used.includes(i)) {
         this.rooks = BB_FILES[i] & BB_BACKRANKS;
         used.push(i);
         break;
       }
     }
-    for (const i of range(1, 8)) {
+    for (const i of utils.range(1, 8)) {
       if (~used.includes(i)) {
         this.kings = BB_FILES[i] & BB_BACKRANKS;
         used.push(i);
         break;
       }
     }
-    for (const i of range(2, 8)) {
+    for (const i of utils.range(2, 8)) {
       if (!used.includes(i)) {
         this.rooks |= BB_FILES[i] & BB_BACKRANKS;
         break;
@@ -1785,7 +1602,7 @@ class BaseBoard {
     let n1f = false;
     let rf = 0;
     const n0s = [0, 4, 7, 9];
-    for (const square of range(A1, H1 + 1)) {
+    for (const square of utils.range(A1, H1 + 1)) {
       const bb = BB_SQUARES[square];
       if (bb & this.queens) {
         qf = true;
@@ -1878,8 +1695,8 @@ class BaseBoard {
   } = {}): string {
     const builder: string[] = [];
     for (const rankIndex of (orientation
-      ? range(7, -1, -1)
-      : range(8)) as IterableIterator<RankOrFileIndex>) {
+      ? utils.range(7, -1, -1)
+      : utils.range(8)) as IterableIterator<RankOrFileIndex>) {
       if (borders) {
         builder.push('  ');
         builder.push('-'.repeat(17));
@@ -1889,10 +1706,10 @@ class BaseBoard {
         builder.push(' ');
       }
 
-      for (const [i, fileIndex] of enumerate(
+      for (const [i, fileIndex] of utils.enumerate(
         (orientation
-          ? range(8)
-          : range(7, -1, -1)) as IterableIterator<RankOrFileIndex>,
+          ? utils.range(8)
+          : utils.range(7, -1, -1)) as IterableIterator<RankOrFileIndex>,
       )) {
         const squareIndex = square(fileIndex, rankIndex);
 
@@ -2375,7 +2192,7 @@ class Board extends BaseBoard {
    * arbitrary starting positions, and the stack can be cleared.
    */
   ply(): number {
-    return 2 * (this.fullmoveNumber - 1) + numberFromBool(this.turn === BLACK);
+    return 2 * (this.fullmoveNumber - 1) + utils.boolToNumber(this.turn === BLACK);
   }
 
   removePieceAt(square: Square): Piece | null {
@@ -2530,7 +2347,7 @@ class Board extends BaseBoard {
   }
 
   isCheck(): boolean {
-    return bool(this.checkersMask());
+    return utils.bool(this.checkersMask());
   }
 
   givesCheck(move: Move): boolean {
@@ -2552,7 +2369,7 @@ class Board extends BaseBoard {
     const checkers = this.attackersMask(!this.turn, king);
     if (
       checkers &&
-      !iterIncludes(
+      !utils.iterIncludes(
         this._generateEvasions(
           king,
           checkers,
@@ -2615,7 +2432,7 @@ class Board extends BaseBoard {
     // Handle castling.
     if (piece === KING) {
       move = this._fromChess960(this.chess960, move.fromSquare, move.toSquare);
-      if (iterIncludes(this.generateCastlingMoves(), move)) {
+      if (utils.iterIncludes(this.generateCastlingMoves(), move)) {
         return true;
       }
     }
@@ -2627,14 +2444,14 @@ class Board extends BaseBoard {
 
     // Handle pawn moves.
     if (piece === PAWN) {
-      return iterIncludes(
+      return utils.iterIncludes(
         this.generatePseudoLegalMoves(fromMask, toMask),
         move,
       );
     }
 
     // Handle all other pieces.
-    return bool(this.attacksMask(move.fromSquare) & toMask);
+    return utils.bool(this.attacksMask(move.fromSquare) & toMask);
   }
 
   isLegal(move: Move): boolean {
@@ -2730,7 +2547,7 @@ class Board extends BaseBoard {
     if (this.isInsufficientMaterial()) {
       return new Outcome(Termination.INSUFFICIENT_MATERIAL, null);
     }
-    if (!iterAny(this.generateLegalMoves())) {
+    if (!utils.iterAny(this.generateLegalMoves())) {
       return new Outcome(Termination.STALEMATE, null);
     }
 
@@ -2762,7 +2579,7 @@ class Board extends BaseBoard {
     if (!this.isCheck()) {
       return false;
     }
-    return !iterAny(this.generateLegalMoves());
+    return !utils.iterAny(this.generateLegalMoves());
   }
 
   /**
@@ -2777,7 +2594,7 @@ class Board extends BaseBoard {
       return false;
     }
 
-    return !iterAny(this.generateLegalMoves());
+    return !utils.iterAny(this.generateLegalMoves());
   }
 
   /**
@@ -2785,7 +2602,7 @@ class Board extends BaseBoard {
    * (:func:`~chess.Board.hasInsufficientMaterial()`).
    */
   isInsufficientMaterial(): boolean {
-    return iterAll(COLORS.map(color => this.hasInsufficientMaterial(color)));
+    return utils.iterAll(COLORS.map(color => this.hasInsufficientMaterial(color)));
   }
 
   /**
@@ -2834,7 +2651,7 @@ class Board extends BaseBoard {
   }
 
   _isHalfmoves(n: number): boolean {
-    return this.halfmoveClock >= n && iterAny(this.generateLegalMoves());
+    return this.halfmoveClock >= n && utils.iterAny(this.generateLegalMoves());
   }
 
   /**
@@ -2920,7 +2737,7 @@ class Board extends BaseBoard {
   canClaimThreefoldRepetition(): boolean {
     // TODO check this function's logic (straight outta ChatGPT)
     const transpositionKey = this._transpositionKey();
-    const transpositions = new Counter<bigint>();
+    const transpositions = new utils.Counter<bigint>();
     transpositions.update([transpositionKey]);
 
     // Count positions.
@@ -3103,7 +2920,7 @@ class Board extends BaseBoard {
     const fromBb = BB_SQUARES[move.fromSquare];
     const toBb = BB_SQUARES[move.toSquare];
 
-    const promoted = bool(this.promoted & fromBb);
+    const promoted = utils.bool(this.promoted & fromBb);
     const pieceType = this._removePieceAt(move.fromSquare);
     if (pieceType === null) {
       throw new Error(
@@ -3157,7 +2974,7 @@ class Board extends BaseBoard {
 
     // Castling.
     const castling =
-      pieceType === KING && bool(this.occupiedCo[colorIdx(this.turn)] & toBb);
+      pieceType === KING && utils.bool(this.occupiedCo[colorIdx(this.turn)] & toBb);
     if (castling) {
       const aSide = squareFile(move.toSquare) < squareFile(move.fromSquare);
 
@@ -3175,7 +2992,7 @@ class Board extends BaseBoard {
 
     // Put the piece on the target square.
     if (!castling) {
-      const wasPromoted = bool(this.promoted & toBb);
+      const wasPromoted = utils.bool(this.promoted & toBb);
       this._setPieceAt(move.toSquare, pieceType, this.turn, promoted);
 
       if (capturedPieceType !== null) {
@@ -3300,8 +3117,8 @@ class Board extends BaseBoard {
 
         let ch;
         if (
-          iterAny(
-            iterMap(
+          utils.iterAny(
+            utils.iterMap(
               scanReversed(otherRooks),
               other => squareFile(other) < rookFile === aSide,
             ),
@@ -3327,14 +3144,14 @@ class Board extends BaseBoard {
    * Checks if there is a pseudo-legal en passant capture.
    */
   hasPseudoLegalEnPassant(): boolean {
-    return this.epSquare !== null && iterAny(this.generatePseudoLegalEp());
+    return this.epSquare !== null && utils.iterAny(this.generatePseudoLegalEp());
   }
 
   /**
    * Checks if there is a legal en passant capture.
    */
   hasLegalEnPassant(): boolean {
-    return this.epSquare !== null && iterAny(this.generateLegalEp());
+    return this.epSquare !== null && utils.iterAny(this.generateLegalEp());
   }
 
   /**
@@ -4154,22 +3971,22 @@ class Board extends BaseBoard {
     // Castling.
     try {
       if (['O-O', 'O-O+', 'O-O#', '0-0', '0-0+', '0-0#'].includes(san)) {
-        return iterNext(
-          iterFilter(this.generateCastlingMoves(), move =>
+        return utils.iterNext(
+          utils.iterFilter(this.generateCastlingMoves(), move =>
             this.isKingsideCastling(move),
           ),
         );
       } else if (
         ['O-O-O', 'O-O-O+', 'O-O-O#', '0-0-0', '0-0-0+', '0-0-0#'].includes(san)
       ) {
-        return iterNext(
-          iterFilter(this.generateCastlingMoves(), move =>
+        return utils.iterNext(
+          utils.iterFilter(this.generateCastlingMoves(), move =>
             this.isQueensideCastling(move),
           ),
         );
       }
     } catch (error) {
-      if (error instanceof StopIteration) {
+      if (error instanceof utils.StopIteration) {
         throw new IllegalMoveError(`illegal san: ${san} in ${this.fen()}`);
       }
     }
@@ -4380,7 +4197,7 @@ class Board extends BaseBoard {
   isEnPassant(move: Move): boolean {
     return (
       this.epSquare === move.toSquare &&
-      bool(this.pawns & BB_SQUARES[move.fromSquare]) &&
+      utils.bool(this.pawns & BB_SQUARES[move.fromSquare]) &&
       [7, 9].includes(Math.abs(move.toSquare - move.fromSquare)) &&
       !(this.occupied & BB_SQUARES[move.toSquare])
     );
@@ -4392,7 +4209,7 @@ class Board extends BaseBoard {
   isCapture(move: Move): boolean {
     const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare];
     return (
-      bool(touched & this.occupiedCo[colorIdx(!this.turn)]) ||
+      utils.bool(touched & this.occupiedCo[colorIdx(!this.turn)]) ||
       this.isEnPassant(move)
     );
   }
@@ -4402,7 +4219,7 @@ class Board extends BaseBoard {
    */
   isZeroing(move: Move): boolean {
     const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare];
-    return bool(
+    return utils.bool(
       touched & this.pawns ||
         touched & this.occupiedCo[colorIdx(!this.turn)] ||
         move.drop === PAWN,
@@ -4412,7 +4229,7 @@ class Board extends BaseBoard {
   _reducesCastlingRights(move: Move): boolean {
     const cr = this.cleanCastlingRights();
     const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare];
-    return bool(
+    return utils.bool(
       touched & cr ||
         (cr & BB_RANK_1 &&
           touched &
@@ -4453,7 +4270,7 @@ class Board extends BaseBoard {
       const diff = squareFile(move.fromSquare) - squareFile(move.toSquare);
       return (
         Math.abs(diff) > 1 ||
-        bool(
+        utils.bool(
           this.rooks &
             this.occupiedCo[colorIdx(this.turn)] &
             BB_SQUARES[move.toSquare],
@@ -4579,7 +4396,7 @@ class Board extends BaseBoard {
    */
   hasCastlingRights(color: Color): boolean {
     const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8;
-    return bool(this.cleanCastlingRights() & backrank);
+    return utils.bool(this.cleanCastlingRights() & backrank);
   }
 
   /**
@@ -4910,12 +4727,12 @@ class Board extends BaseBoard {
         return !this.isAttackedBy(!this.turn, move.toSquare);
       }
     } else if (this.isEnPassant(move)) {
-      return bool(
+      return utils.bool(
         this.pinMask(this.turn, move.fromSquare) & BB_SQUARES[move.toSquare] &&
           !this._epSkewered(king, move.fromSquare),
       );
     } else {
-      return bool(
+      return utils.bool(
         !(blockers & BB_SQUARES[move.fromSquare]) ||
           ray(move.fromSquare, move.toSquare) & BB_SQUARES[king],
       );
@@ -5030,8 +4847,8 @@ class Board extends BaseBoard {
   }
 
   _attackedForKing(path: Bitboard, occupied: Bitboard): boolean {
-    return iterAny(
-      iterMap(scanReversed(path), sq =>
+    return utils.iterAny(
+      utils.iterMap(scanReversed(path), sq =>
         this._attackersMask(!this.turn, sq, occupied),
       ),
     );
@@ -5298,7 +5115,7 @@ class PseudoLegalMoveGenerator {
   }
 
   bool(): boolean {
-    return iterAny(this.board.generatePseudoLegalMoves());
+    return utils.iterAny(this.board.generatePseudoLegalMoves());
   }
 
   count(): number {
@@ -5338,7 +5155,7 @@ class LegalMoveGenerator {
   }
 
   bool(): boolean {
-    return iterAny(this.board.generateLegalMoves());
+    return utils.iterAny(this.board.generateLegalMoves());
   }
 
   count(): number {
@@ -5464,7 +5281,7 @@ class SquareSet {
   // Set
 
   contains(square: Square) {
-    return bool(BB_SQUARES[square] & this.mask);
+    return utils.bool(BB_SQUARES[square] & this.mask);
   }
 
   iter() {
@@ -5495,21 +5312,21 @@ class SquareSet {
    * Tests if the square sets are disjoint.
    */
   isdisjoint(other: IntoSquareSet) {
-    return !bool(this.mask & new SquareSet(other).mask);
+    return !utils.bool(this.mask & new SquareSet(other).mask);
   }
 
   /**
    * Tests if this square set is a subset of another.
    */
   issubset(other: IntoSquareSet) {
-    return !bool(this.mask & ~new SquareSet(other).mask);
+    return !utils.bool(this.mask & ~new SquareSet(other).mask);
   }
 
   /**
    * Tests if this square set is a superset of another.
    */
   issuperset(other: IntoSquareSet) {
-    return !bool(~this.mask & new SquareSet(other).mask);
+    return !utils.bool(~this.mask & new SquareSet(other).mask);
   }
 
   union(other: IntoSquareSet) {
@@ -5662,7 +5479,7 @@ class SquareSet {
   }
 
   bool() {
-    return bool(this.mask);
+    return utils.bool(this.mask);
   }
 
   equals(other: any) {
@@ -6320,3 +6137,5 @@ const chess = {
 };
 
 export default chess;
+
+// export * from './pgn';
