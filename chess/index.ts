@@ -12,42 +12,33 @@
 
 import * as utils from './utils';
 
-type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
-const colorIdx = (color: Color): 1 | 0 => utils.boolToNumber(color);
+export const colorIdx = (color: Color): 1 | 0 => utils.boolToNumber(color);
 
 
-/**
- * Parse a string to an integer, throwing an error if the entire string
- * is not formatted as an integer.
- */
-const parseIntStrict = (str: string): number => {
-  if (str.match(/^-?(0|[1-9]\d*)$/) === null) {
-    throw new Error(`ValueError: ${str} is not an integer`);
-  }
-  return parseInt(str, 10);
-};
 
 /** ========== Direct transpilation ========== */
 
-const __author__ = 'Niklas Fiekas';
-const __email__ = 'niklas.fiekas@backscattering.de';
-const __version__ = '1.10.0';
+export const __author__ = 'Niklas Fiekas';
+export const __email__ = 'niklas.fiekas@backscattering.de';
+export const __version__ = '1.10.0';
 
-const __transpilerAuthor__ = 'Jackson Thurner Hall';
-const __transpiledVersion__ = '0.0.1';
+export const __transpilerAuthor__ = 'Jackson Thurner Hall';
+export const __transpiledVersion__ = '0.0.1';
 
-type EnPassantSpec = 'legal' | 'fen' | 'xfen';
+export type EnPassantSpec = 'legal' | 'fen' | 'xfen';
 
-type Color = boolean;
-const [WHITE, BLACK] = [true, false];
-const COLORS: Color[] = [WHITE, BLACK];
-type ColorName = 'white' | 'black';
-const COLOR_NAMES: ColorName[] = ['white', 'black'];
+export type Color = boolean;
+export const [WHITE, BLACK] = [true, false];
+export const COLORS: Color[] = [WHITE, BLACK];
+export type ColorName = 'white' | 'black';
+export const COLOR_NAMES: ColorName[] = ['white', 'black'];
 
-const enum PieceType {
+export const enum PieceType {
   PAWN = 1,
   KNIGHT, // = 2, etc.
   BISHOP,
@@ -55,10 +46,10 @@ const enum PieceType {
   QUEEN,
   KING,
 }
-const PIECE_TYPES: PieceType[] = Array.from({ length: 6 }, (_, i) => i + 1);
-const [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING] = PIECE_TYPES;
-const PIECE_SYMBOLS: (string | null)[] = [null, 'p', 'n', 'b', 'r', 'q', 'k'];
-const PIECE_NAMES: (string | null)[] = [
+export const PIECE_TYPES: PieceType[] = Array.from({ length: 6 }, (_, i) => i + 1);
+export const [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING] = PIECE_TYPES;
+export const PIECE_SYMBOLS: (string | null)[] = [null, 'p', 'n', 'b', 'r', 'q', 'k'];
+export const PIECE_NAMES: (string | null)[] = [
   null,
   'pawn',
   'knight',
@@ -68,15 +59,15 @@ const PIECE_NAMES: (string | null)[] = [
   'king',
 ];
 
-const pieceSymbol = (pieceType: PieceType) => {
+export const pieceSymbol = (pieceType: PieceType) => {
   return PIECE_SYMBOLS[pieceType] as string;
 };
 
-const pieceName = (pieceType: PieceType) => {
+export const pieceName = (pieceType: PieceType) => {
   return PIECE_NAMES[pieceType] as string;
 };
 
-const UNICODE_PIECE_SYMBOLS: { [key: string]: string } = {
+export const UNICODE_PIECE_SYMBOLS: { [key: string]: string } = {
   R: '♖',
   r: '♜',
   N: '♘',
@@ -91,17 +82,17 @@ const UNICODE_PIECE_SYMBOLS: { [key: string]: string } = {
   p: '♟',
 };
 
-const FILE_NAMES: string[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+export const FILE_NAMES: string[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
 
-const RANK_NAMES: string[] = ['1', '2', '3', '4', '5', '6', '7', '8'];
+export const RANK_NAMES: string[] = ['1', '2', '3', '4', '5', '6', '7', '8'];
 
 /** The FEN for the standard chess starting position. */
-const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
+export const STARTING_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
 
 /** The board part of the FEN for the standard chess starting position. */
-const STARTING_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
+export const STARTING_BOARD_FEN = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR';
 
-const enum Status {
+export const enum Status {
   VALID = 0,
   NO_WHITE_KING = 1 << 0,
   NO_BLACK_KING = 1 << 1,
@@ -122,29 +113,29 @@ const enum Status {
   IMPOSSIBLE_CHECK = 1 << 16,
 }
 
-const STATUS_VALID = Status.VALID;
-const STATUS_NO_WHITE_KING = Status.NO_WHITE_KING;
-const STATUS_NO_BLACK_KING = Status.NO_BLACK_KING;
-const STATUS_TOO_MANY_KINGS = Status.TOO_MANY_KINGS;
-const STATUS_TOO_MANY_WHITE_PAWNS = Status.TOO_MANY_WHITE_PAWNS;
-const STATUS_TOO_MANY_BLACK_PAWNS = Status.TOO_MANY_BLACK_PAWNS;
-const STATUS_PAWNS_ON_BACKRANK = Status.PAWNS_ON_BACKRANK;
-const STATUS_TOO_MANY_WHITE_PIECES = Status.TOO_MANY_WHITE_PIECES;
-const STATUS_TOO_MANY_BLACK_PIECES = Status.TOO_MANY_BLACK_PIECES;
-const STATUS_BAD_CASTLING_RIGHTS = Status.BAD_CASTLING_RIGHTS;
-const STATUS_INVALID_EP_SQUARE = Status.INVALID_EP_SQUARE;
-const STATUS_OPPOSITE_CHECK = Status.OPPOSITE_CHECK;
-const STATUS_EMPTY = Status.EMPTY;
-const STATUS_RACE_CHECK = Status.RACE_CHECK;
-const STATUS_RACE_OVER = Status.RACE_OVER;
-const STATUS_RACE_MATERIAL = Status.RACE_MATERIAL;
-const STATUS_TOO_MANY_CHECKERS = Status.TOO_MANY_CHECKERS;
-const STATUS_IMPOSSIBLE_CHECK = Status.IMPOSSIBLE_CHECK;
+export const STATUS_VALID = Status.VALID;
+export const STATUS_NO_WHITE_KING = Status.NO_WHITE_KING;
+export const STATUS_NO_BLACK_KING = Status.NO_BLACK_KING;
+export const STATUS_TOO_MANY_KINGS = Status.TOO_MANY_KINGS;
+export const STATUS_TOO_MANY_WHITE_PAWNS = Status.TOO_MANY_WHITE_PAWNS;
+export const STATUS_TOO_MANY_BLACK_PAWNS = Status.TOO_MANY_BLACK_PAWNS;
+export const STATUS_PAWNS_ON_BACKRANK = Status.PAWNS_ON_BACKRANK;
+export const STATUS_TOO_MANY_WHITE_PIECES = Status.TOO_MANY_WHITE_PIECES;
+export const STATUS_TOO_MANY_BLACK_PIECES = Status.TOO_MANY_BLACK_PIECES;
+export const STATUS_BAD_CASTLING_RIGHTS = Status.BAD_CASTLING_RIGHTS;
+export const STATUS_INVALID_EP_SQUARE = Status.INVALID_EP_SQUARE;
+export const STATUS_OPPOSITE_CHECK = Status.OPPOSITE_CHECK;
+export const STATUS_EMPTY = Status.EMPTY;
+export const STATUS_RACE_CHECK = Status.RACE_CHECK;
+export const STATUS_RACE_OVER = Status.RACE_OVER;
+export const STATUS_RACE_MATERIAL = Status.RACE_MATERIAL;
+export const STATUS_TOO_MANY_CHECKERS = Status.TOO_MANY_CHECKERS;
+export const STATUS_IMPOSSIBLE_CHECK = Status.IMPOSSIBLE_CHECK;
 
 /**
  * Enum with reasons for a game to be over.
  */
-enum Termination {
+export enum Termination {
   /** See :func:`chess.Board.isCheckmate()`. */
   CHECKMATE,
   /** See :func:`chess.Board.isStalemate()`. */
@@ -171,7 +162,7 @@ enum Termination {
  * Information about the outcome of an ended game, usually obtained from
  * :func:`chess.Board.outcome()`.
  */
-class Outcome {
+export class Outcome {
   termination: Termination;
   /** The reason for the game to have ended. */
 
@@ -194,7 +185,7 @@ class Outcome {
 /**
  * Raised when move notation is not syntactically valid
  */
-class InvalidMoveError extends Error {
+export class InvalidMoveError extends Error {
   constructor(message?: string) {
     super(message);
     this.name = 'InvalidMoveError';
@@ -205,7 +196,7 @@ class InvalidMoveError extends Error {
 /**
  * Raised when the attempted move is illegal in the current position
  */
-class IllegalMoveError extends Error {
+export class IllegalMoveError extends Error {
   constructor(message?: string) {
     super(message);
     this.name = 'IllegalMoveError';
@@ -216,7 +207,7 @@ class IllegalMoveError extends Error {
 /**
  * Raised when the attempted move is ambiguous in the current position
  */
-class AmbiguousMoveError extends Error {
+export class AmbiguousMoveError extends Error {
   constructor(message?: string) {
     super(message);
     this.name = 'AmbiguousMoveError';
@@ -225,7 +216,7 @@ class AmbiguousMoveError extends Error {
 }
 
 // prettier-ignore
-const enum Square { // Instead of `Square = number`
+export const enum Square { // Instead of `Square = number`
   A1, B1, C1, D1, E1, F1, G1, H1,
   A2, B2, C2, D2, E2, F2, G2, H2,
   A3, B3, C3, D3, E3, F3, G3, H3,
@@ -235,9 +226,9 @@ const enum Square { // Instead of `Square = number`
   A7, B7, C7, D7, E7, F7, G7, H7,
   A8, B8, C8, D8, E8, F8, G8, H8,
 }
-const SQUARES = Array.from(utils.range(64)) as Square[];
+export const SQUARES = Array.from(utils.range(64)) as Square[];
 // prettier-ignore
-const [
+export const [
   A1, B1, C1, D1, E1, F1, G1, H1,
   A2, B2, C2, D2, E2, F2, G2, H2,
   A3, B3, C3, D3, E3, F3, G3, H3,
@@ -248,7 +239,7 @@ const [
   A8, B8, C8, D8, E8, F8, G8, H8,
 ] = SQUARES;
 
-const SQUARE_NAMES = RANK_NAMES.flatMap(r => FILE_NAMES.map(f => f + r));
+export const SQUARE_NAMES = RANK_NAMES.flatMap(r => FILE_NAMES.map(f => f + r));
 
 /**
  * Gets the square index for the given square *name*
@@ -256,7 +247,7 @@ const SQUARE_NAMES = RANK_NAMES.flatMap(r => FILE_NAMES.map(f => f + r));
  *
  * @throws :exc:`Error` if the square name is invalid.
  */
-const parseSquare = (name: string): Square => {
+export const parseSquare = (name: string): Square => {
   const idx = SQUARE_NAMES.indexOf(name);
   if (idx === -1) {
     throw new Error(`Invalid square name ${name}`);
@@ -267,14 +258,14 @@ const parseSquare = (name: string): Square => {
 /**
  * Gets the name of the square, like ``a3``.
  */
-const squareName = (square: Square): string => {
+export const squareName = (square: Square): string => {
   return SQUARE_NAMES[square];
 };
 
 /**
  * Gets a square number by file and rank index.
  */
-const square = (
+export const square = (
   fileIndex: RankOrFileIndex,
   rankIndex: RankOrFileIndex,
 ): Square => {
@@ -284,21 +275,21 @@ const square = (
 /**
  * Gets the file index of the square where ``0`` is the a-file.
  */
-const squareFile = (square: Square): RankOrFileIndex => {
+export const squareFile = (square: Square): RankOrFileIndex => {
   return (square & 7) as RankOrFileIndex;
 };
 
 /**
  * Gets the rank index of the square where ``0`` is the first rank.
  */
-const squareRank = (square: Square): RankOrFileIndex => {
+export const squareRank = (square: Square): RankOrFileIndex => {
   return (square >> 3) as RankOrFileIndex;
 };
 
 /**
  * Gets the Chebyshev distance (i.e., the number of king steps) from square *a* to *b*.
  */
-const squareDistance = (a: Square, b: Square): number => {
+export const squareDistance = (a: Square, b: Square): number => {
   return Math.max(
     Math.abs(squareFile(a) - squareFile(b)),
     Math.abs(squareRank(a) - squareRank(b)),
@@ -308,7 +299,7 @@ const squareDistance = (a: Square, b: Square): number => {
 /**
  * Gets the Manhattan/Taxicab distance (i.e., the number of orthogonal king steps) from square *a* to *b*.
  */
-const squareManhattanDistance = (a: Square, b: Square): number => {
+export const squareManhattanDistance = (a: Square, b: Square): number => {
   return (
     Math.abs(squareFile(a) - squareFile(b)) +
     Math.abs(squareRank(a) - squareRank(b))
@@ -318,7 +309,7 @@ const squareManhattanDistance = (a: Square, b: Square): number => {
 /**
  * Gets the Knight distance (i.e., the number of knight moves) from square *a* to *b*.
  */
-const squareKnightDistance = (a: Square, b: Square): number => {
+export const squareKnightDistance = (a: Square, b: Square): number => {
   const dx = Math.abs(squareFile(a) - squareFile(b));
   const dy = Math.abs(squareRank(a) - squareRank(b));
 
@@ -340,19 +331,19 @@ const squareKnightDistance = (a: Square, b: Square): number => {
 /**
  * Mirrors the square vertically.
  */
-const squareMirror = (square: Square): Square => {
+export const squareMirror = (square: Square): Square => {
   return square ^ (0x38 as Square);
 };
 
-const SQUARES_180 = SQUARES.map(squareMirror);
+export const SQUARES_180 = SQUARES.map(squareMirror);
 
-type Bitboard = bigint;
-const BB_EMPTY = 0n;
-const BB_ALL = 0xffff_ffff_ffff_ffffn;
+export type Bitboard = bigint;
+export const BB_EMPTY = 0n;
+export const BB_ALL = 0xffff_ffff_ffff_ffffn;
 
-const BB_SQUARES = SQUARES.map(s => 1n << BigInt(s));
+export const BB_SQUARES = SQUARES.map(s => 1n << BigInt(s));
 // prettier-ignore
-const [
+export const [
   BB_A1, BB_B1, BB_C1, BB_D1, BB_E1, BB_F1, BB_G1, BB_H1,
   BB_A2, BB_B2, BB_C2, BB_D2, BB_E2, BB_F2, BB_G2, BB_H2,
   BB_A3, BB_B3, BB_C3, BB_D3, BB_E3, BB_F3, BB_G3, BB_H3,
@@ -363,16 +354,16 @@ const [
   BB_A8, BB_B8, BB_C8, BB_D8, BB_E8, BB_F8, BB_G8, BB_H8,
 ] = BB_SQUARES;
 
-const BB_CORNERS = BB_A1 | BB_H1 | BB_A8 | BB_H8;
-const BB_CENTER = BB_D4 | BB_E4 | BB_D5 | BB_E5;
+export const BB_CORNERS = BB_A1 | BB_H1 | BB_A8 | BB_H8;
+export const BB_CENTER = BB_D4 | BB_E4 | BB_D5 | BB_E5;
 
-const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan;
-const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n;
+export const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan;
+export const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n;
 
-const BB_FILES = Array.from(utils.range(8)).map(
+export const BB_FILES = Array.from(utils.range(8)).map(
   i => 0x0101_0101_0101_0101n << BigInt(i),
 );
-const [
+export const [
   BB_FILE_A,
   BB_FILE_B,
   BB_FILE_C,
@@ -383,8 +374,8 @@ const [
   BB_FILE_H,
 ] = BB_FILES;
 
-const BB_RANKS = Array.from(utils.range(8)).map(i => 0xffn << BigInt(8 * i));
-const [
+export const BB_RANKS = Array.from(utils.range(8)).map(i => 0xffn << BigInt(8 * i));
+export const [
   BB_RANK_1,
   BB_RANK_2,
   BB_RANK_3,
@@ -395,13 +386,13 @@ const [
   BB_RANK_8,
 ] = BB_RANKS;
 
-const BB_BACKRANKS = BB_RANK_1 | BB_RANK_8;
+export const BB_BACKRANKS = BB_RANK_1 | BB_RANK_8;
 
-const lsb = (bb: Bitboard): Square => {
+export const lsb = (bb: Bitboard): Square => {
   return utils.bitLength(bb & -bb) - 1;
 };
 
-function* scanForward(bb: Bitboard): IterableIterator<Square> {
+export function* scanForward(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
     let r = bb & -bb;
     yield (utils.bitLength(r) - 1) as Square;
@@ -409,11 +400,11 @@ function* scanForward(bb: Bitboard): IterableIterator<Square> {
   }
 }
 
-const msb = (bb: Bitboard): Square => {
+export const msb = (bb: Bitboard): Square => {
   return (utils.bitLength(bb) - 1) as Square;
 };
 
-function* scanReversed(bb: Bitboard): IterableIterator<Square> {
+export function* scanReversed(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
     let r = utils.bitLength(bb) - 1;
     yield r as Square;
@@ -421,9 +412,9 @@ function* scanReversed(bb: Bitboard): IterableIterator<Square> {
   }
 }
 
-const popcount = (bb: Bitboard): number => utils.bitCount(bb);
+export const popcount = (bb: Bitboard): number => utils.bitCount(bb);
 
-const flipVertical = (bb: Bitboard): Bitboard => {
+export const flipVertical = (bb: Bitboard): Bitboard => {
   // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#FlipVertically
   bb =
     ((bb >> 8n) & 0x00ff_00ff_00ff_00ffn) |
@@ -435,7 +426,7 @@ const flipVertical = (bb: Bitboard): Bitboard => {
   return bb;
 };
 
-const flipHorizontal = (bb: Bitboard): Bitboard => {
+export const flipHorizontal = (bb: Bitboard): Bitboard => {
   // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#MirrorHorizontally
   bb =
     ((bb >> 1n) & 0x5555_5555_5555_5555n) |
@@ -449,7 +440,7 @@ const flipHorizontal = (bb: Bitboard): Bitboard => {
   return bb;
 };
 
-const flipDiagonal = (bb: Bitboard): Bitboard => {
+export const flipDiagonal = (bb: Bitboard): Bitboard => {
   // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#FlipabouttheDiagonal
   let t = (bb ^ (bb << 28n)) & 0x0f0f_0f0f_0000_0000n;
   bb = bb ^ t ^ (t >> 28n);
@@ -460,7 +451,7 @@ const flipDiagonal = (bb: Bitboard): Bitboard => {
   return bb;
 };
 
-const flipAntiDiagonal = (bb: Bitboard): Bitboard => {
+export const flipAntiDiagonal = (bb: Bitboard): Bitboard => {
   // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#FlipabouttheAntidiagonal
   let t = bb ^ (bb << 36n);
   bb = bb ^ ((t ^ (bb >> 36n)) & 0xf0f0_f0f0_0f0f_0f0fn);
@@ -471,55 +462,55 @@ const flipAntiDiagonal = (bb: Bitboard): Bitboard => {
   return bb;
 };
 
-const shiftDown = (b: Bitboard): Bitboard => {
+export const shiftDown = (b: Bitboard): Bitboard => {
   return b >> 8n;
 };
 
-const shift2Down = (b: Bitboard): Bitboard => {
+export const shift2Down = (b: Bitboard): Bitboard => {
   return b >> 16n;
 };
 
-const shiftUp = (b: Bitboard): Bitboard => {
+export const shiftUp = (b: Bitboard): Bitboard => {
   return (b << 8n) & BB_ALL;
 };
 
-const shift2Up = (b: Bitboard): Bitboard => {
+export const shift2Up = (b: Bitboard): Bitboard => {
   return (b << 16n) & BB_ALL;
 };
 
-const shiftRight = (b: Bitboard): Bitboard => {
+export const shiftRight = (b: Bitboard): Bitboard => {
   return (b << 1n) & ~BB_FILE_A & BB_ALL;
 };
 
-const shift2Right = (b: Bitboard): Bitboard => {
+export const shift2Right = (b: Bitboard): Bitboard => {
   return (b << 2n) & ~BB_FILE_A & ~BB_FILE_B & BB_ALL;
 };
 
-const shiftLeft = (b: Bitboard): Bitboard => {
+export const shiftLeft = (b: Bitboard): Bitboard => {
   return (b >> 1n) & ~BB_FILE_H;
 };
 
-const shift2Left = (b: Bitboard): Bitboard => {
+export const shift2Left = (b: Bitboard): Bitboard => {
   return (b >> 2n) & ~BB_FILE_G & ~BB_FILE_H;
 };
 
-const shiftUpLeft = (b: Bitboard): Bitboard => {
+export const shiftUpLeft = (b: Bitboard): Bitboard => {
   return (b << 7n) & ~BB_FILE_H & BB_ALL;
 };
 
-const shiftUpRight = (b: Bitboard): Bitboard => {
+export const shiftUpRight = (b: Bitboard): Bitboard => {
   return (b << 9n) & ~BB_FILE_A & BB_ALL;
 };
 
-const shiftDownLeft = (b: Bitboard): Bitboard => {
+export const shiftDownLeft = (b: Bitboard): Bitboard => {
   return (b >> 9n) & ~BB_FILE_H;
 };
 
-const shiftDownRight = (b: Bitboard): Bitboard => {
+export const shiftDownRight = (b: Bitboard): Bitboard => {
   return (b >> 7n) & ~BB_FILE_A;
 };
 
-const _slidingAttacks = (
+export const _slidingAttacks = (
   square: Square,
   occupied: Bitboard,
   deltas: number[],
@@ -546,29 +537,29 @@ const _slidingAttacks = (
   return attacks;
 };
 
-const _stepAttacks = (square: Square, deltas: number[]): Bitboard => {
+export const _stepAttacks = (square: Square, deltas: number[]): Bitboard => {
   return _slidingAttacks(square, BB_ALL, deltas);
 };
 
-const BB_KNIGHT_ATTACKS = SQUARES.map(sq =>
+export const BB_KNIGHT_ATTACKS = SQUARES.map(sq =>
   _stepAttacks(sq, [17, 15, 10, 6, -17, -15, -10, -6]),
 );
-const BB_KING_ATTACKS = SQUARES.map(sq =>
+export const BB_KING_ATTACKS = SQUARES.map(sq =>
   _stepAttacks(sq, [9, 8, 7, 1, -9, -8, -7, -1]),
 );
-const BB_PAWN_ATTACKS = [
+export const BB_PAWN_ATTACKS = [
   [-7, -9],
   [7, 9],
 ].map(deltas => SQUARES.map(sq => _stepAttacks(sq, deltas)));
 
-const _edges = (square: Square): Bitboard => {
+export const _edges = (square: Square): Bitboard => {
   return (
     ((BB_RANK_1 | BB_RANK_8) & ~BB_RANKS[squareRank(square)]) |
     ((BB_FILE_A | BB_FILE_H) & ~BB_FILES[squareFile(square)])
   );
 };
 
-function* _carryRippler(mask: Bitboard): IterableIterator<Bitboard> {
+export function* _carryRippler(mask: Bitboard): IterableIterator<Bitboard> {
   // # Carry-Rippler trick to iterate subsets of mask.
   let subset = BB_EMPTY;
   while (true) {
@@ -581,9 +572,9 @@ function* _carryRippler(mask: Bitboard): IterableIterator<Bitboard> {
   }
 }
 
-function _attackTable(
+export const _attackTable = (
   deltas: number[],
-): [Bitboard[], Map<Bitboard, Bitboard>[]] {
+): [Bitboard[], Map<Bitboard, Bitboard>[]] => {
   const maskTable: Bitboard[] = [];
   const attackTable: Map<Bitboard, Bitboard>[] = [];
 
@@ -603,11 +594,11 @@ function _attackTable(
   return [maskTable, attackTable];
 }
 
-const [BB_DIAG_MASKS, BB_DIAG_ATTACKS] = _attackTable([-9, -7, 7, 9]);
-const [BB_FILE_MASKS, BB_FILE_ATTACKS] = _attackTable([-8, 8]);
-const [BB_RANK_MASKS, BB_RANK_ATTACKS] = _attackTable([-1, 1]);
+export const [BB_DIAG_MASKS, BB_DIAG_ATTACKS] = _attackTable([-9, -7, 7, 9]);
+export const [BB_FILE_MASKS, BB_FILE_ATTACKS] = _attackTable([-8, 8]);
+export const [BB_RANK_MASKS, BB_RANK_ATTACKS] = _attackTable([-1, 1]);
 
-const _rays = (): Bitboard[][] => {
+export const _rays = (): Bitboard[][] => {
   let rays: Bitboard[][] = [];
   BB_SQUARES.forEach((bbA, a) => {
     let raysRow: Bitboard[] = [];
@@ -633,26 +624,26 @@ const _rays = (): Bitboard[][] => {
   return rays;
 };
 
-const BB_RAYS = _rays();
+export const BB_RAYS = _rays();
 
-const ray = (a: Square, b: Square): Bitboard => {
+export const ray = (a: Square, b: Square): Bitboard => {
   return BB_RAYS[a][b];
 };
 
-const between = (a: Square, b: Square): Bitboard => {
+export const between = (a: Square, b: Square): Bitboard => {
   const bb = BB_RAYS[a][b] & ((BB_ALL << BigInt(a)) ^ (BB_ALL << BigInt(b)));
   return bb & (bb - 1n);
 };
 
-const SAN_REGEX =
+export const SAN_REGEX =
   /^([NBKRQ])?([a-h])?([1-8])?[\\-x]?([a-h][1-8])(=?[nbrqkNBRQK])?[\\+#]?$/;
 
-const FEN_CASTLING_REGEX = /^(?:-|[KQABCDEFGH]{0,2}[kqabcdefgh]{0,2})$/;
+export const FEN_CASTLING_REGEX = /^(?:-|[KQABCDEFGH]{0,2}[kqabcdefgh]{0,2})$/;
 
 /**
  * A piece with type and color.
  */
-class Piece {
+export class Piece {
   /** The piece type. */
   pieceType: PieceType;
 
@@ -718,7 +709,7 @@ class Piece {
  *
  * Drops and null moves are supported.
  */
-class Move {
+export class Move {
   /** The source square. */
   fromSquare: Square;
 
@@ -865,7 +856,7 @@ class Move {
  * otherwise specified in the optional *boardFen* argument. If *boardFen*
  * is ``null``, an empty board is created.
  */
-class BaseBoard {
+export class BaseBoard {
   occupied: Bitboard;
   occupiedCo: [Bitboard, Bitboard];
   pawns: Bitboard;
@@ -1874,7 +1865,7 @@ class BaseBoard {
   }
 }
 
-class _BoardState<BoardT extends Board> {
+export class _BoardState<BoardT extends Board> {
   pawns: Bitboard;
   knights: Bitboard;
   bishops: Bitboard;
@@ -1963,7 +1954,7 @@ class _BoardState<BoardT extends Board> {
  *     (useful to gracefully handle errors or to implement chess variants).
  *     Use :func:`~chess.Board.isValid()` to detect invalid positions.
  */
-class Board extends BaseBoard {
+export class Board extends BaseBoard {
   static aliases: string[] = [
     'Standard',
     'Chess',
@@ -3269,7 +3260,7 @@ class Board extends BaseBoard {
       halfmoveClock = 0;
     } else {
       try {
-        halfmoveClock = parseIntStrict(halfmovePart);
+        halfmoveClock = utils.parseIntStrict(halfmovePart);
       } catch (e) {
         throw new Error(`ValueError: invalid half-move clock in fen: ${fen}`);
       }
@@ -3289,7 +3280,7 @@ class Board extends BaseBoard {
       fullmoveNumber = 1;
     } else {
       try {
-        fullmoveNumber = parseIntStrict(fullmovePart);
+        fullmoveNumber = utils.parseIntStrict(fullmovePart);
       } catch (e) {
         throw new Error(`ValueError: invalid fullmove number in fen: ${fen}`);
       }
@@ -5107,7 +5098,7 @@ class Board extends BaseBoard {
   }
 }
 
-class PseudoLegalMoveGenerator {
+export class PseudoLegalMoveGenerator {
   board: Board;
 
   constructor(board: Board) {
@@ -5147,7 +5138,7 @@ class PseudoLegalMoveGenerator {
   }
 }
 
-class LegalMoveGenerator {
+export class LegalMoveGenerator {
   board: Board;
 
   constructor(board: Board) {
@@ -5183,7 +5174,7 @@ class LegalMoveGenerator {
   }
 }
 
-type IntoSquareSet = Bitboard | Iterable<Square>;
+export type IntoSquareSet = Bitboard | Iterable<Square>;
 
 /**
  * A set of squares.
@@ -5261,7 +5252,7 @@ type IntoSquareSet = Bitboard | Iterable<Square>;
  * :func:`~chess.SquareSet.symmetricDifferenceUpdate()` and
  * :func:`~chess.SquareSet.clear()`.
  */
-class SquareSet {
+export class SquareSet {
   mask: Bitboard;
 
   constructor(squares: IntoSquareSet = BB_EMPTY) {
@@ -5604,7 +5595,7 @@ class SquareSet {
 }
 
 
-export {
+export default {
   COLORS,
   WHITE,
   BLACK,
@@ -5864,278 +5855,3 @@ export {
   LegalMoveGenerator,
   SquareSet,
 };
-
-export type {
-  EnPassantSpec,
-  Color,
-  PieceType,
-  Status,
-  Square,
-  Bitboard,
-  IntoSquareSet,
-};
-
-const chess = {
-  COLORS,
-  WHITE,
-  BLACK,
-  COLOR_NAMES,
-  PIECE_TYPES,
-  PAWN,
-  KNIGHT,
-  BISHOP,
-  ROOK,
-  QUEEN,
-  KING,
-  PIECE_SYMBOLS,
-  PIECE_NAMES,
-  pieceSymbol,
-  pieceName,
-  UNICODE_PIECE_SYMBOLS,
-  FILE_NAMES,
-  RANK_NAMES,
-  STARTING_FEN,
-  STARTING_BOARD_FEN,
-  STATUS_VALID,
-  STATUS_NO_WHITE_KING,
-  STATUS_NO_BLACK_KING,
-  STATUS_TOO_MANY_KINGS,
-  STATUS_TOO_MANY_WHITE_PAWNS,
-  STATUS_TOO_MANY_BLACK_PAWNS,
-  STATUS_PAWNS_ON_BACKRANK,
-  STATUS_TOO_MANY_WHITE_PIECES,
-  STATUS_TOO_MANY_BLACK_PIECES,
-  STATUS_BAD_CASTLING_RIGHTS,
-  STATUS_INVALID_EP_SQUARE,
-  STATUS_OPPOSITE_CHECK,
-  STATUS_EMPTY,
-  STATUS_RACE_CHECK,
-  STATUS_RACE_OVER,
-  STATUS_RACE_MATERIAL,
-  STATUS_TOO_MANY_CHECKERS,
-  STATUS_IMPOSSIBLE_CHECK,
-  Termination,
-  Outcome,
-  InvalidMoveError,
-  IllegalMoveError,
-  AmbiguousMoveError,
-  SQUARES,
-  A1,
-  B1,
-  C1,
-  D1,
-  E1,
-  F1,
-  G1,
-  H1,
-  A2,
-  B2,
-  C2,
-  D2,
-  E2,
-  F2,
-  G2,
-  H2,
-  A3,
-  B3,
-  C3,
-  D3,
-  E3,
-  F3,
-  G3,
-  H3,
-  A4,
-  B4,
-  C4,
-  D4,
-  E4,
-  F4,
-  G4,
-  H4,
-  A5,
-  B5,
-  C5,
-  D5,
-  E5,
-  F5,
-  G5,
-  H5,
-  A6,
-  B6,
-  C6,
-  D6,
-  E6,
-  F6,
-  G6,
-  H6,
-  A7,
-  B7,
-  C7,
-  D7,
-  E7,
-  F7,
-  G7,
-  H7,
-  A8,
-  B8,
-  C8,
-  D8,
-  E8,
-  F8,
-  G8,
-  H8,
-  SQUARE_NAMES,
-  parseSquare,
-  squareName,
-  square,
-  squareFile,
-  squareRank,
-  squareDistance,
-  squareManhattanDistance,
-  squareKnightDistance,
-  squareMirror,
-  SQUARES_180,
-  BB_EMPTY,
-  BB_ALL,
-  BB_SQUARES,
-  BB_A1,
-  BB_B1,
-  BB_C1,
-  BB_D1,
-  BB_E1,
-  BB_F1,
-  BB_G1,
-  BB_H1,
-  BB_A2,
-  BB_B2,
-  BB_C2,
-  BB_D2,
-  BB_E2,
-  BB_F2,
-  BB_G2,
-  BB_H2,
-  BB_A3,
-  BB_B3,
-  BB_C3,
-  BB_D3,
-  BB_E3,
-  BB_F3,
-  BB_G3,
-  BB_H3,
-  BB_A4,
-  BB_B4,
-  BB_C4,
-  BB_D4,
-  BB_E4,
-  BB_F4,
-  BB_G4,
-  BB_H4,
-  BB_A5,
-  BB_B5,
-  BB_C5,
-  BB_D5,
-  BB_E5,
-  BB_F5,
-  BB_G5,
-  BB_H5,
-  BB_A6,
-  BB_B6,
-  BB_C6,
-  BB_D6,
-  BB_E6,
-  BB_F6,
-  BB_G6,
-  BB_H6,
-  BB_A7,
-  BB_B7,
-  BB_C7,
-  BB_D7,
-  BB_E7,
-  BB_F7,
-  BB_G7,
-  BB_H7,
-  BB_A8,
-  BB_B8,
-  BB_C8,
-  BB_D8,
-  BB_E8,
-  BB_F8,
-  BB_G8,
-  BB_H8,
-  BB_CORNERS,
-  BB_CENTER,
-  BB_LIGHT_SQUARES,
-  BB_DARK_SQUARES,
-  BB_FILES,
-  BB_FILE_A,
-  BB_FILE_B,
-  BB_FILE_C,
-  BB_FILE_D,
-  BB_FILE_E,
-  BB_FILE_F,
-  BB_FILE_G,
-  BB_FILE_H,
-  BB_RANKS,
-  BB_RANK_1,
-  BB_RANK_2,
-  BB_RANK_3,
-  BB_RANK_4,
-  BB_RANK_5,
-  BB_RANK_6,
-  BB_RANK_7,
-  BB_RANK_8,
-  BB_BACKRANKS,
-  lsb,
-  scanForward,
-  msb,
-  scanReversed,
-  popcount,
-  flipVertical,
-  flipHorizontal,
-  flipDiagonal,
-  flipAntiDiagonal,
-  shiftDown,
-  shift2Down,
-  shiftUp,
-  shift2Up,
-  shiftRight,
-  shift2Right,
-  shiftLeft,
-  shift2Left,
-  shiftUpLeft,
-  shiftUpRight,
-  shiftDownLeft,
-  shiftDownRight,
-  _slidingAttacks,
-  _stepAttacks,
-  BB_KNIGHT_ATTACKS,
-  BB_KING_ATTACKS,
-  BB_PAWN_ATTACKS,
-  _edges,
-  _carryRippler,
-  _attackTable,
-  BB_DIAG_MASKS,
-  BB_DIAG_ATTACKS,
-  BB_FILE_MASKS,
-  BB_FILE_ATTACKS,
-  BB_RANK_MASKS,
-  BB_RANK_ATTACKS,
-  _rays,
-  BB_RAYS,
-  ray,
-  between,
-  SAN_REGEX,
-  FEN_CASTLING_REGEX,
-  Piece,
-  Move,
-  BaseBoard,
-  _BoardState,
-  Board,
-  PseudoLegalMoveGenerator,
-  LegalMoveGenerator,
-  SquareSet,
-};
-
-export default chess;
-
-// export * from './pgn';
