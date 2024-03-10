@@ -27,6 +27,18 @@ export const bool = (x: any) => !!x;
 
 
 /**
+ * Parse a string to an integer, throwing an error if the entire string
+ * is not formatted as an integer.
+ */
+export const parseIntStrict = (str: string): number => {
+  if (str.match(/^-?(0|[1-9]\d*)$/) === null) {
+    throw new Error(`ValueError: ${str} is not an integer`);
+  }
+  return parseInt(str, 10);
+};
+
+
+/**
  * Convert a boolean to 1 if true, 0 if false.
  */
 export const boolToNumber = (b: boolean): 1 | 0 => (b ? 1 : 0);
