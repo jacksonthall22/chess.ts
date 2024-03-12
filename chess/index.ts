@@ -1046,12 +1046,12 @@ export class BaseBoard {
       return BB_KING_ATTACKS[square];
     } else {
       let attacks = 0n;
-      if (bbSquare & this.bishops || bbSquare & this.queens) {
+      if ((bbSquare & this.bishops) || (bbSquare & this.queens)) {
         attacks = BB_DIAG_ATTACKS[square].get(
           BB_DIAG_MASKS[square] & this.occupied,
         ) as Bitboard;
       }
-      if (bbSquare & this.rooks || bbSquare & this.queens) {
+      if ((bbSquare & this.rooks) || (bbSquare & this.queens)) {
         attacks |=
           (BB_RANK_ATTACKS[square].get(
             BB_RANK_MASKS[square] & this.occupied,
@@ -2248,7 +2248,8 @@ export class Board extends BaseBoard {
     }
 
     // Prepare pawn advance generation.
-    let singleMoves, doubleMoves;
+    let singleMoves: Bitboard
+    let doubleMoves: Bitboard
     if (this.turn === WHITE) {
       singleMoves = (pawns << 8n) & ~this.occupied;
       doubleMoves =
@@ -2378,7 +2379,7 @@ export class Board extends BaseBoard {
 
   wasIntoCheck(): boolean {
     const king = this.king(!this.turn);
-    return king !== null && this.isAttackedBy(this.turn, king);
+    return (king !== null) && this.isAttackedBy(this.turn, king);
   }
 
   isPseudoLegal(move: Move): boolean {
@@ -2911,28 +2912,26 @@ export class Board extends BaseBoard {
     const fromBb = BB_SQUARES[move.fromSquare];
     const toBb = BB_SQUARES[move.toSquare];
 
-    const promoted = utils.bool(this.promoted & fromBb);
-    const pieceType = this._removePieceAt(move.fromSquare);
+    let promoted = utils.bool(this.promoted & fromBb);
+    let pieceType = this._removePieceAt(move.fromSquare);
     if (pieceType === null) {
-      throw new Error(
-        `push() expects move to be pseudo-legal, but got ${move} in ${this.boardFen()}`,
-      );
+      throw new Error(`ValueError: push() expects move to be pseudo-legal, but got ${move} in ${this.boardFen()}`)
     }
-    const captureSquare = move.toSquare;
-    const capturedPieceType = this.pieceTypeAt(captureSquare);
+    let captureSquare = move.toSquare;
+    let capturedPieceType = this.pieceTypeAt(captureSquare);
 
     // Update castling rights.
     this.castlingRights &= ~toBb & ~fromBb;
-    if (pieceType === KING && !promoted) {
+    if ((pieceType === KING) && !promoted) {
       if (this.turn === WHITE) {
         this.castlingRights &= ~BB_RANK_1;
       } else {
         this.castlingRights &= ~BB_RANK_8;
       }
-    } else if (capturedPieceType === KING && !(this.promoted & toBb)) {
-      if (this.turn === WHITE && squareRank(move.toSquare) === 7) {
+    } else if ((capturedPieceType === KING) && !(this.promoted & toBb)) {
+      if ((this.turn === WHITE) && (squareRank(move.toSquare) === 7)) {
         this.castlingRights &= ~BB_RANK_8;
-      } else if (this.turn === BLACK && squareRank(move.toSquare) === 0) {
+      } else if ((this.turn === BLACK) && (squareRank(move.toSquare) === 0)) {
         this.castlingRights &= ~BB_RANK_1;
       }
     }
@@ -2941,31 +2940,27 @@ export class Board extends BaseBoard {
     if (pieceType === PAWN) {
       const diff = move.toSquare - move.fromSquare;
 
-      if (diff === 16 && squareRank(move.fromSquare) === 1) {
+      if ((diff === 16) && (squareRank(move.fromSquare) === 1)) {
         this.epSquare = move.fromSquare + 8;
-      } else if (diff === -16 && squareRank(move.fromSquare) === 6) {
+      } else if ((diff === -16) && (squareRank(move.fromSquare) === 6)) {
         this.epSquare = move.fromSquare - 8;
-      } else if (
-        move.toSquare === epSquare &&
-        [7, 9].includes(Math.abs(diff)) &&
-        !capturedPieceType
-      ) {
+      } else if ((move.toSquare === epSquare) && [7, 9].includes(Math.abs(diff)) && (capturedPieceType === null)) {
         // Remove pawns captured en passant.
-        const down = this.turn == WHITE ? -8 : 8;
-        const captureSquare = epSquare + down;
-        const capturedPieceType = this._removePieceAt(captureSquare);
+        const down = this.turn === WHITE ? -8 : 8;
+        captureSquare = epSquare + down;
+        capturedPieceType = this._removePieceAt(captureSquare);
       }
     }
 
     // Promotion.
-    if (move.promotion != null) {
-      const promoted = true;
-      const pieceType = move.promotion;
+    if (move.promotion !== null) {
+      promoted = true;
+      pieceType = move.promotion;
     }
 
     // Castling.
     const castling =
-      pieceType === KING && utils.bool(this.occupiedCo[colorIdx(this.turn)] & toBb);
+      (pieceType === KING) && utils.bool(this.occupiedCo[colorIdx(this.turn)] & toBb);
     if (castling) {
       const aSide = squareFile(move.toSquare) < squareFile(move.fromSquare);
 
@@ -2973,18 +2968,18 @@ export class Board extends BaseBoard {
       this._removePieceAt(move.toSquare);
 
       if (aSide) {
-        this._setPieceAt(this.turn == WHITE ? C1 : C8, KING, this.turn);
-        this._setPieceAt(this.turn == WHITE ? D1 : D8, ROOK, this.turn);
+        this._setPieceAt(this.turn === WHITE ? C1 : C8, KING, this.turn);
+        this._setPieceAt(this.turn === WHITE ? D1 : D8, ROOK, this.turn);
       } else {
-        this._setPieceAt(this.turn == WHITE ? G1 : G8, KING, this.turn);
-        this._setPieceAt(this.turn == WHITE ? F1 : F8, ROOK, this.turn);
+        this._setPieceAt(this.turn === WHITE ? G1 : G8, KING, this.turn);
+        this._setPieceAt(this.turn === WHITE ? F1 : F8, ROOK, this.turn);
       }
     }
 
     // Put the piece on the target square.
     if (!castling) {
-      const wasPromoted = utils.bool(this.promoted & toBb);
-      this._setPieceAt(move.toSquare, pieceType, this.turn, promoted);
+      let wasPromoted = utils.bool(this.promoted & toBb)
+      this._setPieceAt(move.toSquare, pieceType, this.turn, promoted)
 
       if (capturedPieceType !== null) {
         this._pushCapture(move, captureSquare, capturedPieceType, wasPromoted);
