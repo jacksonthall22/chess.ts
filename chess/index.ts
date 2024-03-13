@@ -608,7 +608,7 @@ export const _rays = (): Bitboard[][] => {
           ((BB_DIAG_ATTACKS[a].get(0n) as Bitboard) &
             (BB_DIAG_ATTACKS[b].get(0n) as Bitboard)) |
             bbA |
-            bbB, // TODO Check if prettier adding a comma here matters (CGPT says no)
+            bbB,
         );
       } else if ((BB_RANK_ATTACKS[a].get(0n) as Bitboard) & bbB) {
         raysRow.push((BB_RANK_ATTACKS[a].get(0n) as Bitboard) | bbA);
@@ -2727,7 +2727,6 @@ export class Board extends BaseBoard {
    * be replayed because there is no incremental transposition table.
    */
   canClaimThreefoldRepetition(): boolean {
-    // TODO check this function's logic (straight outta ChatGPT)
     const transpositionKey = this._transpositionKey();
     const transpositions = new utils.Counter<bigint>();
     transpositions.update([transpositionKey]);
@@ -2750,7 +2749,7 @@ export class Board extends BaseBoard {
     }
 
     // Threefold repetition occurred.
-    if ((transpositions.get(transpositionKey) as number) >= 3) {
+    if (transpositions.get(transpositionKey)! >= 3) {
       return true;
     }
 
@@ -2758,7 +2757,7 @@ export class Board extends BaseBoard {
     for (const move of this.generateLegalMoves()) {
       this.push(move);
       try {
-        if ((transpositions.get(this._transpositionKey()) as number) >= 2) {
+        if (transpositions.get(this._transpositionKey())! >= 2) {
           return true;
         }
       } finally {
