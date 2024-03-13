@@ -1,10 +1,8 @@
 // NOTE: This skips a bunch of stuff for now.
 // This only implements enough for minimal functionality of `pgn.ts`.
 
-
-import * as utils from "./utils"
-import * as chess from "./index"
-
+import * as utils from './utils'
+import * as chess from './index'
 
 const VARIANTS: (typeof chess.Board)[] = [
   chess.Board,
@@ -18,14 +16,18 @@ const VARIANTS: (typeof chess.Board)[] = [
   // CrazyhouseBoard,
 ]
 
-
 /**
  * Looks for a variant board class by variant name. Supports many common
  * aliases.
  */
 export const findVariant = (name: string): typeof chess.Board => {
   for (const variant of VARIANTS) {
-    if (utils.iterAny(variant.aliases, (alias) => alias.toLowerCase() === name.toLowerCase())) {
+    if (
+      utils.iterAny(
+        variant.aliases,
+        alias => alias.toLowerCase() === name.toLowerCase(),
+      )
+    ) {
       return variant
     }
   }

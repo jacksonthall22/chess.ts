@@ -1,10 +1,8 @@
 // NOTE: This skips a bunch of stuff for now.
 // This only implements enough for `pgn.ts` to work.
 
-
-import * as chess from "./index"
-import { Square } from "./index"
-
+import * as chess from './index'
+import { Square } from './index'
 
 /**
  * Details of an arrow to be drawn.
@@ -19,7 +17,11 @@ export class Arrow {
   /** Arrow color. */
   color: string
 
-  constructor(tail: Square, head: Square, { color = "green" }: { color?: string } = {}) {
+  constructor(
+    tail: Square,
+    head: Square,
+    { color = 'green' }: { color?: string } = {},
+  ) {
     this.tail = tail
     this.head = head
     this.color = color
@@ -28,19 +30,19 @@ export class Arrow {
   /**
    * Returns the arrow in the format used by ``[%csl ...]`` and
    * ``[%cal ...]`` PGN annotations, e.g., ``Ga1`` or ``Ya2h2``.
-   * 
+   *
    * Colors other than ``red``, ``yellow``, and ``blue`` default to green.
    */
   pgn(): string {
-    let color: string;
-    if (this.color === "red") {
-      color = "R"
-    } else if (this.color === "yellow") {
-      color = "Y"
-    } else if (this.color === "blue") {
-      color = "B"
+    let color: string
+    if (this.color === 'red') {
+      color = 'R'
+    } else if (this.color === 'yellow') {
+      color = 'Y'
+    } else if (this.color === 'blue') {
+      color = 'B'
     } else {
-      color = "G"
+      color = 'G'
     }
 
     if (this.tail === this.head) {
@@ -63,27 +65,27 @@ export class Arrow {
   /**
    * Parses an arrow from the format used by ``[%csl ...]`` and
    * ``[%cal ...]`` PGN annotations, e.g., ``Ga1`` or ``Ya2h2``.
-   * 
+   *
    * Also allows skipping the color prefix, defaulting to green.
-   * 
+   *
    * :raises: :exc:`ValueError` if the format is invalid.
    */
   static fromPgn(pgn: string): Arrow {
-    let color: string;
-    if (pgn.startsWith("G")) {
-      color = "green"
+    let color: string
+    if (pgn.startsWith('G')) {
+      color = 'green'
       pgn = pgn.slice(1)
-    } else if (pgn.startsWith("R")) {
-      color = "red"
+    } else if (pgn.startsWith('R')) {
+      color = 'red'
       pgn = pgn.slice(1)
-    } else if (pgn.startsWith("Y")) {
-      color = "yellow"
+    } else if (pgn.startsWith('Y')) {
+      color = 'yellow'
       pgn = pgn.slice(1)
-    } else if (pgn.startsWith("B")) {
-      color = "blue"
+    } else if (pgn.startsWith('B')) {
+      color = 'blue'
       pgn = pgn.slice(1)
     } else {
-      color = "green"
+      color = 'green'
     }
 
     const tail = chess.parseSquare(pgn.slice(0, 2))

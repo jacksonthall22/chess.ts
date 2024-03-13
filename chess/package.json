@@ -11,6 +11,9 @@
     "type": "git",
     "url": "git+https://github.com/jacksonthall22/chess.ts.git"
   },
+  "files": [
+    "*.ts"
+  ],
   "keywords": [
     "typescript",
     "chess",
