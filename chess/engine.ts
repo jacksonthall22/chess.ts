@@ -1,14 +1,12 @@
-import * as utils from "./utils"
+import * as utils from './utils'
 
-import * as chess from "./index"
-import { Color } from "./index"
+import * as chess from './index'
+import { Color } from './index'
 
-
+// prettier-ignore
 export type WdlModel = "sf" | "sf16" | "sf15.1" | "sf15" | "sf14" | "sf12" | "lichess"
 
-
 // NOTE: Skipping a bunch of stuff in `python-chess` for running analysis
-
 
 /**
  * A relative :class:`~chess.engine.Score` and the point of view.
@@ -56,15 +54,18 @@ export class PovScore {
   /**
    * See :func:`~chess.engine.Score.wdl()`.
    */
-  wdl({ model = "sf", ply = 30 }: { model?: WdlModel, ply?: number } = {}): PovWdl {
+  wdl({
+    model = 'sf',
+    ply = 30,
+  }: { model?: WdlModel; ply?: number } = {}): PovWdl {
     return new PovWdl(this.relative.wdl({ model, ply }), this.turn)
   }
 
   toRepr(): string {
-    return `PovScore(${this.relative.toString()}, ${this.turn ? "WHITE" : "BLACK"})`
+    return `PovScore(${this.relative.toString()}, ${this.turn ? 'WHITE' : 'BLACK'})`
   }
 
-  toString = this.toRepr;  // Not in `python-chess`, including for convenience
+  toString = this.toRepr // Not in `python-chess`, including for convenience
 
   equals(other: object): boolean {
     if (other instanceof PovScore) {
@@ -75,42 +76,41 @@ export class PovScore {
   }
 }
 
-
 /**
  * Evaluation of a position.
- * 
+ *
  * The score can be :class:`~chess.engine.Cp` (centi-pawns),
  * :class:`~chess.engine.Mate` or :py:data:`~chess.engine.MateGiven`.
  * A positive value indicates an advantage.
- * 
+ *
  * There is a total order defined on centi-pawn and mate scores.
- * 
+ *
  * >>> from chess.engine import Cp, Mate, MateGiven
  * >>>
  * >>> Mate(-0) < Mate(-1) < Cp(-50) < Cp(200) < Mate(4) < Mate(1) < MateGiven
  * true
- * 
+ *
  * Scores can be negated to change the point of view:
- * 
+ *
  * >>> -Cp(20)
  * Cp(-20)
- * 
+ *
  * >>> -Mate(-4)
  * Mate(+4)
- * 
+ *
  * >>> -Mate(0)
  * MateGiven
  */
 export abstract class Score {
-  abstract score(): number | null;
-  abstract score({ mateScore }: { mateScore: number }): number;
-  abstract score({ mateScore }: { mateScore: null }): number | null;
+  abstract score(): number | null
+  abstract score({ mateScore }: { mateScore: number }): number
+  abstract score({ mateScore }: { mateScore: null }): number | null
   /**
    * Returns the centi-pawn score as an integer or ``null``.
-   * 
+   *
    * You can optionally pass a large value to convert mate scores to
    * centi-pawn scores.
-   * 
+   *
    * >>> Cp(-300).score()
    * -300
    * >>> Mate(5).score() is null
@@ -118,17 +118,17 @@ export abstract class Score {
    * >>> Mate(5).score(mateScore=100000)
    * 99995
    */
-  abstract score({ mateScore }: { mateScore?: number | null }): number | null;
+  abstract score({ mateScore }: { mateScore?: number | null }): number | null
 
   /**
    * Returns the number of plies to mate, negative if we are getting
    * mated, or ``null``.
-   * 
+   *
    * .. warning::
    *     This conflates ``Mate(0)`` (we lost) and ``MateGiven``
    *     (we won) to ``0``.
    */
-  abstract mate(): number | null;
+  abstract mate(): number | null
 
   /**
    * Tests if this is a mate score.
@@ -140,20 +140,20 @@ export abstract class Score {
   /**
    * Returns statistics for the expected outcome of this game, based on
    * a *model*, given that this score is reached at *ply*.
-   * 
+   *
    * Scores have a total order, but it makes little sense to compute
    * the difference between two scores. For example, going from
    * ``Cp(-100)`` to ``Cp(+100)`` is much more significant than going
    * from ``Cp(+300)`` to ``Cp(+500)``. It is better to compute differences
    * of the expectation values for the outcome of the game (based on winning
    * chances and drawing chances).
-   * 
+   *
    * >>> Cp(100).wdl().expectation() - Cp(-100).wdl().expectation()  // doctest: +ELLIPSIS
    * 0.379...
-   * 
+   *
    * >>> Cp(500).wdl().expectation() - Cp(300).wdl().expectation()  // doctest: +ELLIPSIS
    * 0.015...
-   * 
+   *
    * :param model:
    *     * ``sf``, the WDL model used by the latest Stockfish
    *       (currently ``sf16``).
@@ -168,21 +168,21 @@ export abstract class Score {
    *     position. Models may scale scores slightly differently based on
    *     this. Defaults to middle game.
    */
-  abstract wdl({ model, ply }: { model?: WdlModel, ply?: number }): Wdl;
+  abstract wdl({ model, ply }: { model?: WdlModel; ply?: number }): Wdl
 
   // __neg__()
-  abstract neg(): Score;
+  abstract neg(): Score
 
   // __pos__()
-  abstract pos(): Score;
+  abstract pos(): Score
 
-  abstract abs(): Score;
+  abstract abs(): Score
 
   _scoreTuple(): [boolean, boolean, boolean, number, number | null] {
     const mate = this.mate()
     return [
       this instanceof MateGivenType,
-      (mate !== null) && (mate > 0),
+      mate !== null && mate > 0,
       mate === null,
       -(mate || 0),
       this.score(),
@@ -240,9 +240,10 @@ export const _sf16Wins = (cp: number, { ply }: { ply: number }): number => {
   const NormalizeToPawnValue = 328
   // https://github.com/official-stockfish/Stockfish/blob/sf16/src/uci.cpp//L200-L224
   const m = Math.min(240, Math.max(ply, 0)) / 64
-  const a = (((0.38036525 * m + -2.82015070) * m + 23.17882135) * m) + 307.36768407
-  const b = (((-2.29434733 * m + 13.27689788) * m + -14.26828904) * m) + 63.45318330
-  const x = Math.min(4000, Math.max(cp * NormalizeToPawnValue / 100, -4000))
+  const a = ((0.38036525 * m + -2.8201507) * m + 23.17882135) * m + 307.36768407
+  const b =
+    ((-2.29434733 * m + 13.27689788) * m + -14.26828904) * m + 63.4531833
+  const x = Math.min(4000, Math.max((cp * NormalizeToPawnValue) / 100, -4000))
   return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
 }
 
@@ -251,17 +252,21 @@ export const _sf151Wins = (cp: number, { ply }: { ply: number }): number => {
   const NormalizeToPawnValue = 361
   // https://github.com/official-stockfish/Stockfish/blob/sf15.1/src/uci.cpp//L200-L224
   const m = Math.min(240, Math.max(ply, 0)) / 64
-  const a = (((-0.58270499 * m + 2.68512549) * m + 15.24638015) * m) + 344.49745382
-  const b = (((-2.65734562 * m + 15.96509799) * m + -20.69040836) * m) + 73.61029937
-  const x = Math.min(4000, Math.max(cp * NormalizeToPawnValue / 100, -4000))
+  const a =
+    ((-0.58270499 * m + 2.68512549) * m + 15.24638015) * m + 344.49745382
+  const b =
+    ((-2.65734562 * m + 15.96509799) * m + -20.69040836) * m + 73.61029937
+  const x = Math.min(4000, Math.max((cp * NormalizeToPawnValue) / 100, -4000))
   return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
 }
 
 export const _sf15Wins = (cp: number, { ply }: { ply: number }): number => {
   // https://github.com/official-stockfish/Stockfish/blob/sf15/src/uci.cpp//L200-L220
   const m = Math.min(240, Math.max(ply, 0)) / 64
-  const a = (((-1.17202460e-1 * m + 5.94729104e-1) * m + 1.12065546e+1) * m) + 1.22606222e+2
-  const b = (((-1.79066759 * m + 11.30759193) * m + -17.43677612) * m) + 36.47147479
+  const a =
+    ((-1.1720246e-1 * m + 5.94729104e-1) * m + 1.12065546e1) * m + 1.22606222e2
+  const b =
+    ((-1.79066759 * m + 11.30759193) * m + -17.43677612) * m + 36.47147479
   const x = Math.min(2000, Math.max(cp, -2000))
   return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
 }
@@ -269,8 +274,10 @@ export const _sf15Wins = (cp: number, { ply }: { ply: number }): number => {
 export const _sf14Wins = (cp: number, { ply }: { ply: number }): number => {
   // https://github.com/official-stockfish/Stockfish/blob/sf14/src/uci.cpp//L200-L220
   const m = Math.min(240, Math.max(ply, 0)) / 64
-  const a = (((-3.68389304 * m + 30.07065921) * m + -60.52878723) * m) + 149.53378557
-  const b = (((-2.01818570 * m + 15.85685038) * m + -29.83452023) * m) + 47.59078827
+  const a =
+    ((-3.68389304 * m + 30.07065921) * m + -60.52878723) * m + 149.53378557
+  const b =
+    ((-2.0181857 * m + 15.85685038) * m + -29.83452023) * m + 47.59078827
   const x = Math.min(2000, Math.max(cp, -2000))
   return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
 }
@@ -278,8 +285,10 @@ export const _sf14Wins = (cp: number, { ply }: { ply: number }): number => {
 export const _sf12Wins = (cp: number, { ply }: { ply: number }): number => {
   // https://github.com/official-stockfish/Stockfish/blob/sf12/src/uci.cpp//L198-L218
   const m = Math.min(240, Math.max(ply, 0)) / 64
-  const a = (((-8.24404295 * m + 64.23892342) * m + -95.73056462) * m) + 153.86478679
-  const b = (((-3.37154371 * m + 28.44489198) * m + -56.67657741) * m) + 72.05858751
+  const a =
+    ((-8.24404295 * m + 64.23892342) * m + -95.73056462) * m + 153.86478679
+  const b =
+    ((-3.37154371 * m + 28.44489198) * m + -56.67657741) * m + 72.05858751
   const x = Math.min(1000, Math.max(cp, -1000))
   return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
 }
@@ -290,12 +299,11 @@ export const _lichessRawWins = (cp: number): number => {
   return Math.round(1000 / (1 + Math.exp(-0.00368208 * cp)))
 }
 
-
 /**
  * Centi-pawn score.
  */
 export class Cp extends Score {
-  cp: number;
+  cp: number
 
   constructor(cp: number) {
     super()
@@ -310,22 +318,25 @@ export class Cp extends Score {
     return this.cp
   }
 
-  wdl({ model = "sf", ply = 30 }: { model?: WdlModel, ply?: number } = {}): Wdl {
+  wdl({
+    model = 'sf',
+    ply = 30,
+  }: { model?: WdlModel; ply?: number } = {}): Wdl {
     let wins: number
     let losses: number
-    if (model === "lichess") {
+    if (model === 'lichess') {
       wins = _lichessRawWins(Math.max(-1000, Math.min(this.cp, 1000)))
       losses = 1000 - wins
-    } else if (model === "sf12") {
+    } else if (model === 'sf12') {
       wins = _sf12Wins(this.cp, { ply })
       losses = _sf12Wins(-this.cp, { ply })
-    } else if (model === "sf14") {
+    } else if (model === 'sf14') {
       wins = _sf14Wins(this.cp, { ply })
       losses = _sf14Wins(-this.cp, { ply })
-    } else if (model === "sf15") {
+    } else if (model === 'sf15') {
       wins = _sf15Wins(this.cp, { ply })
       losses = _sf15Wins(-this.cp, { ply })
-    } else if (model === "sf15.1") {
+    } else if (model === 'sf15.1') {
       wins = _sf151Wins(this.cp, { ply })
       losses = _sf151Wins(-this.cp, { ply })
     } else {
@@ -362,12 +373,11 @@ export class Cp extends Score {
   }
 }
 
-
 /**
  * Mate score.
  */
 export class Mate extends Score {
-  moves: number;
+  moves: number
 
   constructor(moves: number) {
     super()
@@ -378,10 +388,12 @@ export class Mate extends Score {
     return this.moves
   }
 
-  score(): number | null;
-  score({ mateScore }: { mateScore: number }): number;
-  score({ mateScore }: { mateScore?: number | null }): number | null;
-  score({ mateScore = null }: { mateScore?: number | null } = {}): number | null {
+  score(): number | null
+  score({ mateScore }: { mateScore: number }): number
+  score({ mateScore }: { mateScore?: number | null }): number | null
+  score({ mateScore = null }: { mateScore?: number | null } = {}):
+    | number
+    | null {
     if (mateScore === null) {
       return null
     } else if (this.moves > 0) {
@@ -391,11 +403,16 @@ export class Mate extends Score {
     }
   }
 
-  wdl({ model = "sf", ply = 30 }: { model?: WdlModel, ply?: number } = {}): Wdl {
-    if (model === "lichess") {
+  wdl({
+    model = 'sf',
+    ply = 30,
+  }: { model?: WdlModel; ply?: number } = {}): Wdl {
+    if (model === 'lichess') {
       const cp = (21 - Math.min(10, Math.abs(this.moves))) * 100
       const wins = _lichessRawWins(cp)
-      return this.moves > 0 ? new Wdl(wins, 0, 1000 - wins) : new Wdl(1000 - wins, 0, wins)
+      return this.moves > 0
+        ? new Wdl(wins, 0, 1000 - wins)
+        : new Wdl(1000 - wins, 0, wins)
     } else {
       return this.moves > 0 ? new Wdl(1000, 0, 0) : new Wdl(0, 0, 1000)
     }
@@ -408,7 +425,7 @@ export class Mate extends Score {
 
   // __repr__()
   toRepr(): string {
-    return `Mate(${this.toString().replace(/^#/, "")})`
+    return `Mate(${this.toString().replace(/^#/, '')})`
   }
 
   // __neg__()
@@ -426,7 +443,6 @@ export class Mate extends Score {
   }
 }
 
-
 /**
  * Winning mate score, equivalent to ``-Mate(0)``.
  */
@@ -435,14 +451,19 @@ export class MateGivenType extends Score {
     return 0
   }
 
-  score(): number | null;
-  score({ mateScore }: { mateScore: number }): number;
-  score({ mateScore }: { mateScore?: number | null }): number | null;
-  score({ mateScore = null }: { mateScore?: number | null } = {}): number | null {
+  score(): number | null
+  score({ mateScore }: { mateScore: number }): number
+  score({ mateScore }: { mateScore?: number | null }): number | null
+  score({ mateScore = null }: { mateScore?: number | null } = {}):
+    | number
+    | null {
     return mateScore
   }
 
-  wdl({ model = "sf", ply = 30 }: { model?: WdlModel, ply?: number } = {}): Wdl {
+  wdl({
+    model = 'sf',
+    ply = 30,
+  }: { model?: WdlModel; ply?: number } = {}): Wdl {
     return new Wdl(1000, 0, 0)
   }
 
@@ -463,22 +484,21 @@ export class MateGivenType extends Score {
 
   // __repr__()
   toRepr(): string {
-    return "MateGiven"
+    return 'MateGiven'
   }
 
   // __str__()
   toString(): string {
-    return "//+0"
+    return '//+0'
   }
 }
 
 export const MateGiven = new MateGivenType()
 
-
 /**
  * Relative :class:`win/draw/loss statistics <chess.engine.Wdl>` and the point
  * of view.
- * 
+ *
  * .. deprecated:: 1.2
  *     Behaves like a tuple
  *     ``(wdl.relative.wins, wdl.relative.draws, wdl.relative.losses)``
@@ -526,7 +546,7 @@ export class PovWdl {
 
   // __repr__()
   toRepr(): string {
-    return `PovWdl(${this.relative}, ${this.turn ? "WHITE" : "BLACK"})`
+    return `PovWdl(${this.relative}, ${this.turn ? 'WHITE' : 'BLACK'})`
   }
 
   // Unfortunately in python-chess v1.1.0, info["wdl"] was a simple tuple
@@ -556,16 +576,17 @@ export class PovWdl {
     if (other instanceof PovWdl) {
       return this.white() === other.white()
     } else if (other instanceof Array) {
-      return other.length === 3 && 
+      return (
+        other.length === 3 &&
         this.relative.wins === other[0] &&
         this.relative.draws === other[1] &&
         this.relative.losses === other[2]
+      )
     } else {
       return false
     }
   }
 }
-
 
 /**
  * Win/draw/loss statistics.
@@ -573,7 +594,7 @@ export class PovWdl {
 export class Wdl {
   /** The number of wins. */
   wins: number
-  
+
   /** The number of draws. */
   draws: number
 
