@@ -21,9 +21,11 @@ export class Counter<T> extends Map<T, number> {
 
 
 /**
- * Return `!!x`.
+ * Return a global version of the given regex pattern.
  */
-export const bool = (x: any) => !!x;
+export const toGlobal = (pat: RegExp): RegExp => {
+  return pat.global ? pat : new RegExp(pat.source, pat.flags + 'g');
+}
 
 
 /**
@@ -39,6 +41,54 @@ export const parseIntStrict = (str: string): number => {
 
 
 /**
+ * Replace the first `count` instanaces of `pat` in `inputStr` with `repl`,
+ * which may either be a new string, or a function that takes the matched
+ * string and returns a new string. Converts `regex` to a global regex if
+ * it is not already so that all instances could be replaced.
+ */
+export const subn = (
+  regex: RegExp,
+  replacer: (substring: string, ...args: any[]) => string,
+  str: string,
+  count: number = 0
+): [string, number] => {
+let found = 0;
+regex = toGlobal(regex);
+const result = str.replace(regex, (...args) => {
+  if (count === 0 || found < count) {
+    found++;
+    return replacer(...args);
+  }
+  return args[0]; // return the match itself
+});
+return [result, found];
+}
+
+
+export const sub = (
+  regex: RegExp,
+  replacer: (substring: string, ...args: any[]) => string,
+  str: string
+): string => {
+  return subn(regex, replacer, str)[0];
+}
+
+
+/**
+ * A mirror of Python's `str.isspace()` method.
+ */
+export const isspace = (s: string): boolean => {
+  return s !== '' && s.trim() === '';
+}
+
+
+/**
+ * Return `!!x`.
+ */
+export const bool = (x: any) => !!x;
+
+
+/**
  * Convert a boolean to 1 if true, 0 if false.
  */
 export const boolToNumber = (b: boolean): 1 | 0 => (b ? 1 : 0);
@@ -49,7 +99,7 @@ export const boolToNumber = (b: boolean): 1 | 0 => (b ? 1 : 0);
  *
  * A mirror of Python's `divmod()` function.
  */
-export function divmod(x: number, y: number): [number, number] {
+export const divmod = (x: number, y: number): [number, number] => {
   const quotient = Math.floor(x / y);
   const remainder = x % y;
   return [quotient, remainder];
@@ -59,7 +109,7 @@ export function divmod(x: number, y: number): [number, number] {
 /**
  * Get the number of bits necessary to represent `n` in binary.
  * 
- * A mirror of Python's `int.bit_length()` function.
+ * A mirror of Python's `int.bit_length()` method.
  */
 export const bitLength = (n: number | bigint): number => {
   let length = 0;
@@ -82,7 +132,7 @@ export const bitLength = (n: number | bigint): number => {
  * Number of ones in the binary representation of the absolute value of `n`.
  * Also known as the population count.
  * 
- * A mirror of Python's `int.bit_count()` function.
+ * A mirror of Python's `int.bit_count()` method.
  */
 export const bitCount = (n: number | bigint): number => {
   let count = 0;
@@ -131,6 +181,40 @@ export function* enumerate<T>(
 ): IterableIterator<[number, T]> {
   for (const value of iterable) {
     yield [start++, value];
+  }
+}
+
+
+/**
+ * A mirror of Python's `itertools.chain` function.
+ */
+export function* iterChain<T>(...iterables: Iterable<T>[]): IterableIterator<T> {
+  for (const iterable of iterables) {
+    yield* iterable;
+  }
+}
+
+
+/**
+ * A mirror of Python's `itertools.islice` function.
+ */
+export function* islice<T>(iterable: Iterable<T>, start: number | null, stop: number | null, step: number = 1): IterableIterator<T> {
+  if (start === null) {
+    start = 0;
+  }
+  let i = 0;
+  for (const item of iterable) {
+    if (i < start) {
+      i++;
+      continue;
+    }
+    if (stop !== null && i >= stop) {
+      break;
+    }
+    if ((i - start) % step === 0) {
+      yield item;
+    }
+    i++;
   }
 }
 
@@ -212,7 +296,7 @@ export const iterAll = <T>(
  */
 export function* iterFilter<T>(
   iterable: Iterable<T>,
-  predicate: (value: T) => boolean,
+  predicate: (value: T) => boolean = bool,
 ): IterableIterator<T> {
   for (const item of iterable) {
     if (predicate(item)) {
@@ -232,4 +316,14 @@ export function* iterMap<T1, T2>(
   for (let x of iterable) {
     yield callback(x);
   }
+}
+
+
+/**
+ * Remove the first occurrence of `element` from `src` in-place.
+ */
+export const remove = <T>(src: T[], element: T): void => {
+  const index: number = src.indexOf(element);
+  if (index === -1) return;
+  src.splice(index, 1);
 }
