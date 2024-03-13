@@ -1,4 +1,3 @@
 *.code-workspace
 __pycache__/
 .vscode/
-temp.txt
