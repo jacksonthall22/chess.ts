@@ -1,7 +1,7 @@
 {
   "name": "@jacksonthall22/chess.ts",
-  "version": "0.0.1",
-  "author": "Jackson Hall <jacksonthall22+chess.ts@gmail.com> (https://www.linkedin.com/in/jackson-t-hall/)",
+  "version": "0.1.0",
+  "author": "Jackson Thurner Hall <jacksonthall22+chess.ts@gmail.com> (https://www.linkedin.com/in/jackson-t-hall/)",
   "description": "A direct port of `python-chess` to TypeScript!",
   "main": "index.ts",
   "scripts": {
@@ -15,10 +15,11 @@
     "*.ts"
   ],
   "keywords": [
-    "typescript",
+    "chess.ts",
+    "chess.js",
     "chess",
-    "python-chess",
-    "chess.ts"
+    "typescript",
+    "python-chess"
   ],
   "license": "SEE LICENSE IN LICENSE.txt",
   "bugs": {
