@@ -1,5 +1,5 @@
 // import engine from './engine';
-import { Board, Move, Square } from './index'
+import { Board, Color, Move, Square, WHITE } from './index'
 import { PovScore, Cp, Score, Mate } from './engine'
 import { Arrow } from './svg'
 import { findVariant } from './variant'
