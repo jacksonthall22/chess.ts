@@ -10,12 +10,29 @@
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
-import * as utils from './utils'
+import {
+  bitLength,
+  bitCount,
+  bool,
+  boolToNumber,
+  Counter,
+  divmod,
+  enumerate,
+  iterAny,
+  iterAll,
+  iterFilter,
+  iterIncludes,
+  iterMap,
+  iterNext,
+  parseIntStrict,
+  range,
+  StopIteration,
+} from './utils'
 
 export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
-export const colorIdx = (color: Color): 1 | 0 => utils.boolToNumber(color)
+export const colorIdx = (color: Color): 1 | 0 => boolToNumber(color)
 
 /** ========== Direct transpilation ========== */
 
@@ -234,7 +251,7 @@ export const enum Square { // Instead of `Square = number`
   A7, B7, C7, D7, E7, F7, G7, H7,
   A8, B8, C8, D8, E8, F8, G8, H8,
 }
-export const SQUARES = Array.from(utils.range(64)) as Square[]
+export const SQUARES = Array.from(range(64)) as Square[]
 // prettier-ignore
 export const [
   A1, B1, C1, D1, E1, F1, G1, H1,
@@ -368,7 +385,7 @@ export const BB_CENTER = BB_D4 | BB_E4 | BB_D5 | BB_E5
 export const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan
 export const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n
 
-export const BB_FILES = Array.from(utils.range(8)).map(
+export const BB_FILES = Array.from(range(8)).map(
   i => 0x0101_0101_0101_0101n << BigInt(i),
 )
 export const [
@@ -382,9 +399,7 @@ export const [
   BB_FILE_H,
 ] = BB_FILES
 
-export const BB_RANKS = Array.from(utils.range(8)).map(
-  i => 0xffn << BigInt(8 * i),
-)
+export const BB_RANKS = Array.from(range(8)).map(i => 0xffn << BigInt(8 * i))
 export const [
   BB_RANK_1,
   BB_RANK_2,
@@ -399,30 +414,30 @@ export const [
 export const BB_BACKRANKS = BB_RANK_1 | BB_RANK_8
 
 export const lsb = (bb: Bitboard): Square => {
-  return utils.bitLength(bb & -bb) - 1
+  return bitLength(bb & -bb) - 1
 }
 
 export function* scanForward(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
     let r = bb & -bb
-    yield (utils.bitLength(r) - 1) as Square
+    yield (bitLength(r) - 1) as Square
     bb ^= r
   }
 }
 
 export const msb = (bb: Bitboard): Square => {
-  return (utils.bitLength(bb) - 1) as Square
+  return (bitLength(bb) - 1) as Square
 }
 
 export function* scanReversed(bb: Bitboard): IterableIterator<Square> {
   while (bb) {
-    let r = utils.bitLength(bb) - 1
+    let r = bitLength(bb) - 1
     yield r as Square
     bb ^= BB_SQUARES[r]
   }
 }
 
-export const popcount = (bb: Bitboard): number => utils.bitCount(bb)
+export const popcount = (bb: Bitboard): number => bitCount(bb)
 
 export const flipVertical = (bb: Bitboard): Bitboard => {
   // https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#FlipVertically
@@ -777,7 +792,7 @@ export class Move {
   }
 
   bool(): boolean {
-    return utils.bool(
+    return bool(
       this.fromSquare ||
         this.toSquare ||
         this.promotion !== null ||
@@ -985,7 +1000,7 @@ export class BaseBoard {
     const pieceType = this.pieceTypeAt(square)
     if (pieceType !== null) {
       const mask = BB_SQUARES[square]
-      const color = utils.bool(this.occupiedCo[colorIdx(WHITE)] & mask)
+      const color = bool(this.occupiedCo[colorIdx(WHITE)] & mask)
       return new Piece(pieceType, color)
     } else {
       return null
@@ -1046,7 +1061,7 @@ export class BaseBoard {
     const bbSquare = BB_SQUARES[square]
 
     if (bbSquare & this.pawns) {
-      const color = utils.bool(bbSquare & this.occupiedCo[colorIdx(WHITE)])
+      const color = bool(bbSquare & this.occupiedCo[colorIdx(WHITE)])
       return BB_PAWN_ATTACKS[colorIdx(color)][square]
     } else if (bbSquare & this.knights) {
       return BB_KNIGHT_ATTACKS[square]
@@ -1115,7 +1130,7 @@ export class BaseBoard {
    * en passant are **not** considered attacked.
    */
   isAttackedBy(color: Color, square: Square): boolean {
-    return utils.bool(this.attackersMask(color, square))
+    return bool(this.attackersMask(color, square))
   }
 
   /**
@@ -1236,9 +1251,7 @@ export class BaseBoard {
    * :class:`Board` also clears the move stack.
    */
   removePieceAt(square: Square): Piece | null {
-    const color = utils.bool(
-      this.occupiedCo[colorIdx(WHITE)] & BB_SQUARES[square],
-    )
+    const color = bool(this.occupiedCo[colorIdx(WHITE)] & BB_SQUARES[square])
     const pieceType = this._removePieceAt(square)
     return pieceType !== null ? new Piece(pieceType, color) : null
   }
@@ -1461,13 +1474,13 @@ export class BaseBoard {
     // See http://www.russellcottrell.com/Chess/Chess960.htm for
     // a description of the algorithm.
     let n: number, bw: number, bb: number, q: number
-    ;[n, bw] = utils.divmod(scharnagl, 4)
-    ;[n, bb] = utils.divmod(n, 4)
-    ;[n, q] = utils.divmod(n, 6)
+    ;[n, bw] = divmod(scharnagl, 4)
+    ;[n, bb] = divmod(n, 4)
+    ;[n, q] = divmod(n, 6)
 
     let n1: number = 0
     let n2: number = 0
-    for (n1 of utils.range(0, 4)) {
+    for (n1 of range(0, 4)) {
       n2 = n + Math.floor(((3 - n1) * (4 - n1)) / 2) - 5
       if (n1 < n2 && 1 <= n2 && n2 <= 4) {
         break
@@ -1481,15 +1494,15 @@ export class BaseBoard {
 
     // Queens.
     let qFile = q
-    qFile += utils.boolToNumber(Math.min(bwFile, bbFile) <= qFile)
-    qFile += utils.boolToNumber(Math.max(bwFile, bbFile) <= qFile)
+    qFile += boolToNumber(Math.min(bwFile, bbFile) <= qFile)
+    qFile += boolToNumber(Math.max(bwFile, bbFile) <= qFile)
     this.queens = BB_FILES[qFile] & BB_BACKRANKS
 
     const used = [bwFile, bbFile, qFile]
 
     // Knights.
     this.knights = BB_EMPTY
-    for (const i of utils.range(0, 8)) {
+    for (const i of range(0, 8)) {
       if (!used.includes(i)) {
         if (n1 == 0 || n2 == 0) {
           this.knights |= BB_FILES[i] & BB_BACKRANKS
@@ -1501,21 +1514,21 @@ export class BaseBoard {
     }
 
     // RKR.
-    for (const i of utils.range(0, 8)) {
+    for (const i of range(0, 8)) {
       if (!used.includes(i)) {
         this.rooks = BB_FILES[i] & BB_BACKRANKS
         used.push(i)
         break
       }
     }
-    for (const i of utils.range(1, 8)) {
+    for (const i of range(1, 8)) {
       if (~used.includes(i)) {
         this.kings = BB_FILES[i] & BB_BACKRANKS
         used.push(i)
         break
       }
     }
-    for (const i of utils.range(2, 8)) {
+    for (const i of range(2, 8)) {
       if (!used.includes(i)) {
         this.rooks |= BB_FILES[i] & BB_BACKRANKS
         break
@@ -1599,7 +1612,7 @@ export class BaseBoard {
     let n1f = false
     let rf = 0
     const n0s = [0, 4, 7, 9]
-    for (const square of utils.range(A1, H1 + 1)) {
+    for (const square of range(A1, H1 + 1)) {
       const bb = BB_SQUARES[square]
       if (bb & this.queens) {
         qf = true
@@ -1692,8 +1705,8 @@ export class BaseBoard {
   } = {}): string {
     const builder: string[] = []
     for (const rankIndex of (orientation
-      ? utils.range(7, -1, -1)
-      : utils.range(8)) as IterableIterator<RankOrFileIndex>) {
+      ? range(7, -1, -1)
+      : range(8)) as IterableIterator<RankOrFileIndex>) {
       if (borders) {
         builder.push('  ')
         builder.push('-'.repeat(17))
@@ -1703,10 +1716,10 @@ export class BaseBoard {
         builder.push(' ')
       }
 
-      for (const [i, fileIndex] of utils.enumerate(
+      for (const [i, fileIndex] of enumerate(
         (orientation
-          ? utils.range(8)
-          : utils.range(7, -1, -1)) as IterableIterator<RankOrFileIndex>,
+          ? range(8)
+          : range(7, -1, -1)) as IterableIterator<RankOrFileIndex>,
       )) {
         const squareIndex = square(fileIndex, rankIndex)
 
@@ -2189,9 +2202,7 @@ export class Board extends BaseBoard {
    * arbitrary starting positions, and the stack can be cleared.
    */
   ply(): number {
-    return (
-      2 * (this.fullmoveNumber - 1) + utils.boolToNumber(this.turn === BLACK)
-    )
+    return 2 * (this.fullmoveNumber - 1) + boolToNumber(this.turn === BLACK)
   }
 
   removePieceAt(square: Square): Piece | null {
@@ -2347,7 +2358,7 @@ export class Board extends BaseBoard {
   }
 
   isCheck(): boolean {
-    return utils.bool(this.checkersMask())
+    return bool(this.checkersMask())
   }
 
   givesCheck(move: Move): boolean {
@@ -2369,7 +2380,7 @@ export class Board extends BaseBoard {
     const checkers = this.attackersMask(!this.turn, king)
     if (
       checkers &&
-      !utils.iterIncludes(
+      !iterIncludes(
         this._generateEvasions(
           king,
           checkers,
@@ -2432,7 +2443,7 @@ export class Board extends BaseBoard {
     // Handle castling.
     if (piece === KING) {
       move = this._fromChess960(this.chess960, move.fromSquare, move.toSquare)
-      if (utils.iterIncludes(this.generateCastlingMoves(), move)) {
+      if (iterIncludes(this.generateCastlingMoves(), move)) {
         return true
       }
     }
@@ -2444,14 +2455,11 @@ export class Board extends BaseBoard {
 
     // Handle pawn moves.
     if (piece === PAWN) {
-      return utils.iterIncludes(
-        this.generatePseudoLegalMoves(fromMask, toMask),
-        move,
-      )
+      return iterIncludes(this.generatePseudoLegalMoves(fromMask, toMask), move)
     }
 
     // Handle all other pieces.
-    return utils.bool(this.attacksMask(move.fromSquare) & toMask)
+    return bool(this.attacksMask(move.fromSquare) & toMask)
   }
 
   isLegal(move: Move): boolean {
@@ -2547,7 +2555,7 @@ export class Board extends BaseBoard {
     if (this.isInsufficientMaterial()) {
       return new Outcome(Termination.INSUFFICIENT_MATERIAL, null)
     }
-    if (!utils.iterAny(this.generateLegalMoves())) {
+    if (!iterAny(this.generateLegalMoves())) {
       return new Outcome(Termination.STALEMATE, null)
     }
 
@@ -2579,7 +2587,7 @@ export class Board extends BaseBoard {
     if (!this.isCheck()) {
       return false
     }
-    return !utils.iterAny(this.generateLegalMoves())
+    return !iterAny(this.generateLegalMoves())
   }
 
   /**
@@ -2594,7 +2602,7 @@ export class Board extends BaseBoard {
       return false
     }
 
-    return !utils.iterAny(this.generateLegalMoves())
+    return !iterAny(this.generateLegalMoves())
   }
 
   /**
@@ -2602,9 +2610,7 @@ export class Board extends BaseBoard {
    * (:func:`~chess.Board.hasInsufficientMaterial()`).
    */
   isInsufficientMaterial(): boolean {
-    return utils.iterAll(
-      COLORS.map(color => this.hasInsufficientMaterial(color)),
-    )
+    return iterAll(COLORS.map(color => this.hasInsufficientMaterial(color)))
   }
 
   /**
@@ -2653,7 +2659,7 @@ export class Board extends BaseBoard {
   }
 
   _isHalfmoves(n: number): boolean {
-    return this.halfmoveClock >= n && utils.iterAny(this.generateLegalMoves())
+    return this.halfmoveClock >= n && iterAny(this.generateLegalMoves())
   }
 
   /**
@@ -2738,7 +2744,7 @@ export class Board extends BaseBoard {
    */
   canClaimThreefoldRepetition(): boolean {
     const transpositionKey = this._transpositionKey()
-    const transpositions = new utils.Counter<bigint>()
+    const transpositions = new Counter<bigint>()
     transpositions.update([transpositionKey])
 
     // Count positions.
@@ -2921,7 +2927,7 @@ export class Board extends BaseBoard {
     const fromBb = BB_SQUARES[move.fromSquare]
     const toBb = BB_SQUARES[move.toSquare]
 
-    let promoted = utils.bool(this.promoted & fromBb)
+    let promoted = bool(this.promoted & fromBb)
     let pieceType = this._removePieceAt(move.fromSquare)
     if (pieceType === null) {
       throw new Error(
@@ -2975,8 +2981,7 @@ export class Board extends BaseBoard {
 
     // Castling.
     const castling =
-      pieceType === KING &&
-      utils.bool(this.occupiedCo[colorIdx(this.turn)] & toBb)
+      pieceType === KING && bool(this.occupiedCo[colorIdx(this.turn)] & toBb)
     if (castling) {
       const aSide = squareFile(move.toSquare) < squareFile(move.fromSquare)
 
@@ -2994,7 +2999,7 @@ export class Board extends BaseBoard {
 
     // Put the piece on the target square.
     if (!castling) {
-      let wasPromoted = utils.bool(this.promoted & toBb)
+      let wasPromoted = bool(this.promoted & toBb)
       this._setPieceAt(move.toSquare, pieceType, this.turn, promoted)
 
       if (capturedPieceType !== null) {
@@ -3119,8 +3124,8 @@ export class Board extends BaseBoard {
 
         let ch
         if (
-          utils.iterAny(
-            utils.iterMap(
+          iterAny(
+            iterMap(
               scanReversed(otherRooks),
               other => squareFile(other) < rookFile === aSide,
             ),
@@ -3146,14 +3151,14 @@ export class Board extends BaseBoard {
    * Checks if there is a pseudo-legal en passant capture.
    */
   hasPseudoLegalEnPassant(): boolean {
-    return this.epSquare !== null && utils.iterAny(this.generatePseudoLegalEp())
+    return this.epSquare !== null && iterAny(this.generatePseudoLegalEp())
   }
 
   /**
    * Checks if there is a legal en passant capture.
    */
   hasLegalEnPassant(): boolean {
-    return this.epSquare !== null && utils.iterAny(this.generateLegalEp())
+    return this.epSquare !== null && iterAny(this.generateLegalEp())
   }
 
   /**
@@ -3271,7 +3276,7 @@ export class Board extends BaseBoard {
       halfmoveClock = 0
     } else {
       try {
-        halfmoveClock = utils.parseIntStrict(halfmovePart)
+        halfmoveClock = parseIntStrict(halfmovePart)
       } catch (e) {
         throw new Error(`ValueError: invalid half-move clock in fen: ${fen}`)
       }
@@ -3291,7 +3296,7 @@ export class Board extends BaseBoard {
       fullmoveNumber = 1
     } else {
       try {
-        fullmoveNumber = utils.parseIntStrict(fullmovePart)
+        fullmoveNumber = parseIntStrict(fullmovePart)
       } catch (e) {
         throw new Error(`ValueError: invalid fullmove number in fen: ${fen}`)
       }
@@ -3981,22 +3986,22 @@ export class Board extends BaseBoard {
     // Castling.
     try {
       if (['O-O', 'O-O+', 'O-O#', '0-0', '0-0+', '0-0#'].includes(san)) {
-        return utils.iterNext(
-          utils.iterFilter(this.generateCastlingMoves(), move =>
+        return iterNext(
+          iterFilter(this.generateCastlingMoves(), move =>
             this.isKingsideCastling(move),
           ),
         )
       } else if (
         ['O-O-O', 'O-O-O+', 'O-O-O#', '0-0-0', '0-0-0+', '0-0-0#'].includes(san)
       ) {
-        return utils.iterNext(
-          utils.iterFilter(this.generateCastlingMoves(), move =>
+        return iterNext(
+          iterFilter(this.generateCastlingMoves(), move =>
             this.isQueensideCastling(move),
           ),
         )
       }
     } catch (error) {
-      if (error instanceof utils.StopIteration) {
+      if (error instanceof StopIteration) {
         throw new IllegalMoveError(`illegal san: ${san} in ${this.fen()}`)
       }
     }
@@ -4207,7 +4212,7 @@ export class Board extends BaseBoard {
   isEnPassant(move: Move): boolean {
     return (
       this.epSquare === move.toSquare &&
-      utils.bool(this.pawns & BB_SQUARES[move.fromSquare]) &&
+      bool(this.pawns & BB_SQUARES[move.fromSquare]) &&
       [7, 9].includes(Math.abs(move.toSquare - move.fromSquare)) &&
       !(this.occupied & BB_SQUARES[move.toSquare])
     )
@@ -4219,7 +4224,7 @@ export class Board extends BaseBoard {
   isCapture(move: Move): boolean {
     const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare]
     return (
-      utils.bool(touched & this.occupiedCo[colorIdx(!this.turn)]) ||
+      bool(touched & this.occupiedCo[colorIdx(!this.turn)]) ||
       this.isEnPassant(move)
     )
   }
@@ -4229,7 +4234,7 @@ export class Board extends BaseBoard {
    */
   isZeroing(move: Move): boolean {
     const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare]
-    return utils.bool(
+    return bool(
       touched & this.pawns ||
         touched & this.occupiedCo[colorIdx(!this.turn)] ||
         move.drop === PAWN,
@@ -4239,7 +4244,7 @@ export class Board extends BaseBoard {
   _reducesCastlingRights(move: Move): boolean {
     const cr = this.cleanCastlingRights()
     const touched = BB_SQUARES[move.fromSquare] ^ BB_SQUARES[move.toSquare]
-    return utils.bool(
+    return bool(
       touched & cr ||
         (cr & BB_RANK_1 &&
           touched &
@@ -4280,7 +4285,7 @@ export class Board extends BaseBoard {
       const diff = squareFile(move.fromSquare) - squareFile(move.toSquare)
       return (
         Math.abs(diff) > 1 ||
-        utils.bool(
+        bool(
           this.rooks &
             this.occupiedCo[colorIdx(this.turn)] &
             BB_SQUARES[move.toSquare],
@@ -4404,7 +4409,7 @@ export class Board extends BaseBoard {
    */
   hasCastlingRights(color: Color): boolean {
     const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8
-    return utils.bool(this.cleanCastlingRights() & backrank)
+    return bool(this.cleanCastlingRights() & backrank)
   }
 
   /**
@@ -4735,12 +4740,12 @@ export class Board extends BaseBoard {
         return !this.isAttackedBy(!this.turn, move.toSquare)
       }
     } else if (this.isEnPassant(move)) {
-      return utils.bool(
+      return bool(
         this.pinMask(this.turn, move.fromSquare) & BB_SQUARES[move.toSquare] &&
           !this._epSkewered(king, move.fromSquare),
       )
     } else {
-      return utils.bool(
+      return bool(
         !(blockers & BB_SQUARES[move.fromSquare]) ||
           ray(move.fromSquare, move.toSquare) & BB_SQUARES[king],
       )
@@ -4855,8 +4860,8 @@ export class Board extends BaseBoard {
   }
 
   _attackedForKing(path: Bitboard, occupied: Bitboard): boolean {
-    return utils.iterAny(
-      utils.iterMap(scanReversed(path), sq =>
+    return iterAny(
+      iterMap(scanReversed(path), sq =>
         this._attackersMask(!this.turn, sq, occupied),
       ),
     )
@@ -5124,7 +5129,7 @@ export class PseudoLegalMoveGenerator {
   }
 
   bool(): boolean {
-    return utils.iterAny(this.board.generatePseudoLegalMoves())
+    return iterAny(this.board.generatePseudoLegalMoves())
   }
 
   count(): number {
@@ -5164,7 +5169,7 @@ export class LegalMoveGenerator {
   }
 
   bool(): boolean {
-    return utils.iterAny(this.board.generateLegalMoves())
+    return iterAny(this.board.generateLegalMoves())
   }
 
   count(): number {
@@ -5290,7 +5295,7 @@ export class SquareSet {
   // Set
 
   contains(square: Square) {
-    return utils.bool(BB_SQUARES[square] & this.mask)
+    return bool(BB_SQUARES[square] & this.mask)
   }
 
   iter() {
@@ -5321,21 +5326,21 @@ export class SquareSet {
    * Tests if the square sets are disjoint.
    */
   isdisjoint(other: IntoSquareSet) {
-    return !utils.bool(this.mask & new SquareSet(other).mask)
+    return !bool(this.mask & new SquareSet(other).mask)
   }
 
   /**
    * Tests if this square set is a subset of another.
    */
   issubset(other: IntoSquareSet) {
-    return !utils.bool(this.mask & ~new SquareSet(other).mask)
+    return !bool(this.mask & ~new SquareSet(other).mask)
   }
 
   /**
    * Tests if this square set is a superset of another.
    */
   issuperset(other: IntoSquareSet) {
-    return !utils.bool(~this.mask & new SquareSet(other).mask)
+    return !bool(~this.mask & new SquareSet(other).mask)
   }
 
   union(other: IntoSquareSet) {
@@ -5488,7 +5493,7 @@ export class SquareSet {
   }
 
   bool() {
-    return utils.bool(this.mask)
+    return bool(this.mask)
   }
 
   equals(other: any) {

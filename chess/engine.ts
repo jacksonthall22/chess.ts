@@ -1,7 +1,5 @@
-import * as utils from './utils'
-
-import * as chess from './index'
-import { Color } from './index'
+import { bool as utilsBool } from './utils'
+import { WHITE, BLACK, Color } from './index'
 
 // prettier-ignore
 export type WdlModel = "sf" | "sf16" | "sf15.1" | "sf15" | "sf14" | "sf12" | "lichess"
@@ -27,14 +25,14 @@ export class PovScore {
    * Gets the score from White's point of view.
    */
   white(): Score {
-    return this.pov(chess.WHITE)
+    return this.pov(WHITE)
   }
 
   /**
    * Gets the score from Black's point of view.
    */
   black(): Score {
-    return this.pov(chess.BLACK)
+    return this.pov(BLACK)
   }
 
   /**
@@ -521,14 +519,14 @@ export class PovWdl {
    * Gets the :class:`~chess.engine.Wdl` from White's point of view.
    */
   white(): Wdl {
-    return this.pov(chess.WHITE)
+    return this.pov(WHITE)
   }
 
   /**
    * Gets the :class:`~chess.engine.Wdl` from Black's point of view.
    */
   black(): Wdl {
-    return this.pov(chess.BLACK)
+    return this.pov(BLACK)
   }
 
   /**
@@ -646,7 +644,7 @@ export class Wdl {
 
   // __bool__()
   bool(): boolean {
-    return utils.bool(this.total())
+    return utilsBool(this.total())
   }
 
   // __iter__()
@@ -672,4 +670,21 @@ export class Wdl {
   neg(): Wdl {
     return new Wdl(this.losses, this.draws, this.wins)
   }
+}
+
+export default {
+  PovScore,
+  Score,
+  _sf16Wins,
+  _sf151Wins,
+  _sf15Wins,
+  _sf14Wins,
+  _sf12Wins,
+  _lichessRawWins,
+  Cp,
+  Mate,
+  MateGivenType,
+  MateGiven,
+  PovWdl,
+  Wdl,
 }

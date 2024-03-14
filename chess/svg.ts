@@ -1,8 +1,7 @@
 // NOTE: This skips a bunch of stuff for now.
 // This only implements enough for `pgn.ts` to work.
 
-import * as chess from './index'
-import { Square } from './index'
+import { parseSquare, Square, SQUARE_NAMES } from './index'
 
 /**
  * Details of an arrow to be drawn.
@@ -46,9 +45,9 @@ export class Arrow {
     }
 
     if (this.tail === this.head) {
-      return `${color}${chess.SQUARE_NAMES[this.tail]}`
+      return `${color}${SQUARE_NAMES[this.tail]}`
     } else {
-      return `${color}${chess.SQUARE_NAMES[this.tail]}${chess.SQUARE_NAMES[this.head]}`
+      return `${color}${SQUARE_NAMES[this.tail]}${SQUARE_NAMES[this.head]}`
     }
   }
 
@@ -59,7 +58,7 @@ export class Arrow {
 
   // __repr__()
   toRepr(): string {
-    return `Arrow(${chess.SQUARE_NAMES[this.tail].toUpperCase()}, ${chess.SQUARE_NAMES[this.head].toUpperCase()}, color=${this.color})`
+    return `Arrow(${SQUARE_NAMES[this.tail].toUpperCase()}, ${SQUARE_NAMES[this.head].toUpperCase()}, color=${this.color})`
   }
 
   /**
@@ -88,8 +87,12 @@ export class Arrow {
       color = 'green'
     }
 
-    const tail = chess.parseSquare(pgn.slice(0, 2))
-    const head = pgn.length > 2 ? chess.parseSquare(pgn.slice(2)) : tail
+    const tail = parseSquare(pgn.slice(0, 2))
+    const head = pgn.length > 2 ? parseSquare(pgn.slice(2)) : tail
     return new this(tail, head, { color })
   }
+}
+
+export default {
+  Arrow,
 }
