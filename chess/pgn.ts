@@ -1,7 +1,7 @@
 // import engine from './engine';
-import * as chess from './index'
-import * as chessEngine from './engine'
-import * as chessSvg from './svg'
+import { Board, Move, Square } from './index'
+import { PovScore, Cp, Score, Mate } from './engine'
+import { Arrow } from './svg'
 import { findVariant } from './variant'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
@@ -281,7 +281,7 @@ export abstract class GameNode {
    * The move leading to this node or `null` if this is the root node of the
    * game.
    */
-  move: chess.Move | null
+  move: Move | null
 
   /** A list of child nodes. */
   variations: ChildNode[]
@@ -317,12 +317,12 @@ export abstract class GameNode {
    *
    * Complexity is `O(n)`.
    */
-  abstract board(): chess.Board
+  abstract board(): Board
 
   /**
    * Returns the number of half-moves up to this node, as indicated by
    * fullmove number and turn of the position.
-   * See :func:`chess.Board.ply()`.
+   * See :func:`Board.ply()`.
    *
    * Usually this is equal to the number of parent nodes, but it may be
    * more if the game was started from a custom position.
@@ -332,11 +332,11 @@ export abstract class GameNode {
   abstract ply(): number
 
   /**
-   * Gets the color to move at this node. See :data:`chess.Board.turn`.
+   * Gets the color to move at this node. See :data:`Board.turn`.
    *
    * Complexity is `O(n)`.
    */
-  turn(): chess.Color {
+  turn(): Color {
     return this.ply() % 2 === 0
   }
 
@@ -441,7 +441,7 @@ export abstract class GameNode {
     )
   }
 
-  getitem(move: number | chess.Move | GameNode): ChildNode {
+  getitem(move: number | Move | GameNode): ChildNode {
     if (typeof move === 'number') {
       return this.variations[move]
     }
@@ -455,7 +455,7 @@ export abstract class GameNode {
     throw new Error(`KeyError: ${move}`)
   }
 
-  includes(move: number | chess.Move | GameNode): boolean {
+  includes(move: number | Move | GameNode): boolean {
     try {
       this.getitem(move)
     } catch (e) {
@@ -467,24 +467,24 @@ export abstract class GameNode {
   /**
    * Gets a child node by either the move or the variation index.
    */
-  variation(move: number | chess.Move | GameNode): ChildNode {
+  variation(move: number | Move | GameNode): ChildNode {
     return this.getitem(move)
   }
 
   /** Checks if this node has the given variation. */
-  hasVariation(move: number | chess.Move | GameNode): boolean {
+  hasVariation(move: number | Move | GameNode): boolean {
     return this.includes(move)
   }
 
   /** Promotes the given *move* to the main variation. */
-  promoteToMain(move: number | chess.Move | GameNode): void {
+  promoteToMain(move: number | Move | GameNode): void {
     const variation = this.getitem(move)
     utils.remove(this.variations, variation)
     this.variations.unshift(variation)
   }
 
   /** Moves a variation one up in the list of variations. */
-  promote(move: number | chess.Move | GameNode): void {
+  promote(move: number | Move | GameNode): void {
     const variation = this.getitem(move)
     const i = this.variations.indexOf(variation)
     if (i > 0) {
@@ -498,7 +498,7 @@ export abstract class GameNode {
   /**
    * Moves a variation one down in the list of variations.
    */
-  demote(move: number | chess.Move | GameNode): void {
+  demote(move: number | Move | GameNode): void {
     const variation = this.getitem(move)
     const i = this.variations.indexOf(variation)
     if (i < this.variations.length - 1) {
@@ -511,7 +511,7 @@ export abstract class GameNode {
   /**
    * Removes a variation.
    */
-  removeVariation(move: number | chess.Move | GameNode): void {
+  removeVariation(move: number | Move | GameNode): void {
     utils.remove(this.variations, this.variation(move))
   }
 
@@ -519,7 +519,7 @@ export abstract class GameNode {
    * Creates a child node with the given attributes.
    */
   addVariation(
-    move: chess.Move,
+    move: Move,
     {
       comment = '',
       startingComment = '',
@@ -539,7 +539,7 @@ export abstract class GameNode {
    * main variation.
    */
   addMainVariation(
-    move: chess.Move,
+    move: Move,
     {
       comment = '',
       nags = [],
@@ -570,7 +570,7 @@ export abstract class GameNode {
   /**
    * Returns an iterable over the main moves after this node.
    */
-  mainlineMoves(): Mainline<chess.Move> {
+  mainlineMoves(): Mainline<Move> {
     return new Mainline(this, (node: ChildNode) => node.move)
   }
 
@@ -579,7 +579,7 @@ export abstract class GameNode {
    * Adds *comment* and *nags* to the last node of the line and returns it.
    */
   addLine(
-    moves: Iterable<chess.Move>,
+    moves: Iterable<Move>,
     {
       comment = '',
       startingComment = '',
@@ -618,30 +618,28 @@ export abstract class GameNode {
    *
    * Complexity is `O(n)`.
    */
-  eval(): chessEngine.PovScore | null {
+  eval(): PovScore | null {
     const match = this.comment.match(EVAL_REGEX)
     if (!match) {
       return null
     }
 
     const turn = this.turn()
-    let score: chessEngine.Score
+    let score: Score
     if (match.groups!['mate']) {
       const mate = parseInt(match.groups!['mate'])
-      score = new chessEngine.Mate(mate)
+      score = new Mate(mate)
       if (mate === 0) {
         // Resolve this ambiguity in the specification in favor of
         // standard chess: The player to move after mate is the player
         // who has been mated.
-        return new chessEngine.PovScore(score, turn)
+        return new PovScore(score, turn)
       }
     } else {
-      score = new chessEngine.Cp(
-        Math.round(parseFloat(match.groups!['cp']) * 100),
-      )
+      score = new Cp(Math.round(parseFloat(match.groups!['cp']) * 100))
     }
 
-    return new chessEngine.PovScore(turn ? score : score.neg(), turn)
+    return new PovScore(turn ? score : score.neg(), turn)
   }
 
   /**
@@ -661,10 +659,7 @@ export abstract class GameNode {
    * Replaces the first valid `[%eval ...]` annotation in the comment of
    * this node or adds a new one.
    */
-  setEval(
-    score: chessEngine.PovScore | null,
-    depth: number | null = null,
-  ): void {
+  setEval(score: PovScore | null, depth: number | null = null): void {
     let evalStr = ''
     if (score !== null) {
       const depthSuffix = depth === null ? '' : `,${Math.max(depth, 0)}`
@@ -696,13 +691,13 @@ export abstract class GameNode {
    * Parses all ``[%csl ...]`` and ``[%cal ...]`` annotations in the comment
    * of this node.
    *
-   * Returns a list of :class:`arrows <chess.svg.Arrow>`.
+   * Returns a list of :class:`arrows <svg.Arrow>`.
    */
-  arrows(): chessSvg.Arrow[] {
-    const arrows: chessSvg.Arrow[] = []
+  arrows(): Arrow[] {
+    const arrows: Arrow[] = []
     for (const match of this.comment.matchAll(utils.toGlobal(ARROWS_REGEX))) {
       for (const group of match.groups!['arrows'].split(',')) {
-        arrows.push(chessSvg.Arrow.fromPgn(group))
+        arrows.push(Arrow.fromPgn(group))
       }
     }
 
@@ -713,16 +708,14 @@ export abstract class GameNode {
    * Replaces all valid ``[%csl ...]`` and ``[%cal ...]`` annotations in
    * the comment of this node or adds new ones.
    */
-  setArrows(
-    arrows: Iterable<chessSvg.Arrow | [chess.Square, chess.Square]>,
-  ): void {
+  setArrows(arrows: Iterable<Arrow | [Square, Square]>): void {
     const csl: string[] = []
     const cal: string[] = []
 
     for (let arrow of arrows) {
       if (arrow instanceof Array) {
         let [tail, head] = arrow
-        arrow = new chessSvg.Arrow(tail, head)
+        arrow = new Arrow(tail, head)
       }
       ;(arrow.tail === arrow.head ? csl : cal).push(arrow.pgn())
     }
@@ -916,18 +909,18 @@ export abstract class GameNode {
 
 /**
  * A child node of a game, with the move leading to it.
- * Extends :class:`~chess.pgn.GameNode`.
+ * Extends :class:`~pgn.GameNode`.
  */
 export class ChildNode extends GameNode {
   /** The parent node. */
   parent: GameNode
 
   /** The move leading to this node. */
-  move: chess.Move
+  move: Move
 
   /**
    * A comment for the start of a variation. Only nodes that
-   * actually start a variation (:func:`~chess.pgn.GameNode.starts_variation()`
+   * actually start a variation (:func:`~pgn.GameNode.starts_variation()`
    * checks this) can have a starting comment. The root node can not have
    * a starting comment.
    */
@@ -941,7 +934,7 @@ export class ChildNode extends GameNode {
 
   constructor(
     parent: GameNode,
-    move: chess.Move,
+    move: Move,
     {
       comment = '',
       startingComment = '',
@@ -964,8 +957,8 @@ export class ChildNode extends GameNode {
     this.startingComment = startingComment
   }
 
-  board(): chess.Board {
-    let stack: chess.Move[] = []
+  board(): Board {
+    let stack: Move[] = []
     let node: GameNode = this
 
     while (node.move !== null && node.parent !== null) {
@@ -976,7 +969,7 @@ export class ChildNode extends GameNode {
     const board = node.game().board()
 
     while (stack.length !== 0) {
-      board.push(stack.pop() as chess.Move)
+      board.push(stack.pop() as Move)
     }
 
     return board
@@ -994,7 +987,7 @@ export class ChildNode extends GameNode {
 
   /**
    * Gets the standard algebraic notation of the move leading to this node.
-   * See :func:`chess.Board.san()`.
+   * See :func:`Board.san()`.
    *
    * Do not call this on the root node.
    *
@@ -1006,7 +999,7 @@ export class ChildNode extends GameNode {
 
   /**
    * Gets the UCI notation of the move leading to this node.
-   * See :func:`chess.Board.uci()`.
+   * See :func:`Board.uci()`.
    *
    * Do not call this on the root node.
    *
@@ -1026,7 +1019,7 @@ export class ChildNode extends GameNode {
   }
 
   _acceptNode<ResultT>(
-    parentBoard: chess.Board,
+    parentBoard: Board,
     visitor: BaseVisitor<ResultT>,
   ): void {
     if (this.startingComment) {
@@ -1049,7 +1042,7 @@ export class ChildNode extends GameNode {
   }
 
   _accept<ResultT>(
-    parentBoard: chess.Board,
+    parentBoard: Board,
     visitor: BaseVisitor<ResultT>,
     { sidelines = true }: { sidelines?: boolean } = {},
   ): void {
@@ -1110,22 +1103,22 @@ export class ChildNode extends GameNode {
     }
 
     const parentBoard = this.parent.board()
-    return `<${this.constructor.name} (${parentBoard.fullmoveNumber}${parentBoard.turn === chess.WHITE ? '.' : '...'} ${parentBoard.san(this.move)} ...)>`
+    return `<${this.constructor.name} (${parentBoard.fullmoveNumber}${parentBoard.turn === WHITE ? '.' : '...'} ${parentBoard.san(this.move)} ...)>`
   }
 }
 
 /**
  * The root node of a game with extra information such as headers and the
- * starting position. Extends :class:`~chess.pgn.GameNode`.
+ * starting position. Extends :class:`~pgn.GameNode`.
  */
 export class Game extends GameNode {
   /**
    * A mapping of headers. By default, the following 7 headers are provided
    * (Seven Tag Roster):
    *
-   *      >>> import chess.pgn
+   *      >>> import pgn
    *      >>>
-   *      >>> game = chess.pgn.Game()
+   *      >>> game = pgn.Game()
    *      >>> game.headers
    *      Headers(Event='?', Site='?', Date='????.??.??', Round='?', White='?', Black='?', Result='*')
    */
@@ -1145,7 +1138,7 @@ export class Game extends GameNode {
     this.errors = []
   }
 
-  board(): chess.Board {
+  board(): Board {
     return this.headers.board()
   }
 
@@ -1158,19 +1151,19 @@ export class Game extends GameNode {
    * Sets up a specific starting position. This sets (or resets) the
    * ``FEN``, ``SetUp``, and ``Variant`` header tags.
    */
-  setup(board: chess.Board | string): void {
+  setup(board: Board | string): void {
     let fen: string
-    let setup: chess.Board
-    if (board instanceof chess.Board) {
+    let setup: Board
+    if (board instanceof Board) {
       fen = board.fen() // type: ignore
       setup = board
     } else {
-      setup = new chess.Board(board)
+      setup = new Board(board)
       setup.chess960 = setup.hasChess960CastlingRights()
       fen = setup.fen()
     }
 
-    if (fen === (setup.constructor as typeof chess.Board).startingFen) {
+    if (fen === (setup.constructor as typeof Board).startingFen) {
       this.headers.pop('FEN') // ', null)' not necessary
       this.headers.pop('SetUp') // ', null)' not necessary
     } else {
@@ -1179,16 +1172,14 @@ export class Game extends GameNode {
     }
 
     if (
-      (setup.constructor as typeof chess.Board).aliases[0] === 'Standard' &&
+      (setup.constructor as typeof Board).aliases[0] === 'Standard' &&
       setup.chess960
     ) {
       this.headers.set('Variant', 'Chess960')
-    } else if (
-      (setup.constructor as typeof chess.Board).aliases[0] !== 'Standard'
-    ) {
+    } else if ((setup.constructor as typeof Board).aliases[0] !== 'Standard') {
       this.headers.set(
         'Variant',
-        (setup.constructor as typeof chess.Board).aliases[0],
+        (setup.constructor as typeof Board).aliases[0],
       )
       this.headers.set('FEN', fen)
     } else {
@@ -1235,11 +1226,11 @@ export class Game extends GameNode {
   }
 
   /**
-   * Creates a game from the move stack of a :class:`~chess.Board()`.
+   * Creates a game from the move stack of a :class:`~Board()`.
    */
   static fromBoard<T extends typeof Game>(
     this: T,
-    board: chess.Board,
+    board: Board,
   ): InstanceType<T> {
     // Setup the initial position.
     const game = new this() as InstanceType<T>
@@ -1316,7 +1307,7 @@ export class Headers {
   }
 
   isWild(): boolean {
-    // http://www.freechess.org/Help/HelpFiles/wild.html
+    // http://www.freeorg/Help/HelpFiles/wild.html
     return [
       'wild/0',
       'wild/1',
@@ -1331,15 +1322,15 @@ export class Headers {
     ].includes((this.get('Variant') || '').toLowerCase())
   }
 
-  variant(): typeof chess.Board {
+  variant(): typeof Board {
     if (!this.includes('Variant') || this.isChess960() || this.isWild()) {
-      return chess.Board
+      return Board
     } else {
       return findVariant(this.get('Variant')!)
     }
   }
 
-  board(): chess.Board {
+  board(): Board {
     const VariantBoard = this.variant()
     const fen = this.get('FEN') || VariantBoard.startingFen
     const board = new VariantBoard(fen, { chess960: this.isChess960() })
@@ -1513,8 +1504,8 @@ export class Mainline<MainlineMapT> {
 /**
  * Base class for visitors.
  *
- * Use with :func:`chess.pgn.Game.accept()` or
- * :func:`chess.pgn.GameNode.accept()` or :func:`chess.pgn.readGame()`.
+ * Use with :func:`pgn.Game.accept()` or
+ * :func:`pgn.GameNode.accept()` or :func:`pgn.readGame()`.
  *
  * The methods are called in PGN order.
  */
@@ -1551,7 +1542,7 @@ export abstract class BaseVisitor<ResultT> {
    * When the visitor is used by a parser, this is called at the start of
    * each standard algebraic notation detailing a move.
    */
-  beginParseSan(board: chess.Board, san: string): SkipType | void {
+  beginParseSan(board: Board, san: string): SkipType | void {
     // pass
   }
 
@@ -1568,7 +1559,7 @@ export abstract class BaseVisitor<ResultT> {
    *     workarounds here, please report common quirks so that
    *     they can be handled for everyone.
    */
-  parseSan(board: chess.Board, san: string): chess.Move {
+  parseSan(board: Board, san: string): Move {
     return board.parseSan(san)
   }
 
@@ -1578,7 +1569,7 @@ export abstract class BaseVisitor<ResultT> {
    * *board* is the board state before the move. The board state must be
    * restored before the traversal continues.
    */
-  visitMove(board: chess.Board, move: chess.Move): void {
+  visitMove(board: Board, move: Move): void {
     // pass
   }
 
@@ -1587,7 +1578,7 @@ export abstract class BaseVisitor<ResultT> {
    *
    * The board state must be restored before the traversal continues.
    */
-  visitBoard(board: chess.Board): void {
+  visitBoard(board: Board): void {
     // pass
   }
 
@@ -1648,7 +1639,7 @@ export abstract class BaseVisitor<ResultT> {
 }
 
 /**
- * Creates a game model. Default visitor for :func:`~chess.pgn.readGame()`.
+ * Creates a game model. Default visitor for :func:`~pgn.readGame()`.
  */
 export class GameBuilder extends BaseVisitor<Game> {
   Game_: typeof Game
@@ -1726,7 +1717,7 @@ export class GameBuilder extends BaseVisitor<Game> {
     }
   }
 
-  visitMove(board: chess.Board, move: chess.Move): void {
+  visitMove(board: Board, move: Move): void {
     this.variationStack
     this.variationStack[this.variationStack.length - 1] = this.variationStack
       .at(-1)!
@@ -1737,33 +1728,33 @@ export class GameBuilder extends BaseVisitor<Game> {
   }
 
   /**
-   * Populates :data:`chess.pgn.Game.errors` with encountered errors and
+   * Populates :data:`pgn.Game.errors` with encountered errors and
    * logs them.
    *
    * You can silence the log and handle errors yourself after parsing:
    *
-   * >>> import chess.pgn
+   * >>> import pgn
    * >>> import logging
    * >>>
-   * >>> logging.getLogger("chess.pgn").setLevel(logging.CRITICAL)
+   * >>> logging.getLogger("pgn").setLevel(logging.CRITICAL)
    * >>>
    * >>> pgn = open("data/pgn/kasparov-deep-blue-1997.pgn")
    * >>>
-   * >>> game = chess.pgn.readGame(pgn)
+   * >>> game = pgn.readGame(pgn)
    * >>> game.errors  // List of exceptions
    * []
    *
    * You can also override this method to hook into error handling:
    *
-   * >>> import chess.pgn
+   * >>> import pgn
    * >>>
-   * >>> class MyGameBuilder(chess.pgn.GameBuilder):
+   * >>> class MyGameBuilder(pgn.GameBuilder):
    * >>>     def handleError(this, error: Exception) -> null:
    * >>>         pass  // Ignore error
    * >>>
    * >>> pgn = open("data/pgn/kasparov-deep-blue-1997.pgn")
    * >>>
-   * >>> game = chess.pgn.readGame(pgn, Visitor=MyGameBuilder)
+   * >>> game = pgn.readGame(pgn, Visitor=MyGameBuilder)
    */
   handleError(error: Error): void {
     LOGGER.error(`${error} while parsing ${this.game}`)
@@ -1771,7 +1762,7 @@ export class GameBuilder extends BaseVisitor<Game> {
   }
 
   /**
-   * Returns the visited :class:`~chess.pgn.Game()`.
+   * Returns the visited :class:`~pgn.Game()`.
    */
   result(): Game {
     return this.game
@@ -1814,9 +1805,9 @@ export class HeadersBuilder extends BaseVisitor<Headers> {
  * Returns the final position of the game. The mainline of the game is
  * on the move stack.
  */
-export class BoardBuilder extends BaseVisitor<chess.Board> {
+export class BoardBuilder extends BaseVisitor<Board> {
   skipVariationDepth: number = null!
-  board: chess.Board = null!
+  board: Board = null!
 
   beginGame(): void {
     this.skipVariationDepth = 0
@@ -1831,13 +1822,13 @@ export class BoardBuilder extends BaseVisitor<chess.Board> {
     this.skipVariationDepth = Math.max(this.skipVariationDepth - 1, 0)
   }
 
-  visitBoard(board: chess.Board): void {
+  visitBoard(board: Board): void {
     if (!this.skipVariationDepth) {
       this.board = board
     }
   }
 
-  result(): chess.Board {
+  result(): Board {
     return this.board
   }
 }
@@ -1994,10 +1985,10 @@ export abstract class StringExporterMixin<
     }
   }
 
-  visitMove(board: chess.Board, move: chess.Move): void {
+  visitMove(board: Board, move: Move): void {
     if (this.variations || this.variationDepth === 0) {
       // Write the move number.
-      if (board.turn === chess.WHITE) {
+      if (board.turn === WHITE) {
         this.writeToken(board.fullmoveNumber.toString() + '. ')
       } else if (this.forceMovenumber) {
         this.writeToken(board.fullmoveNumber.toString() + '... ')
@@ -2018,11 +2009,11 @@ export abstract class StringExporterMixin<
 /**
  * Allows exporting a game as a string.
  *
- * >>> import chess.pgn
+ * >>> import pgn
  * >>>
- * >>> game = chess.pgn.Game()
+ * >>> game = pgn.Game()
  * >>>
- * >>> exporter = chess.pgn.StringExporter(headers=true, variations=true, comments=true)
+ * >>> exporter = pgn.StringExporter(headers=true, variations=true, comments=true)
  * >>> pgnString = game.accept(exporter)
  *
  * Only *columns* characters are written per line. If *columns* is ``null``,
@@ -2065,18 +2056,18 @@ export class StringExporter extends StringExporterMixin<string> {
 
 // TODO: Support `FileExporter` if running in a Node environment
 // /**
-//  * Acts like a :class:`~chess.pgn.StringExporter`, but games are written
+//  * Acts like a :class:`~pgn.StringExporter`, but games are written
 //  * directly into a text file.
 //  *
 //  * There will always be a blank line after each game. Handling encodings is up
 //  * to the caller.
 //  *
-//  * >>> import chess.pgn
+//  * >>> import pgn
 //  * >>>
-//  * >>> game = chess.pgn.Game()
+//  * >>> game = pgn.Game()
 //  * >>>
 //  * >>> newPgn = open("/dev/null", "w", encoding="utf-8")
-//  * >>> exporter = chess.pgn.FileExporter(newPgn)
+//  * >>> exporter = pgn.FileExporter(newPgn)
 //  * >>> game.accept(exporter)
 //  */
 // export class FileExporter extends StringExporterMixin<number> {
@@ -2128,12 +2119,12 @@ export function readGame<ResultT>(
 /**
  * Reads a game from a file opened in text mode.
  *
- * >>> import chess.pgn
+ * >>> import pgn
  * >>>
  * >>> pgn = open("data/pgn/kasparov-deep-blue-1997.pgn")
  * >>>
- * >>> firstGame = chess.pgn.readGame(pgn)
- * >>> secondGame = chess.pgn.readGame(pgn)
+ * >>> firstGame = pgn.readGame(pgn)
+ * >>> secondGame = pgn.readGame(pgn)
  * >>>
  * >>> firstGame.headers["Event"]
  * 'IBM Man-Machine, New York USA'
@@ -2159,7 +2150,7 @@ export function readGame<ResultT>(
  * >>> import io
  * >>>
  * >>> pgn = io.StringIO("1. e4 e5 2. Nf3 *")
- * >>> game = chess.pgn.readGame(pgn)
+ * >>> game = pgn.readGame(pgn)
  *
  * The end of a game is determined by a completely blank line or the end of
  * the file. (Of course, blank lines in comments are possible).
@@ -2170,8 +2161,8 @@ export function readGame<ResultT>(
  *
  * The parser is relatively forgiving when it comes to errors. It skips over
  * tokens it can not parse. By default, any exceptions are logged and
- * collected in :data:`Game.errors <chess.pgn.Game.errors>`. This behavior can
- * be :func:`overridden <chess.pgn.GameBuilder.handleError>`.
+ * collected in :data:`Game.errors <pgn.Game.errors>`. This behavior can
+ * be :func:`overridden <pgn.GameBuilder.handleError>`.
  *
  * Returns the parsed game or ``null`` if the end of file is reached.
  */
@@ -2251,8 +2242,8 @@ export function readGame<ResultT>(
     skippingGame = visitor.endHeaders() === SKIP
   }
 
-  let board: chess.Board
-  let boardStack: chess.Board[]
+  let board: Board
+  let boardStack: Board[]
   if (!skippingGame) {
     // Chess variant.
     const headers =
@@ -2262,12 +2253,12 @@ export function readGame<ResultT>(
         'AssertionError: got neither managed nor unmanaged headers',
       )
     }
-    let VariantBoard: typeof chess.Board
+    let VariantBoard: typeof Board
     try {
       VariantBoard = headers.variant()
     } catch (error) {
       visitor.handleError(error)
-      VariantBoard = chess.Board
+      VariantBoard = Board
     }
 
     // Initial position.
@@ -2445,7 +2436,7 @@ export function readGame<ResultT>(
  *
  * This example scans for the first game with Kasparov as the white player.
  *
- *      >>> import chess.pgn
+ *      >>> import pgn
  *      >>>
  *      >>> pgn = open("data/pgn/kasparov-deep-blue-1997.pgn")
  *      >>>
@@ -2454,7 +2445,7 @@ export function readGame<ResultT>(
  *      >>> while true:
  *      ...     offset = pgn.tell()
  *      ...
- *      ...     headers = chess.pgn.readHeaders(pgn)
+ *      ...     headers = pgn.readHeaders(pgn)
  *      ...     if headers is null:
  *      ...         break
  *      ...
@@ -2465,7 +2456,7 @@ export function readGame<ResultT>(
  *
  *      >>> for offset in kasparovOffsets:
  *      ...     pgn.seek(offset)
- *      ...     chess.pgn.readGame(pgn)  // doctest: +ELLIPSIS
+ *      ...     pgn.readGame(pgn)  // doctest: +ELLIPSIS
  *      0
  *      <Game at ... ('Garry Kasparov' vs. 'Deep Blue (Computer)', 1997.??.??)>
  *      1436
@@ -2536,7 +2527,7 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
     }
   }
 
-  // Classification according to https://www.fide.com/FIDE/handbook/LawsOfChess.pdf
+  // Classification according to https://www.fide.com/FIDE/handbook/LawsOfpdf
   // (Bullet added)
   const baseTime = tc.parts[0].time
   const increment = tc.parts[0].increment

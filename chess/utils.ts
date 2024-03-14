@@ -312,3 +312,29 @@ export const remove = <T>(src: T[], element: T): void => {
   if (index === -1) return
   src.splice(index, 1)
 }
+
+export default {
+  Counter,
+  toGlobal,
+  parseIntStrict,
+  subn,
+  sub,
+  isspace,
+  bool,
+  boolToNumber,
+  divmod,
+  bitLength,
+  bitCount,
+  range,
+  enumerate,
+  iterChain,
+  islice,
+  StopIteration,
+  iterNext,
+  iterIncludes,
+  iterAny,
+  iterAll,
+  iterFilter,
+  iterMap,
+  remove,
+}
