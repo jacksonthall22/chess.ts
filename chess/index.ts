@@ -340,9 +340,9 @@ export const squareKnightDistance = (a: Square, b: Square): number => {
 
   if (dx + dy === 1) {
     return 3
-  } else if (dx === dy && dy == 2) {
+  } else if (dx === dy && dy === 2) {
     return 4
-  } else if (dx === dy && dy == 1) {
+  } else if (dx === dy && dy === 1) {
     if (BB_SQUARES[a] & BB_CORNERS || BB_SQUARES[b] & BB_CORNERS) {
       // Special case only for corner squares
       return 4
@@ -822,9 +822,9 @@ export class Move {
    * @thrwos :exc:`InvalidMoveError` if the UCI string is invalid.
    */
   static fromUci(uci: string): Move {
-    if (uci == '0000') {
+    if (uci === '0000') {
       return Move.null()
-    } else if (uci.length == 4 && '@' == uci[1]) {
+    } else if (uci.length === 4 && '@' === uci[1]) {
       const drop = PIECE_SYMBOLS.indexOf(uci[0].toLowerCase()) as PieceType | -1
       const square = SQUARE_NAMES.indexOf(uci.slice(2)) as Square | -1
       if (drop === -1 || square === -1) {
@@ -835,13 +835,13 @@ export class Move {
       const fromSquare = SQUARE_NAMES.indexOf(uci.slice(0, 2))
       const toSquare = SQUARE_NAMES.indexOf(uci.slice(2, 4))
       const promotion =
-        uci.length == 5
+        uci.length === 5
           ? (PIECE_SYMBOLS.indexOf(uci[4]) as PieceType | -1)
           : null
       if (fromSquare === -1 || toSquare === -1 || promotion === -1) {
         throw new InvalidMoveError(`invalid uci: {$uci}`)
       }
-      if (fromSquare == toSquare) {
+      if (fromSquare === toSquare) {
         throw new InvalidMoveError(
           `invalid uci (use 0000 for null moves): ${uci}`,
         )
@@ -1504,7 +1504,7 @@ export class BaseBoard {
     this.knights = BB_EMPTY
     for (const i of range(0, 8)) {
       if (!used.includes(i)) {
-        if (n1 == 0 || n2 == 0) {
+        if (n1 === 0 || n2 === 0) {
           this.knights |= BB_FILES[i] & BB_BACKRANKS
           used.push(i)
         }
@@ -1766,14 +1766,14 @@ export class BaseBoard {
   equals(board: any) {
     if (board instanceof BaseBoard) {
       return (
-        this.occupied == board.occupied &&
-        this.occupiedCo[colorIdx(WHITE)] == board.occupiedCo[colorIdx(WHITE)] &&
-        this.pawns == board.pawns &&
-        this.knights == board.knights &&
-        this.bishops == board.bishops &&
-        this.rooks == board.rooks &&
-        this.queens == board.queens &&
-        this.kings == board.kings
+        this.occupied === board.occupied &&
+        this.occupiedCo[colorIdx(WHITE)] === board.occupiedCo[colorIdx(WHITE)] &&
+        this.pawns === board.pawns &&
+        this.knights === board.knights &&
+        this.bishops === board.bishops &&
+        this.rooks === board.rooks &&
+        this.queens === board.queens &&
+        this.kings === board.kings
       )
     } else {
       return false
@@ -2800,7 +2800,7 @@ export class Board extends BaseBoard {
     // Fast check, based on occupancy only.
     let maybeRepetitions = 1
     for (const state of [...this._stack].reverse()) {
-      if (state.occupied == this.occupied) {
+      if (state.occupied === this.occupied) {
         maybeRepetitions += 1
         if (maybeRepetitions >= count) {
           break
@@ -3234,9 +3234,9 @@ export class Board extends BaseBoard {
     if (turnPart === undefined) {
       turn = WHITE
     } else {
-      if (turnPart == 'w') {
+      if (turnPart === 'w') {
         turn = WHITE
-      } else if (turnPart == 'b') {
+      } else if (turnPart === 'b') {
         turn = BLACK
       } else {
         throw new Error(
@@ -3955,7 +3955,7 @@ export class Board extends BaseBoard {
         )
       }
 
-      if (board.turn == WHITE) {
+      if (board.turn === WHITE) {
         san.push(`${board.fullmoveNumber}. ${board.sanAndPush(move)}`)
       } else if (san.length === 0) {
         san.push(`${board.fullmoveNumber}...${board.sanAndPush(move)}`)
@@ -4604,7 +4604,7 @@ export class Board extends BaseBoard {
       } else {
         if (
           popcount(checkers) > 2 ||
-          (popcount(checkers) == 2 &&
+          (popcount(checkers) === 2 &&
             ray(lsb(checkers), msb(checkers)) & ourKings)
         ) {
           errors |= STATUS_IMPOSSIBLE_CHECK
@@ -4623,7 +4623,7 @@ export class Board extends BaseBoard {
     let epRank: RankOrFileIndex
     let pawnMask: Bitboard
     let seventhRankMask: Bitboard
-    if (this.turn == WHITE) {
+    if (this.turn === WHITE) {
       epRank = 5
       pawnMask = shiftDown(BB_SQUARES[this.epSquare])
       seventhRankMask = shiftUp(BB_SQUARES[this.epSquare])
@@ -4676,7 +4676,7 @@ export class Board extends BaseBoard {
       throw new Error('AssertionError')
     }
 
-    const lastDouble: Square = this.epSquare + (this.turn == WHITE ? -8 : 8)
+    const lastDouble: Square = this.epSquare + (this.turn === WHITE ? -8 : 8)
 
     const occupancy =
       (this.occupied & ~BB_SQUARES[lastDouble] & ~BB_SQUARES[capturer]) |
@@ -4777,7 +4777,7 @@ export class Board extends BaseBoard {
     }
 
     const checker = msb(checkers)
-    if (BB_SQUARES[checker] == checkers) {
+    if (BB_SQUARES[checker] === checkers) {
       // Capture or block a single checker.
       const target = between(king, checker) | checkers
 
@@ -4789,8 +4789,8 @@ export class Board extends BaseBoard {
       // Capture the checking pawn en passant (but avoid yielding
       // duplicate moves).
       if (this.epSquare && !(BB_SQUARES[this.epSquare] & target)) {
-        const lastDouble = this.epSquare + (this.turn == WHITE ? -8 : 8)
-        if (lastDouble == checker) {
+        const lastDouble = this.epSquare + (this.turn === WHITE ? -8 : 8)
+        if (lastDouble === checker) {
           yield* this.generatePseudoLegalEp(fromMask, toMask)
         }
       }
@@ -4875,7 +4875,7 @@ export class Board extends BaseBoard {
       return
     }
 
-    const backrank = this.turn == WHITE ? BB_RANK_1 : BB_RANK_8
+    const backrank = this.turn === WHITE ? BB_RANK_1 : BB_RANK_8
     let king =
       this.occupiedCo[colorIdx(this.turn)] &
       this.kings &
@@ -4931,7 +4931,7 @@ export class Board extends BaseBoard {
         } else if (toSquare === A1) {
           return new Move(E1, C1)
         }
-      } else if (fromSquare == E8 && this.kings & BB_E8) {
+      } else if (fromSquare === E8 && this.kings & BB_E8) {
         if (toSquare === H8) {
           return new Move(E8, G8)
         } else if (toSquare === A8) {
@@ -4944,16 +4944,16 @@ export class Board extends BaseBoard {
   }
 
   _toChess960(move: Move): Move {
-    if (move.fromSquare == E1 && this.kings & BB_E1) {
-      if (move.toSquare == G1 && !(this.rooks & BB_G1)) {
+    if (move.fromSquare === E1 && this.kings & BB_E1) {
+      if (move.toSquare === G1 && !(this.rooks & BB_G1)) {
         return new Move(E1, H1)
-      } else if (move.toSquare == C1 && !(this.rooks & BB_C1)) {
+      } else if (move.toSquare === C1 && !(this.rooks & BB_C1)) {
         return new Move(E1, A1)
       }
-    } else if (move.fromSquare == E8 && this.kings & BB_E8) {
-      if (move.toSquare == G8 && !(this.rooks & BB_G8)) {
+    } else if (move.fromSquare === E8 && this.kings & BB_E8) {
+      if (move.toSquare === G8 && !(this.rooks & BB_G8)) {
         return new Move(E8, H8)
-      } else if (move.toSquare == C8 && !(this.rooks & BB_C8)) {
+      } else if (move.toSquare === C8 && !(this.rooks & BB_C8)) {
         return new Move(E8, A8)
       }
     }
@@ -5498,7 +5498,7 @@ export class SquareSet {
 
   equals(other: any) {
     try {
-      return this.mask == new SquareSet(other as any).mask
+      return this.mask === new SquareSet(other as any).mask
     } catch (e) {
       return false
     }
