@@ -1,9 +1,10 @@
 {
   "name": "@jacksonthall22/chess.ts",
-  "version": "0.1.2",
+  "version": "0.1.6",
   "author": "Jackson Thurner Hall <jacksonthall22+chess.ts@gmail.com> (https://www.linkedin.com/in/jackson-t-hall/)",
   "description": "A direct port of `python-chess` to TypeScript!",
-  "main": "index.ts",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -12,7 +13,9 @@
     "url": "git+https://github.com/jacksonthall22/chess.ts.git"
   },
   "files": [
-    "*.ts"
+    "dist",
+    "LICENSE.txt",
+    "README.md"
   ],
   "keywords": [
     "chess.ts",
