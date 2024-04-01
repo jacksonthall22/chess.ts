@@ -1,19 +1,62 @@
 {
   "name": "@jacksonthall22/chess.ts",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "author": "Jackson Thurner Hall <jacksonthall22+chess.ts@gmail.com> (https://www.linkedin.com/in/jackson-t-hall/)",
   "description": "A direct port of `python-chess` to TypeScript!",
   "main": "dist/index.js",
-  "type": "module",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./engine": {
+      "import": "./dist/engine.js",
+      "require": "./dist/engine.js",
+      "types": "./dist/engine.d.ts"
+    },
+    "./gaviota": {
+      "import": "./dist/gaviota.js",
+      "require": "./dist/gaviota.js",
+      "types": "./dist/gaviota.d.ts"
+    },
+    "./pgn": {
+      "import": "./dist/pgn.js",
+      "require": "./dist/pgn.js",
+      "types": "./dist/pgn.d.ts"
+    },
+    "./polyglot": {
+      "import": "./dist/polyglot.js",
+      "require": "./dist/polyglot.js",
+      "types": "./dist/polyglot.d.ts"
+    },
+    "./svg": {
+      "import": "./dist/svg.js",
+      "require": "./dist/svg.js",
+      "types": "./dist/svg.d.ts"
+    },
+    "./syzygy": {
+      "import": "./dist/syzygy.js",
+      "require": "./dist/syzygy.js",
+      "types": "./dist/syzygy.d.ts"
+    },
+    "./variant": {
+      "import": "./dist/variant.js",
+      "require": "./dist/variant.js",
+      "types": "./dist/variant.d.ts"
+    }
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jacksonthall22/chess.ts.git"
   },
   "files": [
-    "dist",
+    "dist/**/*",
     "LICENSE.txt",
     "README.md"
   ],
