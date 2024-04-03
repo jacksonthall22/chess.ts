@@ -2036,7 +2036,7 @@ export class Board extends BaseBoard {
    * rights. Also see :func:`~chess.Board.hasCastlingRights()`,
    * :func:`~chess.Board.hasKingsideCastlingRights()`,
    * :func:`~chess.Board.hasQueensideCastlingRights()`,
-   * :func:`~chess.Board.hasChess960_castlingRights()`,
+   * :func:`~chess.Board.hasChess960CastlingRights()`,
    * :func:`~chess.Board.cleanCastlingRights()`.
    */
   castlingRights: Bitboard

@@ -430,7 +430,7 @@ export abstract class GameNode {
    *
    * Complexity is `O(1)`.
    */
-  is_main_variation(): boolean {
+  isMainVariation(): boolean {
     if (this.parent === null) {
       return true
     }
@@ -920,7 +920,7 @@ export class ChildNode extends GameNode {
 
   /**
    * A comment for the start of a variation. Only nodes that
-   * actually start a variation (:func:`~pgn.GameNode.starts_variation()`
+   * actually start a variation (:func:`~pgn.GameNode.startsVariation()`
    * checks this) can have a starting comment. The root node can not have
    * a starting comment.
    */
