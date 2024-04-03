@@ -49,7 +49,7 @@ export type Color = boolean
 export const [WHITE, BLACK] = [true, false]
 export const COLORS: Color[] = [WHITE, BLACK]
 export type ColorName = 'white' | 'black'
-export const COLOR_NAMES: ColorName[] = ['white', 'black']
+export const COLOR_NAMES: ColorName[] = ['black', 'white']
 
 export const enum PieceType {
   PAWN = 1,
