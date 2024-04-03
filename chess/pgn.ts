@@ -2606,10 +2606,8 @@ export default {
   StringExporterMixin,
   StringExporter,
   // FileExporter,
-  // readGame,
-  // readGame,
-  // readGame,
-  // readHeaders,
-  // skipGame,
+  readGame,
+  readHeaders,
+  skipGame,
   parseTimeControl,
 }
