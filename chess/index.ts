@@ -1782,21 +1782,18 @@ export class BaseBoard {
     throw new Error('Not implemented')
   }
 
-  equals(board: any) {
-    if (board instanceof BaseBoard) {
-      return (
-        this.occupied === board.occupied &&
-        this.occupiedCo[colorIdx(WHITE)] === board.occupiedCo[colorIdx(WHITE)] &&
-        this.pawns === board.pawns &&
-        this.knights === board.knights &&
-        this.bishops === board.bishops &&
-        this.rooks === board.rooks &&
-        this.queens === board.queens &&
-        this.kings === board.kings
-      )
-    } else {
-      return false
-    }
+  equals(other: any) {
+    return (
+      other instanceof BaseBoard &&
+      this.occupied === other.occupied &&
+      this.occupiedCo[colorIdx(WHITE)] === other.occupiedCo[colorIdx(WHITE)] &&
+      this.pawns === other.pawns &&
+      this.knights === other.knights &&
+      this.bishops === other.bishops &&
+      this.rooks === other.rooks &&
+      this.queens === other.queens &&
+      this.kings === other.kings
+    )
   }
 
   applyTransform(f: (board: Bitboard) => Bitboard): void {
@@ -5028,18 +5025,15 @@ export class Board extends BaseBoard {
     throw new Error('Not implemented')
   }
 
-  equals(board: any): boolean {
-    if (board instanceof Board) {
-      return (
-        this.halfmoveClock === board.halfmoveClock &&
-        this.fullmoveNumber === board.fullmoveNumber &&
-        (this.constructor as typeof Board).uciVariant ===
-          (board.constructor as typeof Board).uciVariant &&
-        this._transpositionKey() === board._transpositionKey()
-      )
-    } else {
-      return false
-    }
+  equals(other: any): boolean {
+    return (
+      other instanceof Board &&
+      this.halfmoveClock === other.halfmoveClock &&
+      this.fullmoveNumber === other.fullmoveNumber &&
+      (this.constructor as typeof Board).uciVariant ===
+        (other.constructor as typeof Board).uciVariant &&
+      this._transpositionKey() === other._transpositionKey()
+    )
   }
 
   applyTransform(f: (board: Bitboard) => Bitboard): void {
@@ -5518,7 +5512,7 @@ export class SquareSet {
 
   equals(other: any) {
     try {
-      return this.mask === new SquareSet(other as any).mask
+      return this.mask === new SquareSet(other).mask
     } catch (e) {
       return false
     }
