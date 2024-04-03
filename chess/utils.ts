@@ -235,11 +235,15 @@ export const iterNext = <T>(iterable: IterableIterator<T>): T => {
 }
 
 /**
- * Return `true` if `value` is an element in the iterable.
+ * Return `true` if `value` is equal to any element in the iterable according to `equalityCheck`.
  */
-export const iterIncludes = <T>(iterable: Iterable<T>, value: T): boolean => {
+export const iterIncludes = <T>(
+    iterable: Iterable<T>,
+    value: T,
+    equalityCheck: (a: T, b: T) => boolean = (a, b) => a === b,
+  ): boolean => {
   for (const item of iterable) {
-    if (item === value) {
+    if (equalityCheck(item, value)) {
       return true
     }
   }

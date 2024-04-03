@@ -810,10 +810,29 @@ export class Move {
 
   copy(): Move {
     // NOTE: No python-chess mirror, included for convenience
-    return new Move(this.fromSquare, this.toSquare, {
-      promotion: this.promotion,
-      drop: this.drop,
-    })
+    return new Move(
+      this.fromSquare,
+      this.toSquare,
+      {
+        promotion: this.promotion,
+        drop: this.drop,
+      }
+    )
+  }
+
+  equals(other: any): boolean {
+    // NOTE: No python-chess mirror, included for convenience
+    return (
+      other instanceof Move &&
+      this.fromSquare === other.fromSquare &&
+      this.toSquare === other.toSquare &&
+      this.promotion === other.promotion &&
+      this.drop === other.drop
+    )
+  }
+
+  static equals(a: Move, b: Move): boolean {
+    return a.equals(b)
   }
 
   /**
@@ -2388,6 +2407,7 @@ export class Board extends BaseBoard {
           BB_SQUARES[move.toSquare],
         ),
         move,
+        Move.equals,
       )
     ) {
       return true
@@ -2443,7 +2463,7 @@ export class Board extends BaseBoard {
     // Handle castling.
     if (piece === KING) {
       move = this._fromChess960(this.chess960, move.fromSquare, move.toSquare)
-      if (iterIncludes(this.generateCastlingMoves(), move)) {
+      if (iterIncludes(this.generateCastlingMoves(), move, Move.equals)) {
         return true
       }
     }
@@ -2455,7 +2475,7 @@ export class Board extends BaseBoard {
 
     // Handle pawn moves.
     if (piece === PAWN) {
-      return iterIncludes(this.generatePseudoLegalMoves(fromMask, toMask), move)
+      return iterIncludes(this.generatePseudoLegalMoves(fromMask, toMask), move, Move.equals)
     }
 
     // Handle all other pieces.
