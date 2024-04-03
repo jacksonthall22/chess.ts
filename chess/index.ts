@@ -5216,66 +5216,66 @@ export type IntoSquareSet = Bitboard | Iterable<Square>
 /**
  * A set of squares.
  *
- * >>> import chess
- * >>>
- * >>> squares = chess.SquareSet([chess.A8, chess.A1])
- * >>> squares
- * SquareSet(0x0100_0000_0000_0001)
+ *      >>> import chess
+ *      >>>
+ *      >>> squares = chess.SquareSet([chess.A8, chess.A1])
+ *      >>> squares
+ *      SquareSet(0x0100_0000_0000_0001)
  *
- * >>> squares = chess.SquareSet(chess.BB_A8 | chess.BB_RANK_1)
- * >>> squares
- * SquareSet(0x0100_0000_0000_00ff)
+ *      >>> squares = chess.SquareSet(chess.BB_A8 | chess.BB_RANK_1)
+ *      >>> squares
+ *      SquareSet(0x0100_0000_0000_00ff)
  *
- * >>> print(squares)
- * 1 . . . . . . .
- * . . . . . . . .
- * . . . . . . . .
- * . . . . . . . .
- * . . . . . . . .
- * . . . . . . . .
- * . . . . . . . .
- * 1 1 1 1 1 1 1 1
+ *      >>> print(squares)
+ *      1 . . . . . . .
+ *      . . . . . . . .
+ *      . . . . . . . .
+ *      . . . . . . . .
+ *      . . . . . . . .
+ *      . . . . . . . .
+ *      . . . . . . . .
+ *      1 1 1 1 1 1 1 1
  *
- * >>> len(squares)
- * 9
+ *      >>> len(squares)
+ *      9
  *
- * >>> bool(squares)
- * True
+ *      >>> bool(squares)
+ *      True
  *
- * >>> chess.B1 in squares
- * True
+ *      >>> chess.B1 in squares
+ *      True
  *
- * >>> for square in squares:
- * ...     # 0 -- chess.A1
- * ...     # 1 -- chess.B1
- * ...     # 2 -- chess.C1
- * ...     # 3 -- chess.D1
- * ...     # 4 -- chess.E1
- * ...     # 5 -- chess.F1
- * ...     # 6 -- chess.G1
- * ...     # 7 -- chess.H1
- * ...     # 56 -- chess.A8
- * ...     print(square)
- * ...
- * 0
- * 1
- * 2
- * 3
- * 4
- * 5
- * 6
- * 7
- * 56
+ *      >>> for square in squares:
+ *      ...     # 0 -- chess.A1
+ *      ...     # 1 -- chess.B1
+ *      ...     # 2 -- chess.C1
+ *      ...     # 3 -- chess.D1
+ *      ...     # 4 -- chess.E1
+ *      ...     # 5 -- chess.F1
+ *      ...     # 6 -- chess.G1
+ *      ...     # 7 -- chess.H1
+ *      ...     # 56 -- chess.A8
+ *      ...     print(square)
+ *      ...
+ *      0
+ *      1
+ *      2
+ *      3
+ *      4
+ *      5
+ *      6
+ *      7
+ *      56
  *
- * >>> list(squares)
- * [0, 1, 2, 3, 4, 5, 6, 7, 56]
+ *      >>> list(squares)
+ *      [0, 1, 2, 3, 4, 5, 6, 7, 56]
  *
  * Square sets are internally represented by 64-bit integer masks of the
  * included squares. Bitwise operations can be used to compute unions,
  * intersections and shifts.
  *
- * >>> int(squares)
- * 72057594037928191
+ *      >>> int(squares)
+ *      72057594037928191
  *
  * Also supports common set operations like
  * :func:`~chess.SquareSet.issubset()`, :func:`~chess.SquareSet.issuperset()`,
