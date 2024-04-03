@@ -2111,11 +2111,11 @@ export class StringExporter extends StringExporterMixin<string> {
 //   }
 // }
 
-export function readGame(handle: StringIO): Game | void
+export function readGame(handle: StringIO): Game | null
 export function readGame<ResultT>(
   handle: StringIO,
   { Visitor }: { Visitor?: typeof BaseVisitor<ResultT> },
-): ResultT | void
+): ResultT | null
 /**
  * Reads a game from a file opened in text mode.
  *
@@ -2169,7 +2169,7 @@ export function readGame<ResultT>(
 export function readGame<ResultT>(
   handle: StringIO,
   { Visitor = GameBuilder }: { Visitor?: any } = {},
-): ResultT | void {
+): ResultT | null {
   const visitor = new Visitor()
 
   let foundGame = false
@@ -2235,7 +2235,7 @@ export function readGame<ResultT>(
   }
 
   if (!foundGame) {
-    return
+    return null
   }
 
   if (!skippingGame) {
@@ -2464,7 +2464,7 @@ export function readGame<ResultT>(
  *      3067
  *      <Game at ... ('Garry Kasparov' vs. 'Deep Blue (Computer)', 1997.??.??)>
  */
-export const readHeaders = (handle: StringIO): Headers | void => {
+export const readHeaders = (handle: StringIO): Headers | null => {
   return readGame(handle, { Visitor: HeadersBuilder })
 }
 
