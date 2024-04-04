@@ -1475,6 +1475,10 @@ export class Mainline<MainlineMapT> {
     }
   }
 
+  [Symbol.iterator](): IterableIterator<MainlineMapT> {
+    return this.iter()
+  }
+
   *reversed(): IterableIterator<MainlineMapT> {
     let node = this.start.end()
     while (node.parent && node !== this.start) {
