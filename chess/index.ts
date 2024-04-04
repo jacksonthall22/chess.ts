@@ -4043,7 +4043,7 @@ export class Board extends BaseBoard {
     // Get the promotion piece type.
     const p = match[5]
     const promotion = p
-      ? PIECE_SYMBOLS.indexOf(p[p.length - 1].toLowerCase())
+      ? PIECE_SYMBOLS.indexOf(p[p.length - 1].toLowerCase()) as PieceType
       : null
 
     // Filter by original square.
@@ -4806,7 +4806,7 @@ export class Board extends BaseBoard {
       // Capture the checking pawn en passant (but avoid yielding
       // duplicate moves).
       if (this.epSquare && !(BB_SQUARES[this.epSquare] & target)) {
-        const lastDouble = this.epSquare + (this.turn === WHITE ? -8 : 8)
+        const lastDouble = this.epSquare + (this.turn === WHITE ? -8 : 8) as Square
         if (lastDouble === checker) {
           yield* this.generatePseudoLegalEp(fromMask, toMask)
         }
