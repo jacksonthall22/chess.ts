@@ -441,13 +441,14 @@ export abstract class GameNode {
     )
   }
 
+  // __getitem__()
   getitem(move: number | Move | GameNode): ChildNode {
     if (typeof move === 'number') {
       return this.variations[move]
     }
 
     for (const variation of this.variations) {
-      if (variation.move === move || variation === move) {
+      if (variation.move.equals(move) || variation === move) {
         return variation
       }
     }
@@ -455,6 +456,7 @@ export abstract class GameNode {
     throw new Error(`KeyError: ${move}`)
   }
 
+  // __contains__()
   includes(move: number | Move | GameNode): boolean {
     try {
       this.getitem(move)
