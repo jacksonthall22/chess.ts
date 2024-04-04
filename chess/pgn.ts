@@ -1724,7 +1724,6 @@ export class GameBuilder extends BaseVisitor<Game> {
   }
 
   visitMove(board: Board, move: Move): void {
-    this.variationStack
     this.variationStack[this.variationStack.length - 1] = this.variationStack
       .at(-1)!
       .addVariation(move) // TODO this type of indexing doesn't work
