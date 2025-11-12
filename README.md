@@ -1,67 +1,136 @@
-# chess.ts
-A direct port of [python-chess](https://github.com/niklasf/python-chess/tree/master) to TypeScript!
+# `chess.ts`
 
-# Install
+The best `chess.ts` package on `npm` because it just mirrors [`python-chess`](https://github.com/niklasf/python-chess)*!
+###### *It's a work in progress!
+
+All of the features you would expect in Python with `import chess` or `import chess.pgn` are implemented.
+Other `python-chess` subpackages have minimal functionality to support the main features of the library.
+Please report any issues in this repo!
+
 ```
 npm i @jacksonthall22/chess.ts
 ```
 
-# Contributing
-I have compiled some notes about how I am approaching this transpilation effort 
-[here](py-to-ts-tips.md). Probably this would be a good starting point.
+## Benefits over `chess.js` and `chess.ts`
 
-Ideally, this library will transpile everything from 
-[python-chess core copy](./python-chess%20core%20copy/) over to the 
-corresponding files in [chess](chess/). However, I think the most important
-and immediate objectives to make this library useful are (in order):
-- [x]  Transpile `__init__.py` → `index.ts`
-- [x]  Transpile `pgn.py` → `pgn.ts`
-- [ ]  Transpile `engine.py` → `engine.ts` (WIP: minimal functionality for `pgn.ts` to work)
-- [ ]  Create a testing suite
+- `python-chess` is battle-tested (and pytested)
+- More logical data structures, eg. better separation of concerns between `Board` / `Game`
+- More straighforward API encourages better code <sub><sub>(IMHO!)</sub></sub>
 
-If anyone wants to help contribute (thank you, by the way!), I would recommend
-starting with the next item in this list. Specifically, `engine.py` might be a
-behemoth—threading stuff is not my forte.
+## Examples
+
+### Pushing moves on a `Board`
+```ts
+import * as chess from "@jacksonthall22/chess.ts"
+
+const b = new chess.Board()
+
+// Push SAN or UCI
+b.pushSan('e4')
+b.pushUci('e7e5')
+
+// Push `Move`s
+const m = new chess.Move(chess.G1, chess.F3)
+console.log(b.san(m))  // Nf3
+b.push(m)
+
+// ASCII representation
+b.pushSan('Nc6')
+b.pushSan('Bb5')
+console.log(b.toString())
+/*
+r . b q k b n r
+p p p p . p p p
+. . n . . . . .
+. B . . p . . .
+. . . . P . . .
+. . . . . N . .
+P P P P . P P P
+R N B Q K . . R
+*/
+
+// Nice trick to get SANs from a Board's moveStack
+const tempB = new chess.Board()
+const sanStack = b.moveStack.map((m) => tempB.sanAndPush(m))
+console.log(sanStack.join(' '))
+/*
+e4 e5 Nf3 Nc6 Bb5
+*/
+```
+
+### Reading `Game`s
+```ts
+import { readGame, StringIO } from "@jacksonthall22/chess.ts/pgn"
+
+
+// This lib provides a minimal mirror of Python's `io.StringIO` class
+// to work with PGNs. Reading directly from files is not yet supported,
+// but you can use a `chessPgn.StringIO` object to read games sequentially
+// from a multi-game PGN the same way you would in `python-chess`:
+const pgns = `
+[Event "FIDE World Championship 2023"]\n[Site "Astana KAZ"]\n[Date "2023.04.30"]\n[Round "18"]\n[White "Nepomniachtchi, Ian"]\n[Black "Liren, Ding"]\n[Result "0-1"]\n[WhiteFideId "4168119"]\n[BlackFideId "8603677"]\n[WhiteElo "2795"]\n[BlackElo "2788"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. d3 b5 7. Bb3 d6 8. a4 Bd7 9. h3 O-O 10. Be3 Na5 11. Ba2 bxa4 12. Nc3 Rb8 13. Bb1 Qe8 14. b3 c5 15. Nxa4 Nc6 16. Nc3 a5 17. Nd2 Be6 18. Nc4 d5 19. exd5 Nxd5 20. Bd2 Nxc3 21. Bxc3 Bxc4 22. bxc4 Bd8 23. Bd2 Bc7 24. c3 f5 25. Re1 Rd8 26. Ra2 Qg6 27. Qe2 Qd6 28. g3 Rde8 29. Qf3 e4 30. dxe4 Ne5 31. Qg2 Nd3 32. Bxd3 Qxd3 33. exf5 Rxe1+ 34. Bxe1 Qxc4 35. Ra1 Rxf5 36. Bd2 h6 37. Qc6 Rf7 38. Re1 Kh7 39. Be3 Be5 40. Qe8 Bxc3 41. Rc1 Rf6 42. Qd7 Qe2 43. Qd5 Bb4 44. Qe4+ Kg8 45. Qd5+ Kh7 46. Qe4+ Rg6 47. Qf5 c4 48. h4 Qd3 49. Qf3 Rf6 50. Qg4 c3 51. Rd1 Qg6 52. Qc8 Rc6 53. Qa8 Rd6 54. Rxd6 Qxd6 55. Qe4+ Qg6 56. Qc4 Qb1+ 57. Kh2 a4 58. Bd4 a3 59. Qc7 Qg6 60. Qc4 c2 61. Be3 Bd6 62. Kg2 h5 63. Kf1 Be5 64. g4 hxg4 65. h5 Qf5 66. Qd5 g3 67. f4 a2 68. Qxa2 Bxf4 0-1
+
+
+[Event "FIDE World Championship 2023"]\n[Site "Astana KAZ"]\n[Date "2023.04.30"]\n[Round "18"]\n[White "Nepomniachtchi, Ian"]\n[Black "Liren, Ding"]\n[Result "0-1"]\n[WhiteFideId "4168119"]\n[BlackFideId "8603677"]\n[WhiteElo "2795"]\n[BlackElo "2788"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. d3 b5 7. Bb3 d6 8. a4 Bd7 9. h3 O-O 10. Be3 Na5 11. Ba2 bxa4 12. Nc3 Rb8 13. Bb1 Qe8 14. b3 c5 15. Nxa4 Nc6 16. Nc3 a5 17. Nd2 Be6 18. Nc4 d5 19. exd5 Nxd5 20. Bd2 Nxc3 21. Bxc3 Bxc4 22. bxc4 Bd8 23. Bd2 Bc7 24. c3 f5 25. Re1 Rd8 26. Ra2 Qg6 27. Qe2 Qd6 28. g3 Rde8 29. Qf3 e4 30. dxe4 Ne5 31. Qg2 Nd3 32. Bxd3 Qxd3 33. exf5 Rxe1+ 34. Bxe1 Qxc4 35. Ra1 Rxf5 36. Bd2 h6 37. Qc6 Rf7 38. Re1 Kh7 39. Be3 Be5 40. Qe8 Bxc3 41. Rc1 Rf6 42. Qd7 Qe2 43. Qd5 Bb4 44. Qe4+ Kg8 45. Qd5+ Kh7 46. Qe4+ Rg6 47. Qf5 c4 48. h4 Qd3 49. Qf3 Rf6 50. Qg4 c3 51. Rd1 Qg6 52. Qc8 Rc6 53. Qa8 Rd6 54. Rxd6 Qxd6 55. Qe4+ Qg6 56. Qc4 Qb1+ 57. Kh2 a4 58. Bd4 a3 59. Qc7 Qg6 60. Qc4 c2 61. Be3 Bd6 62. Kg2 h5 63. Kf1 Be5 64. g4 hxg4 65. h5 Qf5 66. Qd5 g3 67. f4 a2 68. Qxa2 Bxf4 0-1`
+
+let pgnio = new chessPgn.StringIO(pgns)
+let g: chessPgn.Game | null
+
+while (true) {
+  g = chessPgn.readGame(pgnio)
+  if (g === null) break
+  console.log(g!.end().board().toString(), '\n')
+}
+/*
+. . . . . . . .
+. . . . . . p k
+. . . . . . . .
+. . . . . q . P
+. . . . . b . .
+. . . . B . p .
+Q . p . . . . .
+. . . . . K . .
+
+. . . . . . . .
+. . . . . . p k
+. . . . . . . .
+. . . . . q . P
+. . . . . b . .
+. . . . B . p .
+Q . p . . . . .
+. . . . . K . .
+
+*/
+```
+
+
+## Contributing
+This package aims to be a direct port of `python-chess` to TypeScript, faithful down to the line.
+I compiled some notes about how I approached this massive transpilation effort [here](py-to-ts-tips.md).
+
+In the long run, this repo should aim to transpile everything from [python-chess core copy](./python-chess%20core%20copy/)
+over to the corresponding files in [`chess/`](chess/):
+- [x]  `__init__.py` → `index.ts`
+- [x]  `pgn.py` → `pgn.ts`
+- [ ]  `engine.py` → `engine.ts` (WIP: minimal functionality for `pgn.ts` to work)
+- [ ]  Transpile testing suite
+
+PRs welcome!
 
 ### Transpilation helper
-I noticed that 90% of the work is pretty repetitive when converting Python to TypeScript:
-switching the class/method/docstring formatting, putting parentheses around `if` statement
-conditions, changing `True`s to `true`s, `None`s to `null`s, and `==`s to `===`s, etc. I created
-[`transpilation_helper.py`](transpilation_helper.py) for this reason to quickly transpile
-a block of Python code of arbitrary length to TypeScript. This can be used **as a decent starting point**,
-but the almost-TS-code it outputs will almost always need additional manual work. To point out just a
-couple of examples, it does not detect which vars need `let` or `const` (and so it omits those keywords
-completely), and it does not modify `if`/`while` conditions (these will need to be manually edited to
-guarantee the same functionality). Also, it handles methods, but not top-level functions.
+I created [`transpilation_helper.py`](transpilation_helper.py) to quickly transpile the easy keywords/patterns of Python to TypeScript
+(converts docstrings to jsdocs, parenthesizes `if` statement conditions, changes `True`s to `true`s, `None`s to `null`s, and `==`s to
+`===`s, etc). This gives **a decent starting point** for the use case here, but the almost-TS-code it outputs will almost always need
+additional manual editing. For example, it does not detect which variables need `let` or `const` and so it cautiously avoids changing
+those lines. Also, it does not modify `if`/`while` condition expressions (I checked each one manually to verify logical equality).
 
-To use it, just run `python transpilation_helper.py`. Copy a block of Python code to the clipboard
-(triple-click and drag to select multiple whole lines, including the leading indents). Press `Enter`.
-The transpiled code will be copied to the clipboard. Paste it into a TypeScript file, continue to
-make edits, and verify it works the same way as the original Python code.
-
-You might need `pip install chess pyperclip`.
+To use it, just run `python transpilation_helper.py` to open a CLI where you can paste a block of Python code (make sure to triple-click
+and drag to select multiple code lines, including leading indents). Press `Enter` and the transpiled code will be copied to the clipboard
+(you may need `pip install pyperclip`). Paste it into a TypeScript file, continue to make edits until warnings disappear, and check the
+final TypeScript against the Python in a splitscreen to verify it works the same.
 
 ### `chess.ts`'s GPT
-Also check out the GPT I made for this project, [`python-chess` to `chess.ts` helper!](https://chat.openai.com/g/g-Ht5toEWik-python-chess-to-chess-ts-helper).
-I have provided it with instructions specific to this task, which closely follow my 
-notes in [`py-to-ts-tips.md`](py-to-ts-tips.md) (it may even address you as Jackson lol). 
-Thus far it has been an indispensible tool to speed up the manual transpilation effort.
-It is near perfect at transpiling arbitrarily long functions/methods that do not have 
-complex Python-specific code patterns. However, for example, it struggled with 
-transpiling `BaseBoard.copy()` in `__init__.py`, which starts by instantiating a new board 
-with the same dynamic type as `self`:
-
-```py
-board = type(self)(None)
-```
-
-After initially giving a poor response that raised TS errors, I had to probe it for a bit 
-before it came up with a successful idea:
-
-```ts
-const board = new (this.constructor as new () => this)();
-```
-
-So while it is definitely subject to basic mistakes, it usually gets 90% of the way there.
-The other 10% usually just takes a bit more artful prompting. Always make sure to verify its 
-solutions with the original Python code on a split screen.
+I made a GPT to help with this project, [`python-chess` to `chess.ts` helper](https://chat.openai.com/g/g-Ht5toEWik-python-chess-to-chess-ts-helper).
+It has instructions specific to this task, which closely follow [`py-to-ts-tips.md`](py-to-ts-tips.md).
+It was an indispensible tool to speed up the transpilation effort. I designed it to take the partially-transpiled output of `transpilation_helper.py`
+(which may get from 0–75%) and output near-perfect final results (75–95%+).
