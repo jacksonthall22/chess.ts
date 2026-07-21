@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-dd4d9c1285d70f1aaffa276244101d9373053c1d
-v1.11.1-67-gdd4d9c12
-2025-02-23 — Fix Gaviota en-passant resolution
+06de70e2e87969743dfa2196db1e2cbe687a08a8
+v1.11.1-68-g06de70e2
+2025-02-24 — Fix checkmating Gaviota en-passant captures
 ```
 
-This state fixes en-passant resolution in the unsupported pure-Python Gaviota
-tablebase and adds its regression test to the explicit translation TODO ledger.
+This state fixes checkmating en-passant captures in the unsupported pure-Python
+Gaviota tablebase and adds its regression test to the explicit translation TODO
+ledger.
 
 ### Synchronization log
 
@@ -69,6 +70,7 @@ tablebase and adds its regression test to the explicit translation TODO ledger.
 | `f93a7ffb` | Corrected a documentation typo in the unsupported Syzygy module; no TypeScript runtime change applies. |
 | `636e95fb` | Reverted the regressed Gaviota rewrite byte-for-byte to its prior implementation; Gaviota remains unsupported in chess.ts. |
 | `dd4d9c12` | Fixed en-passant resolution in the unsupported pure-Python Gaviota tablebase; `test_ep_is_best` is tracked explicitly as a translation TODO. |
+| `06de70e2` | Fixed checkmating en-passant captures in the unsupported pure-Python Gaviota tablebase; `test_ep_is_mate` is tracked explicitly as a translation TODO. |
 
 ## Original baseline provenance
 
