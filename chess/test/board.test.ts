@@ -688,16 +688,6 @@ class BoardTestCase extends TestCase {
 }
 
 registerTestCase('BoardTestCase', BoardTestCase, {
-  // chess.ts setEpd() currently truncates the operations field before parsing.
-  // cleanCastlingRights() also treats an empty JS array as truthy, unlike an
-  // empty Python list. Keep the faithful upstream tests active while the fixes
-  // land separately.
-  expectedFailures: [
-    'testFromEpd',
-    'testInvalidCastlingRights',
-    'testCleanCastlingRights',
-    'testMoveCount',
-  ],
   lines: {
     testDefaultPosition: 212,
     testEmpty: 218,

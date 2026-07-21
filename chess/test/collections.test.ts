@@ -1,14 +1,10 @@
+import { describe, expect, test } from 'vitest'
+
 import * as chess from '../index'
 import { registerTestCase, TestCase } from './unittest'
 
 const squareValues = (squares: chess.SquareSet): Set<chess.Square> =>
-  new Set(squares.iter())
-
-// The translated `IntoSquareSet` declaration does not currently recognize a
-// SquareSet as iterable. Keep the upstream SquareSet-to-SquareSet calls intact
-// at runtime so the tests characterize that public parity gap.
-const asIntoSquareSet = (squares: chess.SquareSet): chess.IntoSquareSet =>
-  squares as unknown as chess.IntoSquareSet
+  new Set(squares)
 
 const setsAreDisjoint = <T>(left: Set<T>, right: Set<T>): boolean =>
   Array.from(left).every(value => !right.has(value))
@@ -87,13 +83,6 @@ class LegalMoveGeneratorTestCase extends TestCase {
 }
 
 registerTestCase('LegalMoveGeneratorTestCase', LegalMoveGeneratorTestCase, {
-  // Both move-generator iterators return a nested iterator instead of
-  // delegating with `yield*`, so JavaScript observes an empty traversal.
-  expectedFailures: [
-    'testListConversion',
-    'testStringConversion',
-    'testTraverseOnce',
-  ],
   lines: {
     testListConversion: 1716,
     testNonzero: 1719,
@@ -115,11 +104,31 @@ class BaseBoardTestCase extends TestCase {
 }
 
 registerTestCase('BaseBoardTestCase', BaseBoardTestCase, {
-  // BaseBoard's translated default currently clears instead of resetting.
-  expectedFailures: ['testSetPieceMap'],
   lines: {
     testSetPieceMap: 1756,
   },
+})
+
+describe('BaseBoard parity characterizations not covered upstream', () => {
+  class DerivedBoard extends chess.BaseBoard {
+    initializedWith: string | null
+
+    constructor(boardFen: string | null = chess.STARTING_BOARD_FEN) {
+      super(boardFen)
+      this.initializedWith = boardFen
+    }
+  }
+
+  test('copy and empty preserve the dynamic type and construct it empty', () => {
+    const original = new DerivedBoard()
+    const copy = original.copy()
+    const empty = DerivedBoard.empty()
+
+    expect(copy).toBeInstanceOf(DerivedBoard)
+    expect(copy.initializedWith).toBeNull()
+    expect(empty).toBeInstanceOf(DerivedBoard)
+    expect(empty.initializedWith).toBeNull()
+  })
 })
 
 /** Mechanical translation of python-chess `SquareSetTestCase` at cd7f5958. */
@@ -143,10 +152,8 @@ class SquareSetTestCase extends TestCase {
     this.assertEqual(new chess.SquareSet(chess.BB_ALL), chess.BB_ALL)
     this.assertEqual(chess.BB_ALL, new chess.SquareSet(chess.BB_ALL))
 
-    // The cast bridges the incomplete translated type declaration while
-    // preserving the upstream SquareSet-to-SquareSet constructor call.
     this.assertEqual(
-      new chess.SquareSet(asIntoSquareSet(new chess.SquareSet(999n))).int(),
+      new chess.SquareSet(new chess.SquareSet(999n)).int(),
       999n,
     )
     this.assertEqual(new chess.SquareSet([chess.B8]), chess.BB_B8)
@@ -172,7 +179,7 @@ class SquareSetTestCase extends TestCase {
 
   testIter(): void {
     const bb = new chess.SquareSet(chess.BB_G7 | chess.BB_G8)
-    this.assertEqual(Array.from(bb.iter()), [chess.G7, chess.G8])
+    this.assertEqual(Array.from(bb), [chess.G7, chess.G8])
   }
 
   testReversed(): void {
@@ -249,37 +256,33 @@ class SquareSetTestCase extends TestCase {
         const nativeA = squareValues(a)
         const nativeB = squareValues(b)
 
-        // The casts bridge the incomplete translated type declaration while
-        // deliberately preserving upstream's direct SquareSet arguments.
         this.assertEqual(
           setsAreDisjoint(nativeA, nativeB),
-          a.isdisjoint(asIntoSquareSet(b)),
+          a.isdisjoint(b),
         )
         this.assertEqual(
           isSubset(nativeA, nativeB),
-          a.issubset(asIntoSquareSet(b)),
+          a.issubset(b),
         )
         this.assertEqual(
           isSubset(nativeB, nativeA),
-          a.issuperset(asIntoSquareSet(b)),
+          a.issuperset(b),
         )
         this.assertEqual(
           setUnion(nativeA, nativeB),
-          squareValues(a.union(asIntoSquareSet(b))),
+          squareValues(a.union(b)),
         )
         this.assertEqual(
           setIntersection(nativeA, nativeB),
-          squareValues(a.intersection(asIntoSquareSet(b))),
+          squareValues(a.intersection(b)),
         )
         this.assertEqual(
           setDifference(nativeA, nativeB),
-          squareValues(a.difference(asIntoSquareSet(b))),
+          squareValues(a.difference(b)),
         )
         this.assertEqual(
           setSymmetricDifference(nativeA, nativeB),
-          squareValues(
-            a.symmetricDifference(asIntoSquareSet(b)) as unknown as chess.SquareSet,
-          ),
+          squareValues(a.symmetricDifference(b)),
         )
       }
     }
@@ -405,9 +408,6 @@ class SquareSetTestCase extends TestCase {
 }
 
 registerTestCase('SquareSetTestCase', SquareSetTestCase, {
-  // SquareSet currently compares only against bigint and does not implement
-  // the iterable protocol expected by its own set-to-set operations.
-  expectedFailures: ['testEquality', 'testImmutableSetOperations'],
   lines: {
     testEquality: 1767,
     testStringConversion: 1789,
