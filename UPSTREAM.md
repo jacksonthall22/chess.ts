@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-0e900e248f0047e6dff0476494d78b9421b0c13e
-v1.11.1-86-g0e900e24
-2025-12-07 — Add Board.gives_checkmate()
+11399c63ea5531cfac5b8d56d8f4064fa1c7430b
+v1.11.1-90-g11399c63
+2026-01-03 — Ensure hash is always set after threads
 ```
 
-This state adds `Board.givesCheckmate()`, a reversible probe that pushes a
-pseudo-legal move, tests the resulting checkmate state, and always restores the
-board after the test completes or throws.
+This state reorders UCI engine configuration so `Hash` is sent after `Threads`,
+as recommended by Stockfish. The engine process layer remains unsupported in
+`chess.ts`, so this state changes only the exact upstream pin and source
+inventory.
 
 ### Synchronization log
 
@@ -85,6 +86,7 @@ board after the test completes or throws.
 | `1ce4d3f8` | Added public rank/file aliases, constants, collections, parsers, formatters, and square-helper signatures. The TypeScript parsers fail explicitly instead of leaking JavaScript's `indexOf()` sentinel. |
 | `4d9b3bfd` | Opened Gaviota table files read-only upstream; pending the unsupported module's translation. |
 | `0e900e24` | Added `Board.givesCheckmate()` with restoration guarantees for both successful probes and exceptions. |
+| `11399c63` | Reordered UCI engine configuration so `Hash` follows `Threads`; pending the unsupported engine process layer's translation. |
 
 ### Intentional upstream divergence
 
