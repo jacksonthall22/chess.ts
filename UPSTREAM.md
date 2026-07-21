@@ -5,15 +5,27 @@
 submodule currently pins:
 
 ```text
-315052c0105ea1e0d0b4e1cbee70577fd9349f2d
-v1.10.0-71-g315052c0
-2024-02-24 — Fix argument syntax
+eaa6eb3b023e92441f9de810785bb1716dd4d0b5
+v1.10.0-77-geaa6eb3b
+2024-05-04 — Fixup invalid EPD in crazyhouse.perft file
 ```
 
-The preceding first-parent state added the Stockfish 16.1 WDL model. This state
-only corrects its Python `ply=int` annotation to `ply: int`; the mechanically
-translated TypeScript helper already required `ply: number`, so this explicit
-synchronization step has no TypeScript runtime or test delta.
+This state removes invalid move counters from one upstream Crazyhouse perft
+position. chess.ts does not mirror or consume that fixture, so no TypeScript
+runtime or test change applies.
+
+### Synchronization log
+
+| Upstream state | TypeScript disposition |
+| --- | --- |
+| `8e91525e` | Added Stockfish 16.1 WDL source and test behavior. |
+| `315052c0` | Python annotation correction; TypeScript already used `ply: number`. |
+| `d1dce61a` | Python documentation dependency only; not applicable. |
+| `4c7a9025` | Python `TypeAlias` annotations; TypeScript aliases already explicit. |
+| `6af0ff4c` | Expanded core constants into individually typed declarations and named arrays. |
+| `716a0b94` | Required EPD operation codes to begin with a Unicode letter and ported the regression test. |
+| `df714e39` | Corrected the upstream Chess960 perft fixture; chess.ts does not mirror that fixture. |
+| `eaa6eb3b` | Corrected the upstream Crazyhouse perft fixture; chess.ts does not mirror that fixture. |
 
 ## Original baseline provenance
 
@@ -75,10 +87,12 @@ for distinct same-move child variations. The generated
 count of the remaining work.
 
 The first parity pass translates six additional PGN tests and two Engine tests,
-bringing the current total to 84 passing upstream methods and 198 explicit
-TODOs. Seven chess.ts-only characterizations cover the original three game-tree
-cases plus polymorphic `BaseBoard` construction, Python-compatible float
-formatting, Unicode-aware PGN wrapping, and comment sanitization.
+bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
+adds one more translated regression test, so the current total is 85 passing
+upstream methods and 198 explicit TODOs. Seven chess.ts-only characterizations
+cover the original three game-tree cases plus polymorphic `BaseBoard`
+construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
+and comment sanitization.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
