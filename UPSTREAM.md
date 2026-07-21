@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-ffa04827e325de5b4d39a67eee3528474b814285
-v1.11.1-72-gffa04827
-2025-04-06 — Document public Board methods
+b2144c2564f740ea120d037e9ec6129d8a3bea2c
+v1.11.1-73-gb2144c25
+2025-10-03 — Remove explicit CodeQL configuration
 ```
 
-This state adds public API documentation for board mutation, move legality,
-game-over detection, and result reporting. The TypeScript documentation uses
-the corresponding camel-cased API names.
+This state removes an upstream repository-specific CodeQL workflow. chess.ts
+has no corresponding copied workflow, so no TypeScript runtime or CI change
+applies.
 
 ### Synchronization log
 
@@ -74,6 +74,7 @@ the corresponding camel-cased API names.
 | `45f616fa` | Added Python 3.13 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 | `b3c1f62c` | Prepared python-chess 1.11.2 and updated only the mirrored `__version__`; npm and historical transpiler versions remain unchanged. |
 | `ffa04827` | Added public API documentation for board mutation, move legality, game-over detection, and result reporting, using camel-cased TypeScript links. |
+| `b2144c25` | Removed upstream's repository-specific CodeQL workflow; chess.ts has no corresponding copied workflow. |
 
 ## Original baseline provenance
 
