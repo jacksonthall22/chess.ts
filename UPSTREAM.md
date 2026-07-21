@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-636e95fbf292f322fc4ab31b8c4add51f7534362
-v1.11.1-66-g636e95fb
-2025-02-23 — Revert the shortened Gaviota implementation
+dd4d9c1285d70f1aaffa276244101d9373053c1d
+v1.11.1-67-gdd4d9c12
+2025-02-23 — Fix Gaviota en-passant resolution
 ```
 
-This state reverts the regressed Gaviota rewrite byte-for-byte to its prior
-implementation. Gaviota remains unsupported in chess.ts, so no TypeScript
-runtime change applies.
+This state fixes en-passant resolution in the unsupported pure-Python Gaviota
+tablebase and adds its regression test to the explicit translation TODO ledger.
 
 ### Synchronization log
 
@@ -69,6 +68,7 @@ runtime change applies.
 | `3a974697` | Narrowed imports in the unsupported Gaviota module to type-only symbols; no TypeScript runtime change applies. |
 | `f93a7ffb` | Corrected a documentation typo in the unsupported Syzygy module; no TypeScript runtime change applies. |
 | `636e95fb` | Reverted the regressed Gaviota rewrite byte-for-byte to its prior implementation; Gaviota remains unsupported in chess.ts. |
+| `dd4d9c12` | Fixed en-passant resolution in the unsupported pure-Python Gaviota tablebase; `test_ep_is_best` is tracked explicitly as a translation TODO. |
 
 ## Original baseline provenance
 
