@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-ec8ecec5c0277691ec76041e82bf13140f7f719a
-v1.10.0-84-gec8ecec5
-2024-07-11 — chess-playground discontinued
+63aac2ec65860a64256a190220b793e80b132b50
+v1.10.0-85-g63aac2ec
+2024-07-19 — Expose optional occupied parameter for attackers_mask (#1090)
 ```
 
-This state removes a discontinued external project from the upstream README.
-It does not change the python-chess API, runtime, or tests, so no TypeScript
-change applies.
+This state exposes optional occupancy overrides on attack queries. The
+TypeScript API accepts bitboards or square iterables where upstream accepts an
+`IntoSquareSet`, preserves an explicit empty `0n` override, and uses the public
+`attackersMask()` method for castling X-ray checks.
 
 ### Synchronization log
 
@@ -32,6 +33,7 @@ change applies.
 | `95803fc6` | Upstream Syzygy alpha-beta search limit; pending the unsupported module's translation. |
 | `474c87bf` | Ported the additional SAN disambiguation regression assertion. |
 | `ec8ecec5` | Upstream README listing removal only; not applicable. |
+| `63aac2ec` | Exposed optional occupied masks on attack queries and characterized bitboard and iterable overrides. |
 
 ## Original baseline provenance
 
@@ -95,10 +97,10 @@ count of the remaining work.
 The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one more translated regression test, so the current total is 85 passing
-upstream methods and 198 explicit TODOs. Seven chess.ts-only characterizations
+upstream methods and 198 explicit TODOs. Eight chess.ts-only characterizations
 cover the original three game-tree cases plus polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
-and comment sanitization.
+comment sanitization, and attack-query occupancy overrides.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
