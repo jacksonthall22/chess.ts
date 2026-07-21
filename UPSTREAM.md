@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-8e91525e47593932911951919a6855f2ea2aa170
-v1.10.0-70-g8e91525e
-2024-02-24 — Add sf16.1 WDL model
+315052c0105ea1e0d0b4e1cbee70577fd9349f2d
+v1.10.0-71-g315052c0
+2024-02-24 — Fix argument syntax
 ```
 
-This is the first canonical `master` first-parent state after the recovered
-original baseline. Its gitlink advance, TypeScript source change, and affected
-tests land together.
+The preceding first-parent state added the Stockfish 16.1 WDL model. This state
+only corrects its Python `ply=int` annotation to `ply: int`; the mechanically
+translated TypeScript helper already required `ply: number`, so this explicit
+synchronization step has no TypeScript runtime or test delta.
 
 ## Original baseline provenance
 
