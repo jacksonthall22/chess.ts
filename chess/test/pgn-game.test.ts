@@ -98,6 +98,30 @@ class PgnTestCase extends TestCase {
     ])
   }
 
+  testReadGameWithLeadingWhitespaceBeforeHeader(): void {
+    const source =
+      ' [Event "TCEC Season 27 - Entrance League"]\n' +
+      '[Site "https://tcec-chess.com"]\n' +
+      '[White "Patricia 3.1_dev_ca7ef0a3"]\n' +
+      '[Black "Weiss 2.1-dev11"]\n' +
+      '[Result "*"]\n' +
+      '\n' +
+      '1. d4 *'
+
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+
+    this.assertEqual(
+      game.headers.get('Event'),
+      'TCEC Season 27 - Entrance League',
+    )
+    this.assertEqual(game.headers.get('White'), 'Patricia 3.1_dev_ca7ef0a3')
+    this.assertEqual(game.next()?.move, chess.Move.fromUci('d2d4'))
+    this.assertEqual(game.errors, [])
+  }
+
   testCommentAtEol(): void {
     const source =
       '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. Nbd2 a6 $6 (6... Bb6 $5 {\n/\\ Ne7, c6}) *'
@@ -438,18 +462,19 @@ registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2097,
     testPromoteToMain: 2198,
-    testReadGameWithMulticommentMove: 2236,
-    testCommentAtEol: 2244,
-    testGameStartingComment: 2343,
-    testGameStartingVariation: 2353,
-    testTreeTraversal: 2393,
-    testPromoteDemote: 2424,
-    testAddLine: 2705,
-    testMainline: 2722,
-    testAnnotations: 2847,
-    testFloatEmt: 2898,
-    testFloatClk: 2911,
-    testUtf8Bom: 2966,
+    testReadGameWithLeadingWhitespaceBeforeHeader: 2236,
+    testReadGameWithMulticommentMove: 2254,
+    testCommentAtEol: 2262,
+    testGameStartingComment: 2361,
+    testGameStartingVariation: 2371,
+    testTreeTraversal: 2411,
+    testPromoteDemote: 2442,
+    testAddLine: 2723,
+    testMainline: 2740,
+    testAnnotations: 2865,
+    testFloatEmt: 2916,
+    testFloatClk: 2929,
+    testUtf8Bom: 2984,
   },
 })
 
@@ -715,5 +740,22 @@ describe('GameNode parity characterizations not covered upstream', () => {
     expect(
       game.accept(new pgn.StringExporter({ headers: false, columns: null })),
     ).toBe('{ abc } *')
+  })
+
+  test('repeated initial BOM markers are removed before headers', () => {
+    const game = pgn.readGame(
+      new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n1. e4 *'),
+    )
+
+    expect(game?.headers.get('Event')).toBe('BOM')
+    expect(game?.next()?.move).toEqual(chess.Move.fromUci('e2e4'))
+  })
+
+  test('header probing does not strip the raw movetext line', () => {
+    const game = pgn.readGame(
+      new pgn.StringIO('  % remains movetext 1. e4 *'),
+    )
+
+    expect(game?.next()?.move).toEqual(chess.Move.fromUci('e2e4'))
   })
 })

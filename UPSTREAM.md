@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-24c2d5a231ecd79e2ba0b11cb87514f69da2e927
-v1.11.1-106-g24c2d5a2
-2026-07-11 — Merge pull request #1197 from philipmk42/remove-test-badge
+e88e7f0531b39b70fcd42e000d472f26a39ed847
+v1.11.1-109-ge88e7f05
+2026-07-12 — Merge pull request #1195 from gaoflow/fix/1115-pgn-whitespace-headers
 ```
 
-This state removes an obsolete workflow badge from the upstream README. The
-badge and upstream README are not copied into chess.ts, so no TypeScript
-runtime or test change applies.
+This state accepts Python-whitespace indentation before PGN tag pairs. The
+translated reader strips only a local header candidate, retains the raw line
+for movetext parsing, and shares an exact Python whitespace definition with
+the existing `isspace()` compatibility helper.
 
 ### Synchronization log
 
@@ -95,6 +96,7 @@ runtime or test change applies.
 | `77f1dab8` | Inserted the conventional space after the ellipsis when `Board.variationSan()` begins with a black move and updated the translated regression expectation. |
 | `8330cfd5` | Rejected positions with multiple stepping checkers and translated the complete `BoardTestCase.test_status` regression. Atomic's exception remains pending with the unsupported variant module. |
 | `24c2d5a2` | Removed an obsolete status badge from the upstream README; chess.ts does not copy that README badge. |
+| `e88e7f05` | Accepted Python-whitespace indentation before PGN headers and translated the complete parser regression. Added exact Python `lstrip()`/`isspace()` characterizations because ECMAScript whitespace semantics differ. |
 
 ### Intentional upstream divergence
 
@@ -196,7 +198,9 @@ Adding `BaseBoard.pieceCount()` and translating the complete board-clearing
 test brings the current inventory to 90 of 291 methods and 201 explicit TODOs.
 Translating the complete board-status test brings the current inventory to 91
 of 291 methods and 200 explicit TODOs.
-Thirty-seven chess.ts-only
+Translating the leading-whitespace PGN regression brings the current inventory
+to 92 of 292 methods and 200 explicit TODOs.
+Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -224,6 +228,9 @@ One focused subclass characterization proves that `_effectivePromoted()`
 controls default FEN output, unique-king lookup, castling, position status,
 Chess960 recognition, and transposition equality without replacing or losing
 the raw promotion bitboard.
+Five more distinguish Python's exact whitespace set from ECMAScript's, preserve
+initial multi-BOM handling as a separate PGN rule, and prove that header
+probing does not mutate the raw line later consumed as movetext.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
