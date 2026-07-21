@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-7836d446bf0cfc3b265e038fa381a7e52a543c41
-v1.10.0-86-g7836d446
-2024-07-19 — Add chess.svg.SvgWrapper._repr_html_() (closes #1096)
+247d8a06a6b2c2dc06f9ce0b7f3e94dbd9b816bd
+v1.10.0-87-g247d8a06
+2024-07-19 — Update changelog for soon to be released final 1.x
 ```
 
-This state adds upstream notebook rich-display support through `SvgWrapper`.
-The chess.ts SVG module currently exposes only `Arrow` and all upstream SVG
-tests remain explicit TODOs, so rich display is pending that module's
-translation rather than being represented by an invented JavaScript API.
+This state updates only the upstream changelog in preparation for the final
+1.x release. It does not change the python-chess API, runtime, or tests, so no
+TypeScript change applies.
 
 ### Synchronization log
 
@@ -35,6 +34,7 @@ translation rather than being represented by an invented JavaScript API.
 | `ec8ecec5` | Upstream README listing removal only; not applicable. |
 | `63aac2ec` | Exposed optional occupied masks on attack queries and characterized bitboard and iterable overrides. |
 | `7836d446` | Upstream SVG rich-display wrapper; pending the unsupported module's translation. |
+| `247d8a06` | Upstream changelog only; not applicable. |
 
 ## Original baseline provenance
 
