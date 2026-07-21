@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-518d662e5467c13630cfe98f9b99e720775d80b1
-v1.11.0-54-g518d662e
-2024-11-09 — Accept `a1a1` as UCI null move
+aa98f31961275818f829168de696eceac2c2f916
+v1.11.1-54-gaa98f319
+2024-12-20 — Merge the upstream 1.11.1 release branch
 ```
 
-This state accepts lc0's `a1a1` spelling of a null move while retaining `0000`
-as its canonical UCI serialization. All other unpromoted same-square moves
-remain invalid.
+This state merges the upstream 1.11.1 release metadata. The mirrored
+`__version__` is now `1.11.1`; the independently versioned npm package and the
+historical transpiler-version marker remain unchanged.
 
 ### Synchronization log
 
@@ -61,6 +61,7 @@ remain invalid.
 | `100b1c8b` | Upstream Pyright command-line workflow fix only; not applicable. |
 | `d625be1d` | Upstream UCI `movesleft` info parsing; pending the unsupported engine process layer, with exact test movement tracked as TODOs. |
 | `518d662e` | Accepted lc0's `a1a1` null-move spelling, restored `Board.parseUci()`'s null-move fast path, and characterized parsing plus reversible push/pop behavior. |
+| `aa98f319` | Merged upstream 1.11.1 release metadata and updated only the mirrored python-chess `__version__`; npm package versioning remains independent. |
 
 ## Original baseline provenance
 
@@ -128,7 +129,7 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Eighteen chess.ts-only
+and 201 explicit TODOs. Nineteen chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -145,6 +146,7 @@ instantiating the base class.
 Five characterize lc0-style `a1a1` null moves across raw parsing, board
 parsing, reversible push/pop, invalid same-square spellings, and the distinct
 raw-but-illegal `a1a1q` case.
+One guards the independently mirrored python-chess version constant.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
