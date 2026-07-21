@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-e974a37e52a59709a0988872a12c1f01244a8c15
-v1.11.1-78-ge974a37e
-2025-10-11 — Disambiguate Stockfish forced-mate test
+8412bd56a282f7fe7071a8b1788b6b791d5e7b0e
+v1.11.1-79-g8412bd56
+2025-10-11 — Update coroutine-function inspection
 ```
 
-This state narrows the mate horizon in upstream's external Stockfish regression
-to avoid an ambiguous mating line. The unsupported engine integration test
-remains an explicit translation TODO with its exact source identity tracked.
+This state updates coroutine-function introspection in the unsupported Python
+engine process layer for Python 3.15 compatibility. No TypeScript runtime change
+applies.
 
 ### Synchronization log
 
@@ -80,6 +80,7 @@ remains an explicit translation TODO with its exact source identity tracked.
 | `376d6036` | Added Python 3.14 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 | `e4386c2f` | Removed Python's deprecated `DefaultEventLoopPolicy` compatibility layer from the unsupported engine process module; no TypeScript runtime change applies. |
 | `e974a37e` | Narrowed the external Stockfish forced-mate test horizon to avoid an ambiguous mating line; the unsupported integration test remains an explicit TODO. |
+| `8412bd56` | Updated coroutine-function introspection in the unsupported Python engine process layer for Python 3.15 compatibility; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
