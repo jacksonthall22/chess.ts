@@ -5,15 +5,15 @@
 submodule currently pins:
 
 ```text
-312f3bf07758628e4ee9befbd9e3df7dd5eccea6
-v1.11.1-92-g312f3bf0
-2026-02-13 — Introduce Board._effective_promoted()
+8330cfd5dbb9401f0e85be92cf408d6482505642
+v1.11.1-104-g8330cfd5
+2026-06-07 — Reject positions with multiple stepping checkers
 ```
 
-This state separates the raw promoted-piece bitboard from the promotion mask
-that affects variant-facing rules. Standard chess has no effective promoted
-pieces, while future variant translations can override the hook without
-duplicating core rule and serialization paths.
+This state rejects impossible positions where more than one pawn, knight, or
+king checks the side to move. The complete upstream board-status regression is
+translated, while Atomic's variant-specific exception remains pending with the
+unsupported variant module.
 
 ### Synchronization log
 
@@ -89,6 +89,12 @@ duplicating core rule and serialization paths.
 | `11399c63` | Reordered UCI engine configuration so `Hash` follows `Threads`; pending the unsupported engine process layer's translation. |
 | `76cbe984` | Required `BaseBoard.king()` to find exactly one eligible king and ported the multiple-king regression test. |
 | `312f3bf0` | Introduced `_effectivePromoted()` and routed default FEN rendering, king and castling rules, position status, Chess960 recognition, and transposition identity through it. Variant overrides remain pending with the unsupported variant module. Ported the existing promoted-comparison test. |
+| `f780f420` | Corrected the spelling of "instantiate" in the canonical `GameNode.addVariation()` child-construction comment; no runtime behavior changed. |
+| `c0c5cb08` | Corrected a spelling mistake in an upstream README external-project description; the gallery is not copied into chess.ts. |
+| `2b2f1497` | Added `BaseBoard.pieceCount()` and ported the complete board-clearing regression test. Gaviota and Syzygy call-site updates remain pending with those unsupported modules. |
+| `b53c6e60` | Corrected `Board.chess960Pos()` documentation from the incomplete 0–956 range to all indices 0–959. |
+| `77f1dab8` | Inserted the conventional space after the ellipsis when `Board.variationSan()` begins with a black move and updated the translated regression expectation. |
+| `8330cfd5` | Rejected positions with multiple stepping checkers and translated the complete `BoardTestCase.test_status` regression. Atomic's exception remains pending with the unsupported variant module. |
 
 ### Intentional upstream divergence
 
@@ -186,6 +192,10 @@ inventory to 87 of 290 upstream methods and 203 explicit TODOs. The
 multiple-king regression brings that inventory to 88 of 291 upstream methods
 and 203 explicit TODOs. Translating the promoted-comparison test brings the
 current inventory to 89 of 291 upstream methods and 202 explicit TODOs.
+Adding `BaseBoard.pieceCount()` and translating the complete board-clearing
+test brings the current inventory to 90 of 291 methods and 201 explicit TODOs.
+Translating the complete board-status test brings the current inventory to 91
+of 291 methods and 200 explicit TODOs.
 Thirty-seven chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
@@ -245,7 +255,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 202 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 200 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.

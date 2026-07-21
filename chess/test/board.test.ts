@@ -634,7 +634,7 @@ class BoardTestCase extends TestCase {
     const varB = board.variationSan(variation.map(chess.Move.fromUci))
     this.assertEqual(
       varB,
-      '19...Kxh7 20. Qh5+ Kg8 21. Rg3 Bf8 22. Bg5 Re7 23. Bf6 Nd7 24. Qh6 Nxf6 25. exf6 g6 26. fxe7 Bxe7',
+      '19... Kxh7 20. Qh5+ Kg8 21. Rg3 Bf8 22. Bg5 Re7 23. Bf6 Nd7 24. Qh6 Nxf6 25. exf6 g6 26. fxe7 Bxe7',
     )
 
     const illegalVariation = ['d3h7', 'g8h7', 'f3h6', 'h7g8']
@@ -697,6 +697,106 @@ class BoardTestCase extends TestCase {
     this.assertEqual(board.pseudoLegalMoves.count(), 8 + 4 + 3 + 2 + 1 + 6 + 9)
   }
 
+  testStatus(): void {
+    let board = new chess.Board()
+    this.assertEqual(board.status(), chess.STATUS_VALID)
+    this.assertTrue(board.isValid())
+
+    board.removePieceAt(chess.H1)
+    this.assertTrue(board.status() & chess.STATUS_BAD_CASTLING_RIGHTS)
+
+    board.removePieceAt(chess.E8)
+    this.assertTrue(board.status() & chess.STATUS_NO_BLACK_KING)
+
+    // The en passant square should be set even if no capture is actually
+    // possible.
+    board = new chess.Board()
+    board.pushSan('e4')
+    this.assertEqual(board.epSquare, chess.E3)
+    this.assertEqual(board.status(), chess.STATUS_VALID)
+
+    // But there must indeed be a pawn there.
+    board.removePieceAt(chess.E4)
+    this.assertEqual(board.status(), chess.STATUS_INVALID_EP_SQUARE)
+
+    // King must be between the two rooks.
+    board = new chess.Board('2rrk3/8/8/8/8/8/3PPPPP/2RK4 w cd - 0 1')
+    this.assertEqual(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS)
+
+    // Generally valid position, but not valid standard chess position due
+    // to non-standard castling rights. Chess960 start position #0.
+    board = new chess.Board(
+      'bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR w KQkq - 0 1',
+      { chess960: true },
+    )
+    this.assertEqual(board.status(), chess.STATUS_VALID)
+    board = new chess.Board(
+      'bbqnnrkr/pppppppp/8/8/8/8/PPPPPPPP/BBQNNRKR w KQkq - 0 1',
+      { chess960: false },
+    )
+    this.assertEqual(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS)
+
+    // Opposite check.
+    board = new chess.Board('4k3/8/8/8/8/8/4Q3/4K3 w - - 0 1')
+    this.assertEqual(board.status(), chess.STATUS_OPPOSITE_CHECK)
+
+    // Empty board.
+    board = new chess.Board(null)
+    this.assertEqual(
+      board.status(),
+      chess.STATUS_EMPTY |
+        chess.STATUS_NO_WHITE_KING |
+        chess.STATUS_NO_BLACK_KING,
+    )
+
+    // Too many kings.
+    board = new chess.Board(
+      'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBKKBNR w KQkq - 0 1',
+    )
+    this.assertEqual(board.status(), chess.STATUS_TOO_MANY_KINGS)
+
+    // Triple check.
+    board = new chess.Board('4k3/5P2/3N4/8/8/8/4R3/4K3 b - - 0 1')
+    this.assertEqual(
+      board.status(),
+      chess.STATUS_TOO_MANY_CHECKERS | chess.STATUS_IMPOSSIBLE_CHECK,
+    )
+
+    // Impossible checker alignment.
+    board = new chess.Board('3R4/8/q4k2/2B5/1NK5/3b4/8/8 w - - 0 1')
+    this.assertEqual(board.status(), chess.STATUS_IMPOSSIBLE_CHECK)
+    board = new chess.Board('2Nq4/2K5/1b6/8/7R/3k4/7P/8 w - - 0 1')
+    this.assertEqual(board.status(), chess.STATUS_IMPOSSIBLE_CHECK)
+    board = new chess.Board('5R2/2P5/8/4k3/8/3rK2r/8/8 w - - 0 1')
+    this.assertEqual(board.status(), chess.STATUS_IMPOSSIBLE_CHECK)
+    board = new chess.Board('8/8/8/1k6/3Pp3/8/8/4KQ2 b - d3 0 1')
+    this.assertEqual(board.status(), chess.STATUS_IMPOSSIBLE_CHECK)
+
+    // Checkers aligned with opponent king are fine.
+    board = new chess.Board(
+      '8/8/5k2/p1q5/PP1rp1P1/3P1N2/2RK1r2/5nN1 w - - 0 3',
+    )
+    this.assertEqual(board.status(), chess.STATUS_VALID)
+
+    // Multiple stepping checkers.
+    board = new chess.Board('8/8/N7/2k5/N7/8/8/3K4 b - - 0 1')
+    this.assertEqual(board.status(), chess.STATUS_IMPOSSIBLE_CHECK)
+  }
+
+  testClear(): void {
+    const board = new chess.Board()
+    board.clear()
+
+    this.assertEqual(board.turn, chess.WHITE)
+    this.assertEqual(board.fullmoveNumber, 1)
+    this.assertEqual(board.halfmoveClock, 0)
+    this.assertEqual(board.castlingRights, chess.BB_EMPTY)
+    this.assertFalse(board.epSquare)
+
+    this.assertFalse(board.pieceAt(chess.E1))
+    this.assertEqual(board.pieceCount(), 0)
+  }
+
   testPromotedComparison(): void {
     const board = new chess.Board()
     board.setFen('5R2/3P4/8/8/7r/7r/7k/K7 w - - 0 1')
@@ -718,7 +818,7 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testEmpty: 218,
     testPly: 223,
     testFromEpd: 235,
-    testSetFenAsEpd: 1151,
+    testSetFenAsEpd: 1155,
     testMoveMaking: 241,
     testFen: 247,
     testXfen: 258,
@@ -751,8 +851,10 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testMoveStackUsage: 796,
     testIsLegalMove: 810,
     testMoveCount: 833,
-    testPromotedComparison: 1375,
-    testMultipleKings: 1723,
+    testStatus: 982,
+    testClear: 1216,
+    testPromotedComparison: 1379,
+    testMultipleKings: 1727,
   },
 })
 
