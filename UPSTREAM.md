@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-b3c1f62c82b5fc40b14fa33bc9edd31cef68a944
-v1.11.1-70-gb3c1f62c
-2025-02-25 — Prepare python-chess 1.11.2
+ffa04827e325de5b4d39a67eee3528474b814285
+v1.11.1-72-gffa04827
+2025-04-06 — Document public Board methods
 ```
 
-This state updates the mirrored python-chess `__version__` to `1.11.2`. The npm
-package version and historical transpiler-version marker remain independently
-versioned and unchanged.
+This state adds public API documentation for board mutation, move legality,
+game-over detection, and result reporting. The TypeScript documentation uses
+the corresponding camel-cased API names.
 
 ### Synchronization log
 
@@ -73,6 +73,7 @@ versioned and unchanged.
 | `06de70e2` | Fixed checkmating en-passant captures in the unsupported pure-Python Gaviota tablebase; `test_ep_is_mate` is tracked explicitly as a translation TODO. |
 | `45f616fa` | Added Python 3.13 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 | `b3c1f62c` | Prepared python-chess 1.11.2 and updated only the mirrored `__version__`; npm and historical transpiler versions remain unchanged. |
+| `ffa04827` | Added public API documentation for board mutation, move legality, game-over detection, and result reporting, using camel-cased TypeScript links. |
 
 ## Original baseline provenance
 
