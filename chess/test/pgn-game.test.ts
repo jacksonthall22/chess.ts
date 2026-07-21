@@ -2,6 +2,8 @@ import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
 import * as pgn from '../pgn'
+import { Cp, Mate, PovScore } from '../engine'
+import { Arrow } from '../svg'
 import { registerTestCase, TestCase } from './unittest'
 
 /**
@@ -69,20 +71,71 @@ class PgnTestCase extends TestCase {
 { Best } *`
     this.assertEqual(exporter.toString(), exported)
 
-    // Keep the complete upstream method executable. This reaches the current
-    // parity gap only after all StringExporter assertions above have passed.
-    const FileExporter = (
-      pgn as unknown as {
-        FileExporter?: new (handle: pgn.StringIO) => pgn.BaseVisitor<unknown>
-      }
-    ).FileExporter
-    if (FileExporter === undefined) {
-      throw new Error('chess.ts has not implemented pgn.FileExporter')
-    }
     const virtualFile = new pgn.StringIO()
-    const fileExporter = new FileExporter(virtualFile)
+    const fileExporter = new pgn.FileExporter(virtualFile)
     game.accept(fileExporter)
     this.assertEqual(virtualFile.read(), `${exported}\n\n`)
+  }
+
+  testCommentAtEol(): void {
+    const source =
+      '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. Nbd2 a6 $6 (6... Bb6 $5 {\n/\\ Ne7, c6}) *'
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+
+    // Seek the node after 6.Nbd2 and before 6...a6.
+    let node: pgn.GameNode = game
+    while (
+      node.variations.length !== 0 &&
+      !node.hasVariation(chess.Move.fromUci('a7a6'))
+    ) {
+      node = node.getitem(0)
+    }
+
+    // Make sure the comment for the second variation is there.
+    this.assertIn(5, node.getitem(1).nags)
+    this.assertEqual(node.getitem(1).comment, '\n/\\ Ne7, c6')
+  }
+
+  testGameStartingComment(): void {
+    let game = pgn.readGame(
+      new pgn.StringIO('{ Game starting comment } 1. d3'),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.comment, 'Game starting comment')
+    this.assertEqual(game.getitem(0).san(), 'd3')
+
+    game = pgn.readGame(
+      new pgn.StringIO('{ Empty game, but has a comment }'),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.comment, 'Empty game, but has a comment')
+  }
+
+  testGameStartingVariation(): void {
+    const source =
+      '{Start of game} 1. e4 ({Start of variation} 1. d4) 1... e5\n'
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.comment, 'Start of game')
+
+    let node = game.getitem(0)
+    this.assertEqual(node.move, chess.Move.fromUci('e2e4'))
+    this.assertFalse(node.comment)
+    this.assertFalse(node.startingComment)
+
+    node = game.getitem(1)
+    this.assertEqual(node.move, chess.Move.fromUci('d2d4'))
+    this.assertFalse(node.comment)
+    this.assertEqual(node.startingComment, 'Start of variation')
   }
 
   testPromoteToMain(): void {
@@ -191,6 +244,115 @@ class PgnTestCase extends TestCase {
     this.assertIn(42, tail.nags)
   }
 
+  testAnnotations(): void {
+    const game = new pgn.Game()
+    game.comment = 'foo [%bar] baz'
+
+    this.assertTrue(game.clock() === null)
+    const clock = 12345
+    game.setClock(clock)
+    this.assertEqual(game.comment, 'foo [%bar] baz [%clk 3:25:45]')
+    this.assertEqual(game.clock(), clock)
+
+    this.assertTrue(game.eval() === null)
+    game.setEval(new PovScore(new Cp(-80), chess.WHITE))
+    this.assertEqual(
+      game.comment,
+      'foo [%bar] baz [%clk 3:25:45] [%eval -0.80]',
+    )
+    const centipawnEval = game.eval()
+    if (centipawnEval === null) {
+      throw new Error('Expected a centipawn evaluation annotation')
+    }
+    this.assertEqual(centipawnEval.white().score(), -80)
+    this.assertEqual(game.evalDepth(), null)
+
+    game.setEval(new PovScore(new Mate(1), chess.WHITE), 5)
+    this.assertEqual(
+      game.comment,
+      'foo [%bar] baz [%clk 3:25:45] [%eval #1,5]',
+    )
+    const mateEval = game.eval()
+    if (mateEval === null) {
+      throw new Error('Expected a mate evaluation annotation')
+    }
+    this.assertEqual(mateEval.white().mate(), 1)
+    this.assertEqual(game.evalDepth(), 5)
+
+    this.assertEqual(game.arrows(), [])
+    const highlightedSquare: [chess.Square, chess.Square] = [
+      chess.A1,
+      chess.A1,
+    ]
+    game.setArrows([
+      highlightedSquare,
+      new Arrow(chess.A1, chess.H1, { color: 'red' }),
+      new Arrow(chess.B1, chess.B8),
+    ])
+    this.assertEqual(
+      game.comment,
+      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5]',
+    )
+    const arrows = game.arrows()
+    this.assertEqual(arrows.length, 3)
+    this.assertEqual(arrows[0].color, 'green')
+    this.assertEqual(arrows[1].color, 'red')
+    this.assertEqual(arrows[2].color, 'green')
+
+    this.assertTrue(game.emt() === null)
+    const emt = 321
+    game.setEmt(emt)
+    this.assertEqual(
+      game.comment,
+      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5] [%emt 0:05:21]',
+    )
+    this.assertEqual(game.emt(), emt)
+
+    game.setEval(null)
+    this.assertEqual(
+      game.comment,
+      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%emt 0:05:21]',
+    )
+
+    game.setEmt(null)
+    this.assertEqual(
+      game.comment,
+      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45]',
+    )
+
+    game.setClock(null)
+    game.setArrows([])
+    this.assertEqual(game.comment, 'foo [%bar] baz')
+  }
+
+  testFloatEmt(): void {
+    const game = new pgn.Game()
+    game.comment = '[%emt 0:00:01.234]'
+    this.assertEqual(game.emt(), 1.234)
+
+    game.setEmt(6.54321)
+    this.assertEqual(game.comment, '[%emt 0:00:06.543]')
+    this.assertEqual(game.emt(), 6.543)
+
+    game.setEmt(-70)
+    this.assertEqual(game.comment, '[%emt 0:00:00]')
+    this.assertEqual(game.emt(), 0)
+  }
+
+  testFloatClk(): void {
+    const game = new pgn.Game()
+    game.comment = '[%clk 0:00:01.234]'
+    this.assertEqual(game.clock(), 1.234)
+
+    game.setClock(6.54321)
+    this.assertEqual(game.comment, '[%clk 0:00:06.543]')
+    this.assertEqual(game.clock(), 6.543)
+
+    game.setClock(-70)
+    this.assertEqual(game.comment, '[%clk 0:00:00]')
+    this.assertEqual(game.clock(), 0)
+  }
+
   testMainline(): void {
     const moves = ['d2d3', 'g8f6', 'e2e4'].map(chess.Move.fromUci)
 
@@ -212,14 +374,17 @@ registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2079,
     testPromoteToMain: 2180,
+    testCommentAtEol: 2218,
+    testGameStartingComment: 2317,
+    testGameStartingVariation: 2327,
     testTreeTraversal: 2367,
     testPromoteDemote: 2398,
     testAddLine: 2679,
     testMainline: 2696,
+    testAnnotations: 2821,
+    testFloatEmt: 2872,
+    testFloatClk: 2885,
   },
-  // FileExporter is still commented out, and GameNode.demote() contains a
-  // mistranslated tuple swap. Keep both complete upstream methods active.
-  expectedFailures: ['testExporter', 'testPromoteDemote'],
 })
 
 describe('GameNode parity characterizations not covered upstream', () => {
@@ -309,5 +474,44 @@ describe('GameNode parity characterizations not covered upstream', () => {
 
     game.removeVariation(move)
     expect(game.variations).toEqual([])
+  })
+
+  test('clock annotations use Python float formatting', () => {
+    const game = new pgn.Game()
+    const cases = [
+      [Number.NaN, '00'],
+      [1.0625, '01.062'],
+      [1.3125, '01.312'],
+      [2.6755, '02.675'],
+    ] as const
+
+    for (const [seconds, formatted] of cases) {
+      game.comment = ''
+      game.setClock(seconds)
+      expect(game.comment).toBe(`[%clk 0:00:${formatted}]`)
+
+      game.comment = ''
+      game.setEmt(seconds)
+      expect(game.comment).toBe(`[%emt 0:00:${formatted}]`)
+    }
+  })
+
+  test('export wrapping counts Unicode code points', () => {
+    const game = new pgn.Game()
+    const comment = `${'x'.repeat(72)}😀`
+    game.comment = comment
+
+    expect(
+      game.accept(new pgn.StringExporter({ headers: false, columns: 80 })),
+    ).toBe(`{ ${comment} } *`)
+  })
+
+  test('export removes every closing brace from comments', () => {
+    const game = new pgn.Game()
+    game.comment = 'a}b}c'
+
+    expect(
+      game.accept(new pgn.StringExporter({ headers: false, columns: null })),
+    ).toBe('{ abc } *')
   })
 })
