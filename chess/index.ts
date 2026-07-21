@@ -1214,6 +1214,15 @@ export class BaseBoard {
     this._clearBoard()
   }
 
+  /**
+   * Gets the number of pieces on the board.
+   *
+   * Does not include Crazyhouse pockets.
+   */
+  pieceCount(): number {
+    return popcount(this.occupied)
+  }
+
   piecesMask(pieceType: PieceType, color: Color): Bitboard {
     let bb: Bitboard
     if (pieceType === PAWN) {

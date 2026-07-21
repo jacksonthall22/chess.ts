@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-c0c5cb08436e923c6a925297efe448b907a33480
-v1.11.1-96-gc0c5cb08
-2026-04-03 — Correct README project-description typo
+2b2f1497de4131c3b7fb967c0578e063d2b9908d
+v1.11.1-99-g2b2f1497
+2026-04-03 — Add BaseBoard.piece_count()
 ```
 
-This state corrects a spelling mistake in one external-project description in
-upstream's reStructuredText README. The copied chess.ts README does not contain
-that gallery, so no TypeScript documentation or runtime change applies.
+This state adds the public `BaseBoard.pieceCount()` convenience method and
+ports the complete upstream board-clearing test that now exercises it. The
+Gaviota and Syzygy call-site updates remain within unsupported modules.
 
 ### Synchronization log
 
@@ -90,6 +90,7 @@ that gallery, so no TypeScript documentation or runtime change applies.
 | `312f3bf0` | Introduced `_effectivePromoted()` and routed default FEN rendering, king and castling rules, position status, Chess960 recognition, and transposition identity through it. Variant overrides remain pending with the unsupported variant module. Ported the existing promoted-comparison test. |
 | `f780f420` | Corrected the spelling of "instantiate" in the canonical `GameNode.addVariation()` child-construction comment; no runtime behavior changed. |
 | `c0c5cb08` | Corrected a spelling mistake in an upstream README external-project description; the gallery is not copied into chess.ts. |
+| `2b2f1497` | Added `BaseBoard.pieceCount()` and ported the complete board-clearing regression test. Gaviota and Syzygy call-site updates remain pending with those unsupported modules. |
 
 ### Intentional upstream divergence
 
@@ -187,6 +188,8 @@ inventory to 87 of 290 upstream methods and 203 explicit TODOs. The
 multiple-king regression brings that inventory to 88 of 291 upstream methods
 and 203 explicit TODOs. Translating the promoted-comparison test brings the
 current inventory to 89 of 291 upstream methods and 202 explicit TODOs.
+Adding `BaseBoard.pieceCount()` and translating the complete board-clearing
+test brings the current inventory to 90 of 291 methods and 201 explicit TODOs.
 Thirty-seven chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
@@ -246,7 +249,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 202 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 201 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.

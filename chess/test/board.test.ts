@@ -697,6 +697,20 @@ class BoardTestCase extends TestCase {
     this.assertEqual(board.pseudoLegalMoves.count(), 8 + 4 + 3 + 2 + 1 + 6 + 9)
   }
 
+  testClear(): void {
+    const board = new chess.Board()
+    board.clear()
+
+    this.assertEqual(board.turn, chess.WHITE)
+    this.assertEqual(board.fullmoveNumber, 1)
+    this.assertEqual(board.halfmoveClock, 0)
+    this.assertEqual(board.castlingRights, chess.BB_EMPTY)
+    this.assertFalse(board.epSquare)
+
+    this.assertFalse(board.pieceAt(chess.E1))
+    this.assertEqual(board.pieceCount(), 0)
+  }
+
   testPromotedComparison(): void {
     const board = new chess.Board()
     board.setFen('5R2/3P4/8/8/7r/7r/7k/K7 w - - 0 1')
@@ -751,6 +765,7 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testMoveStackUsage: 796,
     testIsLegalMove: 810,
     testMoveCount: 833,
+    testClear: 1212,
     testPromotedComparison: 1375,
     testMultipleKings: 1723,
   },

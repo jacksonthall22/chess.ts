@@ -18,7 +18,6 @@ describe('BoardTestCase — translation pending', () => {
   test.todo('test_attackers (python-chess test.py:1170)',)
   test.todo('test_en_passant_attackers (python-chess test.py:1181)',)
   test.todo('test_attacks (python-chess test.py:1194)',)
-  test.todo('test_clear (python-chess test.py:1212)',)
   test.todo('test_threefold_repetition (python-chess test.py:1225)',)
   test.todo('test_fivefold_repetition (python-chess test.py:1278)',)
   test.todo('test_trivial_is_repetition (python-chess test.py:1337)',)
@@ -249,7 +248,7 @@ describe('GiveawayTestCase — translation pending', () => {
   test.todo('test_antichess_pgn (python-chess test.py:4940)',)
 })
 
-// Upstream pin: python-chess c0c5cb08436e923c6a925297efe448b907a33480
+// Upstream pin: python-chess 2b2f1497de4131c3b7fb967c0578e063d2b9908d
 // Total upstream tests: 291
-// Translated tests: 89
-// Pending tests: 202
+// Translated tests: 90
+// Pending tests: 201
