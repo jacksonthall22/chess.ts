@@ -59,25 +59,46 @@ for distinct same-move child variations. The generated
 `chess/test/upstream-todos.test.ts` file is the canonical, mechanically checked
 count of the remaining work.
 
+The first parity pass translates six additional PGN tests and two Engine tests,
+bringing the current total to 84 passing upstream methods and 198 explicit
+TODOs. Seven chess.ts-only characterizations cover the original three game-tree
+cases plus polymorphic `BaseBoard` construction, Python-compatible float
+formatting, Unicode-aware PGN wrapping, and comment sanitization.
+
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
 failure: it must continue to fail until a focused fix lands, and CI will reject
-an unexpected pass. The baseline found these root defects:
+an unexpected pass. The behavior-neutral baseline found these root defects:
 
-- EPD operation parsing truncates the fifth field before parsing it.
-- Empty JavaScript arrays do not preserve Python list truthiness in castling
+- EPD operation parsing truncated the fifth field before parsing it.
+- Empty JavaScript arrays did not preserve Python list truthiness in castling
   cleanup.
-- legal and pseudo-legal generator iterators return a nested iterator instead
+- Legal and pseudo-legal generator iterators returned a nested iterator instead
   of delegating to it.
-- `BaseBoard` defaults to an empty board instead of the starting position.
-- `SquareSet` does not yet provide SquareSet value equality or iterable
+- `BaseBoard` defaulted to an empty board instead of the starting position.
+- `SquareSet` did not provide SquareSet value equality or iterable
   set-to-set operations.
-- PGN `FileExporter` remains unimplemented.
-- `GameNode.demote()` does not perform its intended tuple swap.
+- PGN `FileExporter` was unimplemented.
+- `GameNode.demote()` did not perform its intended tuple swap.
 
-These markers deliberately keep the test-baseline PR behavior-neutral. Remove
-each expected-failure marker in the same focused change that fixes its root
-cause.
+The focused parity commits following the baseline resolve every item above and
+remove its expected-failure marker. Translating the additional PGN and Engine
+tests, then comparing their surrounding code line-by-line, also exposed and
+fixed:
+
+- malformed PGN regular-expression flags, groups, and replacement callbacks;
+- clock and elapsed-time formatting that did not use Python's exact
+  round-half-even rules;
+- UTF-16 code-unit counting and partial closing-brace removal during PGN export;
+- `Score` equality and ordering that relied on JavaScript array identity and
+  string coercion; and
+- polymorphic `BaseBoard` construction that did not preserve the dynamic class
+  and explicit-empty constructor argument.
+
+This does not imply that all of chess.ts is proven equivalent: the 198 TODOs
+keep unported tests and unimplemented subpackages visible. It does mean that
+every currently translated upstream test passes without an expected-failure
+waiver.
 
 To add or remove translated tests, preserve the upstream class and camel-cased
 method names in the TypeScript suite, record the exact `test.py` source line in
