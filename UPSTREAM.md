@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-f2b0452389c4272948b253ac6266eb89ac85c179
-v1.11.0-41-gf2b04523
-2024-10-09 — Remove deprecated chess.pgn.BaseVisitor.parse_san() (#659)
+b2657ebc4768e2815cb8ddeb8c9ed13109332e15
+v1.11.0-42-gb2657ebc
+2024-10-09 — Remove deprecated chess.engine.Wdl tuple behavior (#659)
 ```
 
-This state deliberately removes the deprecated `BaseVisitor.parseSan()` API.
-The PGN reader now parses recognized SAN tokens directly through the current
-board after calling `beginParseSan()`; no compatibility alias remains.
+This state deliberately removes deprecated tuple behavior from `Wdl` and
+`PovWdl`. They retain dataclass-like value equality, and `PovWdl` equality now
+compares both its relative value and exact point of view.
 
 ### Synchronization log
 
@@ -50,6 +50,7 @@ board after calling `beginParseSan()`; no compatibility alias remains.
 | `ab0e066d` | UCI option parsing fix remains pending with the unsupported engine process layer; tracked its two new tests as TODOs. Upstream Fairy-Stockfish setup and tox changes are not applicable. |
 | `7f123cb5` | Removed deprecated `flipped` from the unsupported SVG board renderer; no TypeScript runtime change applies. |
 | `f2b04523` | Removed deprecated `BaseVisitor.parseSan()` and routed PGN parsing directly through `Board.parseSan()`. |
+| `b2657ebc` | Removed deprecated `Wdl`/`PovWdl` tuple behavior while preserving dataclass-like exact-field value equality. |
 
 ## Original baseline provenance
 
@@ -117,12 +118,14 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Ten chess.ts-only
+and 201 explicit TODOs. Eleven chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
 TypeScript's parser-versus-tree comment visitor boundary. One also guards the
 Python-list/JavaScript-array truthiness adaptation in `GameNode.next()`.
+The latest characterization protects `Wdl` and `PovWdl` value equality while
+proving that their deprecated tuple-era surface is gone.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
@@ -216,6 +219,22 @@ tree traversal sends the node's actual array once. TypeScript visitor methods
 therefore honestly accept `string | string[]` at that boundary. Export emits
 each stored entry as its own `{ ... }` comment, preserves entry whitespace,
 and removes braces from comment content.
+
+## Deprecated API removals
+
+The `f2b04523` and `b2657ebc` states deliberately remove deprecated behavior
+rather than retaining TypeScript-only aliases. `BaseVisitor.parseSan()` is no
+longer an interception point: `readGame()` calls `beginParseSan()` and then
+parses the recognized token on the board itself. `PovWdl` no longer exposes
+`iter()`, `len()`, `getitem()`, or equality with arrays, and `Wdl` no longer
+exposes `iter()` or `reversed()`.
+
+Python supplies value equality for `Wdl` and `PovWdl` through dataclasses.
+TypeScript preserves that semantic explicitly with `equals()`: `Wdl` compares
+its three numeric fields, while `PovWdl` compares the relative `Wdl` by value
+and requires the same exact `turn`; both also require the same runtime class,
+as Python dataclass equality does. In particular, opposite-turn values that
+normalize to the same White point of view are no longer equal.
 
 ## Update discipline
 

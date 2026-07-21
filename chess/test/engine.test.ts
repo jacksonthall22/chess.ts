@@ -1,4 +1,6 @@
-import { Cp, Mate, MateGiven, Score, Wdl, WdlModel } from '../engine'
+import { expect, test } from 'vitest'
+
+import { Cp, Mate, MateGiven, PovWdl, Score, Wdl, WdlModel } from '../engine'
 import { registerTestCase, TestCase } from './unittest'
 
 /** Mechanical translation of python-chess `EngineTestCase` at 8e91525e. */
@@ -93,4 +95,36 @@ registerTestCase('EngineTestCase', EngineTestCase, {
     testScoreOrdering: 3003,
     testWdlModel: 3062,
   },
+})
+
+test('Wdl values use dataclass equality without deprecated tuple behavior', () => {
+  class DerivedWdl extends Wdl {}
+  class DerivedPovWdl extends PovWdl {}
+
+  const value = new Wdl(249, 747, 4)
+  expect(value.equals(new Wdl(249, 747, 4))).toBe(true)
+  expect(value.equals(new Wdl(249, 746, 5))).toBe(false)
+  expect(value.equals(new DerivedWdl(249, 747, 4))).toBe(false)
+  expect(
+    new DerivedWdl(249, 747, 4).equals(new DerivedWdl(249, 747, 4)),
+  ).toBe(true)
+
+  const pov = new PovWdl(value, true)
+  expect(pov.equals(new PovWdl(new Wdl(249, 747, 4), true))).toBe(true)
+  expect(pov.equals(new PovWdl(new Wdl(4, 747, 249), false))).toBe(false)
+  expect(
+    pov.equals(new DerivedPovWdl(new Wdl(249, 747, 4), true)),
+  ).toBe(false)
+  expect(
+    new DerivedPovWdl(new Wdl(249, 747, 4), true).equals(
+      new DerivedPovWdl(new Wdl(249, 747, 4), true),
+    ),
+  ).toBe(true)
+
+  expect('iter' in value).toBe(false)
+  expect('reversed' in value).toBe(false)
+  expect('iter' in pov).toBe(false)
+  expect('len' in pov).toBe(false)
+  expect('getitem' in pov).toBe(false)
+  expect(pov.equals([249, 747, 4])).toBe(false)
 })
