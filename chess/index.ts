@@ -1295,17 +1295,23 @@ export class BaseBoard {
     }
   }
 
+  _effectivePromoted(): Bitboard {
+    return BB_EMPTY
+  }
+
   /**
-   * Finds the king square of the given side. Returns ``null`` if there
-   * is no king of that color.
+   * Finds the unique king square of the given side. Returns ``null`` if
+   * there is no king or multiple kings of that color.
    *
    * In variants with king promotions, only non-promoted kings are
    * considered.
    */
   king(color: Color): Square | null {
     const kingMask =
-      this.occupiedCo[colorIdx(color)] & this.kings & ~this.promoted
-    return kingMask ? msb(kingMask) : null
+      this.occupiedCo[colorIdx(color)] &
+      this.kings &
+      ~this._effectivePromoted()
+    return kingMask && !(kingMask & (kingMask - 1n)) ? msb(kingMask) : null
   }
 
   attacksMask(square: Square): Bitboard {
@@ -1595,7 +1601,7 @@ export class BaseBoard {
    * Gets the board FEN (e.g.,
    * ``rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR``).
    */
-  boardFen({ promoted = false }: { promoted?: boolean | null } = {}): string {
+  boardFen({ promoted = null }: { promoted?: boolean | null } = {}): string {
     const builder: string[] = []
     let empty = 0
 
@@ -1610,7 +1616,15 @@ export class BaseBoard {
           empty = 0
         }
         builder.push(piece.symbol())
-        if (promoted && BB_SQUARES[square] & this.promoted) {
+        let promotedMask: Bitboard
+        if (promoted === null) {
+          promotedMask = this._effectivePromoted()
+        } else if (promoted) {
+          promotedMask = this.promoted
+        } else {
+          promotedMask = BB_EMPTY
+        }
+        if (BB_SQUARES[square] & promotedMask) {
           builder.push('~')
         }
       }
@@ -1848,7 +1862,7 @@ export class BaseBoard {
     if (this.pawns !== (BB_RANK_2 | BB_RANK_7)) {
       return null
     }
-    if (this.promoted) {
+    if (this._effectivePromoted()) {
       return null
     }
 
@@ -3256,13 +3270,16 @@ export class Board extends BaseBoard {
 
     // Update castling rights.
     this.castlingRights &= ~toBb & ~fromBb
-    if (pieceType === KING && !promoted) {
+    if (pieceType === KING && !(this._effectivePromoted() & fromBb)) {
       if (this.turn === WHITE) {
         this.castlingRights &= ~BB_RANK_1
       } else {
         this.castlingRights &= ~BB_RANK_8
       }
-    } else if (capturedPieceType === KING && !(this.promoted & toBb)) {
+    } else if (
+      capturedPieceType === KING &&
+      !(this._effectivePromoted() & toBb)
+    ) {
       if (this.turn === WHITE && squareRank(move.toSquare) === RANK_8) {
         this.castlingRights &= ~BB_RANK_8
       } else if (this.turn === BLACK && squareRank(move.toSquare) === RANK_1) {
@@ -4593,12 +4610,12 @@ export class Board extends BaseBoard {
           touched &
             this.kings &
             this.occupiedCo[colorIdx(WHITE)] &
-            ~this.promoted) ||
+            ~this._effectivePromoted()) ||
         (cr & BB_RANK_8 &&
           touched &
             this.kings &
             this.occupiedCo[colorIdx(BLACK)] &
-            ~this.promoted),
+            ~this._effectivePromoted()),
     )
   }
 
@@ -4683,7 +4700,7 @@ export class Board extends BaseBoard {
         !(
           this.occupiedCo[colorIdx(WHITE)] &
           this.kings &
-          ~this.promoted &
+          ~this._effectivePromoted() &
           BB_E1
         )
       ) {
@@ -4693,7 +4710,7 @@ export class Board extends BaseBoard {
         !(
           this.occupiedCo[colorIdx(BLACK)] &
           this.kings &
-          ~this.promoted &
+          ~this._effectivePromoted() &
           BB_E8
         )
       ) {
@@ -4707,12 +4724,12 @@ export class Board extends BaseBoard {
         this.occupiedCo[colorIdx(WHITE)] &
         this.kings &
         BB_RANK_1 &
-        ~this.promoted
+        ~this._effectivePromoted()
       const blackKingMask =
         this.occupiedCo[colorIdx(BLACK)] &
         this.kings &
         BB_RANK_8 &
-        ~this.promoted
+        ~this._effectivePromoted()
       if (!whiteKingMask) {
         whiteCastling = 0n
       }
@@ -4762,7 +4779,10 @@ export class Board extends BaseBoard {
   hasKingsideCastlingRights(color: Color): boolean {
     const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8
     const kingMask =
-      this.kings & this.occupiedCo[colorIdx(color)] & backrank & ~this.promoted
+      this.kings &
+      this.occupiedCo[colorIdx(color)] &
+      backrank &
+      ~this._effectivePromoted()
     if (!kingMask) {
       return false
     }
@@ -4788,7 +4808,10 @@ export class Board extends BaseBoard {
   hasQueensideCastlingRights(color: Color): boolean {
     const backrank = color === WHITE ? BB_RANK_1 : BB_RANK_8
     const kingMask =
-      this.kings & this.occupiedCo[colorIdx(color)] & backrank & ~this.promoted
+      this.kings &
+      this.occupiedCo[colorIdx(color)] &
+      backrank &
+      ~this._effectivePromoted()
     if (!kingMask) {
       return false
     }
@@ -4876,13 +4899,27 @@ export class Board extends BaseBoard {
     }
 
     // There must be exactly one king of each color.
-    if (!(this.occupiedCo[colorIdx(WHITE)] & this.kings)) {
+    if (
+      !(
+        this.occupiedCo[colorIdx(WHITE)] &
+        this.kings &
+        ~this._effectivePromoted()
+      )
+    ) {
       errors |= STATUS_NO_WHITE_KING
     }
-    if (!(this.occupiedCo[colorIdx(BLACK)] & this.kings)) {
+    if (
+      !(
+        this.occupiedCo[colorIdx(BLACK)] &
+        this.kings &
+        ~this._effectivePromoted()
+      )
+    ) {
       errors |= STATUS_NO_BLACK_KING
     }
-    if (popcount(this.occupied & this.kings) > 2) {
+    if (
+      popcount(this.occupied & this.kings & ~this._effectivePromoted()) > 2
+    ) {
       errors |= STATUS_TOO_MANY_KINGS
     }
 
@@ -4926,7 +4963,9 @@ export class Board extends BaseBoard {
     // More than the maximum number of possible checkers in the variant.
     const checkers = this.checkersMask()
     const ourKings =
-      this.kings & this.occupiedCo[colorIdx(this.turn)] & ~this.promoted
+      this.kings &
+      this.occupiedCo[colorIdx(this.turn)] &
+      ~this._effectivePromoted()
     if (checkers) {
       if (popcount(checkers) > 2) {
         errors |= STATUS_TOO_MANY_CHECKERS
@@ -5222,7 +5261,7 @@ export class Board extends BaseBoard {
     let king =
       this.occupiedCo[colorIdx(this.turn)] &
       this.kings &
-      ~this.promoted &
+      ~this._effectivePromoted() &
       backrank &
       fromMask
     king &= -king
@@ -5315,6 +5354,7 @@ export class Board extends BaseBoard {
       this.rooks,
       this.queens,
       this.kings,
+      this._effectivePromoted(),
       this.occupiedCo[colorIdx(WHITE)],
       this.occupiedCo[colorIdx(BLACK)],
       this.turn,

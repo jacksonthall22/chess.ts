@@ -696,6 +696,20 @@ class BoardTestCase extends TestCase {
     )
     this.assertEqual(board.pseudoLegalMoves.count(), 8 + 4 + 3 + 2 + 1 + 6 + 9)
   }
+
+  testPromotedComparison(): void {
+    const board = new chess.Board()
+    board.setFen('5R2/3P4/8/8/7r/7r/7k/K7 w - - 0 1')
+    board.pushSan('d8=R')
+
+    const sameBoard = new chess.Board(board.fen())
+    this.assertEqual(board, sameBoard)
+  }
+
+  testMultipleKings(): void {
+    const board = new chess.Board('KKKK1kkk/8/8/8/8/8/8/8 w - - 0 1')
+    this.assertEqual(board.king(chess.WHITE), null)
+  }
 }
 
 registerTestCase('BoardTestCase', BoardTestCase, {
@@ -737,6 +751,8 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testMoveStackUsage: 796,
     testIsLegalMove: 810,
     testMoveCount: 833,
+    testPromotedComparison: 1375,
+    testMultipleKings: 1723,
   },
 })
 
@@ -824,5 +840,53 @@ describe('Board.givesCheckmate state restoration', () => {
       expected,
     )
     expect(snapshot(board)).toEqual(before)
+  })
+})
+
+describe('effective promoted-piece policy', () => {
+  class PromotionAwareBoard extends chess.Board {
+    _effectivePromoted(): chess.Bitboard {
+      return this.promoted
+    }
+  }
+
+  test('separates raw promotion state from variant-facing rule semantics', () => {
+    const fen = '4k3/8/8/8/8/8/8/4K2R w K - 0 1'
+    const board = new PromotionAwareBoard(fen)
+    board.promoted = chess.BB_E1
+
+    expect(board.boardFen()).toBe('4k3/8/8/8/8/8/8/4K~2R')
+    expect(board.boardFen({ promoted: false })).toBe(
+      '4k3/8/8/8/8/8/8/4K2R',
+    )
+    expect(board.king(chess.WHITE)).toBeNull()
+    expect(board.cleanCastlingRights()).toBe(chess.BB_EMPTY)
+    expect(board.hasKingsideCastlingRights(chess.WHITE)).toBe(false)
+    expect(Array.from(board.generateCastlingMoves())).toEqual([])
+    expect(board.status() & chess.STATUS_NO_WHITE_KING).not.toBe(0)
+
+    const withoutEffectivePromotion = new PromotionAwareBoard(fen)
+    expect(board.equals(withoutEffectivePromotion)).toBe(false)
+
+    const copied = board.copy()
+    expect(copied).toBeInstanceOf(PromotionAwareBoard)
+    expect(copied.promoted).toBe(chess.BB_E1)
+
+    const standard = new chess.Board(fen)
+    standard.promoted = chess.BB_E1
+    expect(standard.boardFen()).toBe('4k3/8/8/8/8/8/8/4K2R')
+    expect(standard.boardFen({ promoted: true })).toBe(
+      '4k3/8/8/8/8/8/8/4K~2R',
+    )
+    expect(standard.king(chess.WHITE)).toBe(chess.E1)
+    expect(standard.equals(new chess.Board(fen))).toBe(true)
+
+    const promotionAwareStart = new PromotionAwareBoard()
+    promotionAwareStart.promoted = chess.BB_E1
+    expect(promotionAwareStart.chess960Pos()).toBeNull()
+
+    const standardStart = new chess.Board()
+    standardStart.promoted = chess.BB_E1
+    expect(standardStart.chess960Pos()).not.toBeNull()
   })
 })
