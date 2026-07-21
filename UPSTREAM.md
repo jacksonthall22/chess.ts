@@ -5,14 +5,19 @@
 submodule currently pins:
 
 ```text
-32253d6cfdbc1939f78f03892fa848412cf4b4fa
-v1.10.0-89-g32253d6c
-2024-07-27 — Merge pull request #1098 from deepyaman/patch-1
+ec399d1b0298353b1eee7bf63df03401a00a409a
+v1.10.0-97-gec399d1b
+2024-07-31 — Merge pull request #1100 from niklasf/stricter-subclass-typing
 ```
 
-This state corrects the public time-control enum member from `UNKNOW` to
-`UNKNOWN`. The TypeScript enum and its `TimeControl` default mirror that rename
-without retaining a compatibility alias that does not exist upstream.
+This aggregate merge removes the generic `_BoardState` subclass hook and has
+`Board.push()` construct the concrete state snapshot directly. The TypeScript
+port deliberately mirrors that breaking removal even though the hook is
+underscore-prefixed: subclasses that overrode `_boardState()` must stop doing
+so. The upstream engine protocol, Syzygy, and variant typing changes remain
+pending because those modules are not implemented here. Existing dynamic
+construction in `Board.root()` is unchanged; this synchronization commit does
+not silently repair that pre-existing translation drift.
 
 ### Synchronization log
 
@@ -36,6 +41,7 @@ without retaining a compatibility alias that does not exist upstream.
 | `7836d446` | Upstream SVG rich-display wrapper; pending the unsupported module's translation. |
 | `247d8a06` | Upstream changelog only; not applicable. |
 | `32253d6c` | Renamed `TimeControlType.UNKNOW` to `UNKNOWN` and updated the default. |
+| `ec399d1b` | Removed the generic `_BoardState` subclass hook; engine protocol, Syzygy, and variant typing changes remain unsupported. |
 
 ## Original baseline provenance
 

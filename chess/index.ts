@@ -2085,7 +2085,7 @@ export class BaseBoard {
   }
 }
 
-export class _BoardState<BoardT extends Board> {
+export class _BoardState {
   pawns: Bitboard
   knights: Bitboard
   bishops: Bitboard
@@ -2102,7 +2102,7 @@ export class _BoardState<BoardT extends Board> {
   halfmoveClock: number
   fullmoveNumber: number
 
-  constructor(board: BoardT) {
+  constructor(board: Board) {
     this.pawns = board.pawns
     this.knights = board.knights
     this.bishops = board.bishops
@@ -2123,7 +2123,7 @@ export class _BoardState<BoardT extends Board> {
     this.fullmoveNumber = board.fullmoveNumber
   }
 
-  restore(board: BoardT) {
+  restore(board: Board) {
     board.pawns = this.pawns
     board.knights = this.knights
     board.bishops = this.bishops
@@ -2261,7 +2261,7 @@ export class Board extends BaseBoard {
    */
   moveStack: Move[]
 
-  _stack: _BoardState<this>[]
+  _stack: _BoardState[]
 
   constructor(
     fen: string | null = STARTING_FEN,
@@ -3047,10 +3047,6 @@ export class Board extends BaseBoard {
     return false
   }
 
-  _boardState(): _BoardState<this> {
-    return new _BoardState(this)
-  }
-
   _pushCapture(
     move: Move,
     captureSquare: Square,
@@ -3085,7 +3081,7 @@ export class Board extends BaseBoard {
   push(move: Move): void {
     // Push move and remember board state.
     move = this._toChess960(move)
-    const boardState = this._boardState()
+    const boardState = new _BoardState(this)
     this.castlingRights = this.cleanCastlingRights() // Before pushing stack
     this.moveStack.push(
       this._fromChess960(
@@ -3223,7 +3219,7 @@ export class Board extends BaseBoard {
       throw new Error('IndexError')
     }
     const move = this.moveStack.pop() as Move
-    ;(this._stack.pop() as _BoardState<this>).restore(this)
+    ;(this._stack.pop() as _BoardState).restore(this)
     return move
   }
 
