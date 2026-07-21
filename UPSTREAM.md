@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-d1dce61a45ed3784ce867ec0218d6fb3ca47e735
-v1.10.0-72-gd1dce61a
-2024-04-18 — Bump Sphinx to 7.3.6
+4c7a9025e3442fb75a14eae367fd88200e210042
+v1.10.0-73-g4c7a9025
+2024-04-18 — Use typing_extensions.TypeAlias (#564)
 ```
 
-This upstream state changes only the Python documentation toolchain. It is an
-explicit TypeScript semantic no-op; advancing the pin still records that the
-state was reviewed rather than silently skipped.
+This state annotates Python aliases with `typing_extensions.TypeAlias`. The
+corresponding TypeScript declarations were already explicit `type` aliases, so
+it is an explicit TypeScript semantic no-op.
 
 ### Synchronization log
 
@@ -21,6 +21,7 @@ state was reviewed rather than silently skipped.
 | `8e91525e` | Added Stockfish 16.1 WDL source and test behavior. |
 | `315052c0` | Python annotation correction; TypeScript already used `ply: number`. |
 | `d1dce61a` | Python documentation dependency only; not applicable. |
+| `4c7a9025` | Python `TypeAlias` annotations; TypeScript aliases already explicit. |
 
 ## Original baseline provenance
 
