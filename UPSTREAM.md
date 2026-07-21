@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-376d603694913a82bcb2efa594972a5fba5804f6
-v1.11.1-76-g376d6036
-2025-10-11 — Explicitly support Python 3.14
+e4386c2f1efcb686c1d6222681cc84d1f0b06ded
+v1.11.1-77-ge4386c2f
+2025-10-11 — Remove DefaultEventLoopPolicy
 ```
 
-This state adds Python 3.14 to upstream packaging and CI metadata. It does not
-affect the TypeScript package's runtime or tooling.
+This state removes Python's deprecated `DefaultEventLoopPolicy` compatibility
+layer from the unsupported engine process module. No TypeScript runtime change
+applies.
 
 ### Synchronization log
 
@@ -77,6 +78,7 @@ affect the TypeScript package's runtime or tooling.
 | `760360b8` | Applied explicit read-only repository contents permission to the chess.ts CI workflow. |
 | `6b1cfedd` | Adjusted Python bytearray construction in the unsupported Gaviota module for newer mypy releases; no TypeScript runtime change applies. |
 | `376d6036` | Added Python 3.14 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
+| `e4386c2f` | Removed Python's deprecated `DefaultEventLoopPolicy` compatibility layer from the unsupported engine process module; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
