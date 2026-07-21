@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-06de70e2e87969743dfa2196db1e2cbe687a08a8
-v1.11.1-68-g06de70e2
-2025-02-24 — Fix checkmating Gaviota en-passant captures
+45f616fae51a2b08ca4b4d0c01ddddf175d81ff9
+v1.11.1-69-g45f616fa
+2025-02-25 — Support Python 3.13
 ```
 
-This state fixes checkmating en-passant captures in the unsupported pure-Python
-Gaviota tablebase and adds its regression test to the explicit translation TODO
-ledger.
+This state adds Python 3.13 to upstream packaging and CI metadata. It does not
+affect the TypeScript package's runtime or tooling.
 
 ### Synchronization log
 
@@ -71,6 +70,7 @@ ledger.
 | `636e95fb` | Reverted the regressed Gaviota rewrite byte-for-byte to its prior implementation; Gaviota remains unsupported in chess.ts. |
 | `dd4d9c12` | Fixed en-passant resolution in the unsupported pure-Python Gaviota tablebase; `test_ep_is_best` is tracked explicitly as a translation TODO. |
 | `06de70e2` | Fixed checkmating en-passant captures in the unsupported pure-Python Gaviota tablebase; `test_ep_is_mate` is tracked explicitly as a translation TODO. |
+| `45f616fa` | Added Python 3.13 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 
 ## Original baseline provenance
 
