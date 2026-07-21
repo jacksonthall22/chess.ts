@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-76cbe9843b7be94676cf19ea2a446e4eb3ac4291
-v1.11.1-91-g76cbe984
-2026-02-13 — Multiple kings per color
+312f3bf07758628e4ee9befbd9e3df7dd5eccea6
+v1.11.1-92-g312f3bf0
+2026-02-13 — Introduce Board._effective_promoted()
 ```
 
-This state makes `BaseBoard.king()` return `null` unless exactly one eligible
-king exists for the requested color. This prevents callers from arbitrarily
-selecting one king from an invalid multiple-king position.
+This state separates the raw promoted-piece bitboard from the promotion mask
+that affects variant-facing rules. Standard chess has no effective promoted
+pieces, while future variant translations can override the hook without
+duplicating core rule and serialization paths.
 
 ### Synchronization log
 
@@ -87,6 +88,7 @@ selecting one king from an invalid multiple-king position.
 | `0e900e24` | Added `Board.givesCheckmate()` with restoration guarantees for both successful probes and exceptions. |
 | `11399c63` | Reordered UCI engine configuration so `Hash` follows `Threads`; pending the unsupported engine process layer's translation. |
 | `76cbe984` | Required `BaseBoard.king()` to find exactly one eligible king and ported the multiple-king regression test. |
+| `312f3bf0` | Introduced `_effectivePromoted()` and routed default FEN rendering, king and castling rules, position status, Chess960 recognition, and transposition identity through it. Variant overrides remain pending with the unsupported variant module. Ported the existing promoted-comparison test. |
 
 ### Intentional upstream divergence
 
@@ -96,6 +98,22 @@ refer to `FILE_NAMES`, despite their rank-oriented docstrings and the adjacent
 places. Exhaustive round-trip tests protect that intended API and distinguish
 this two-line correction from accidental translation drift. No upstream issue
 or pull request is part of this synchronization stack.
+
+## Promoted-piece compatibility boundary
+
+`promoted` remains the canonical raw bitboard. Parsing, explicit
+`boardFen({ promoted: true })` serialization, copying, stack restoration,
+captures, transformations, and promotion propagation continue to use it
+directly. `_effectivePromoted()` is a rule-policy view only. Its standard
+implementation returns `BB_EMPTY`; translated variants may later override it
+when their rules make selected promotion markers semantically relevant.
+
+There is no stored-FEN migration in this state. Standard chess's default FEN
+continues to omit promotion markers, `promoted: false` continues to suppress
+them, and `promoted: true` continues to emit the raw markers. The only private
+representation change is one additional effective-promotion bitboard segment
+inside `_transpositionKey()`. That key is rebuilt in memory, is not a persisted
+or public contract, and must not be compared across library versions.
 
 ## Original baseline provenance
 
@@ -165,8 +183,10 @@ total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a total of 87 of 288 methods and 201
 explicit TODOs at that checkpoint. The two later Gaviota regressions bring that
 inventory to 87 of 290 upstream methods and 203 explicit TODOs. The
-multiple-king regression brings the current inventory to 88 of 291 upstream
-methods while leaving 203 explicit TODOs. Thirty-six chess.ts-only
+multiple-king regression brings that inventory to 88 of 291 upstream methods
+and 203 explicit TODOs. Translating the promoted-comparison test brings the
+current inventory to 89 of 291 upstream methods and 202 explicit TODOs.
+Thirty-seven chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -190,6 +210,10 @@ parsers, invalid-input matrix, and unbranded TypeScript signatures. Four more
 cover mating, checking-but-not-mating, non-checking, and exceptional
 `Board.givesCheckmate()` probes while requiring exact FEN and move-stack
 restoration.
+One focused subclass characterization proves that `_effectivePromoted()`
+controls default FEN output, unique-king lookup, castling, position status,
+Chess960 recognition, and transposition equality without replacing or losing
+the raw promotion bitboard.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
@@ -221,7 +245,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 203 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 202 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.
