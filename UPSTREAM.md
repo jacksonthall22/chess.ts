@@ -226,6 +226,14 @@ Translating the custom-game-node regression brings the current inventory to
 `visitorFactory` when visitor creation needs runtime arguments, while retaining
 the constructor-only `Visitor` path. The two options are mutually exclusive;
 the parser never guesses by invoking one form and falling back to another.
+Translating the remaining already-supported PGN header, fixture, time-control,
+termination, annotation, and variant-label behaviors brings the current
+inventory to 129 of 292 methods and 163 explicit TODOs. The unsupported
+variant-engine regression and stream-cursor-specific tests remain explicit.
+This batch corrected the over-escaped SAN separator character class and two
+time-control translation hazards: empty rest arrays are truthy in JavaScript,
+and permissive `parseInt()`/`parseFloat()` calls do not match Python's rejecting
+numeric conversions.
 Forty-three chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware

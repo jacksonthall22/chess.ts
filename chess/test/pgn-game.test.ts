@@ -80,6 +80,11 @@ class PgnTestCase extends TestCase {
     this.assertEqual(virtualFile.read(), `${exported}\n\n`)
   }
 
+  testGameWithoutTagRoster(): void {
+    const game = pgn.Game.withoutTagRoster()
+    this.assertEqual(game.toString(), '*')
+  }
+
   testSetup(): void {
     const game = new pgn.Game()
     this.assertEqual(game.board(), new chess.Board())
@@ -185,6 +190,85 @@ class PgnTestCase extends TestCase {
       'A common response',
       'An uncommon comment',
     ])
+  }
+
+  testPromotionWithoutEquals(): void {
+    // Example game from https://github.com/rozim/ChessData as originally
+    // reported.
+    const source = `[Event "It (open)"]
+[Site "Aschach (Austria)"]
+[Date "2011.12.26"]
+[Round "1"]
+[White "Ennsberger Ulrich (AUT)"]
+[Black "Koller Hans-Juergen (AUT)"]
+[Result "0-1"]
+[ECO "A45"]
+[WhiteElo "2373"]
+[BlackElo "2052"]
+[ID ""]
+[FileName ""]
+[Annotator ""]
+[Source ""]
+[Remark ""]
+
+1.d4 Nf6 2.Bg5 c5 3.d5 Ne4 4.Bf4 Qb6 5.Nd2 Nxd2 6.Bxd2 e6 7.Bc3
+d6 8.e4 e5 9.a4 Be7 10.a5 Qc7 11.f4 f6 12.f5 g6 13.Bb5+ Bd7 14.Bc4
+gxf5 15.Qh5+ Kd8 16.exf5 Qc8 17.g4 Na6 18.Ne2 b5 19.axb6 axb6
+20.O-O Nc7 21.Qf7 h5 22.Qg7 Rf8 23.gxh5 Ne8 24.Rxa8 Nxg7 25.Rxc8+
+Kxc8 26.Ng3 Rh8 27.Be2 Be8 28.Be1 Nxh5 29.Bxh5 Bxh5 30.Nxh5 Rxh5
+31.h4 Bf8 32.c4 Bh6 33.Bg3 Be3+ 34.Kg2 Kb7 35.Kh3 b5 36.b3 b4
+37.Kg4 Rh8 38.Kf3 Bh6 39.Bf2 Ra8 40.Kg4 Bf4 41.Kh5 Ra3 42.Kg6
+Rxb3 43.h5 Rf3 44.h6 Bxh6 45.Kxh6 Rxf5 46.Kg6 Rf4 47.Kf7 e4 48.Re1
+Rxf2 49.Ke6 Kc7 50.Rh1 b3 51.Rh7+ Kb6 52.Kxd6 b2 53.Rh1 Rd2 54.Rh8
+e3 55.Rb8+ Ka5 56.Kxc5 Ka4 57.d6 e2 58.Re8 b1Q 0-1`
+
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+
+    // Make sure the last move is a promotion.
+    this.assertEqual(game.end().move?.uci(), 'b2b1q')
+  }
+
+  testHeaderWithParen(): void {
+    const source = readFileSync(
+      resolve(__dirname, '../../python-chess/data/pgn/stockfish-learning.pgn'),
+      'utf8',
+    )
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(
+      game.headers.get('Opening'),
+      'St. George (Baker) defense',
+    )
+    this.assertEqual(
+      game.end().board(),
+      new chess.Board('8/2p2k2/1pR3p1/1P1P4/p1P2P2/P4K2/8/5r2 w - - 7 78'),
+    )
+  }
+
+  testSpecialTagNames(): void {
+    const game = pgn.readGame(new pgn.StringIO('[BlackType: "program"]'))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.headers.get('BlackType:'), 'program')
+
+    this.assertRaises(Error, () => game.headers.set('~', 'foo'))
+    game.headers.set('Equals=', 'bar')
+  }
+
+  testChess960WithoutFen(): void {
+    const game = pgn.readGame(
+      new pgn.StringIO('[Variant "Chess960"]\n\n1. e4 *\n'),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.getitem(0).move, chess.Move.fromUci('e2e4'))
   }
 
   testReadGameWithLeadingWhitespaceBeforeHeader(): void {
@@ -320,6 +404,84 @@ class PgnTestCase extends TestCase {
     this.assertEqual(node.nags.size, 1)
   }
 
+  testParseTimeControl(): void {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        '../../python-chess/data/pgn/nepomniachtchi-liren-game1.pgn',
+      ),
+      'utf8',
+    )
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    const timeControl = game.timeControl()
+
+    this.assertEqual(
+      timeControl,
+      pgn.parseTimeControl(game.headers.get('TimeControl')!),
+    )
+    this.assertEqual(timeControl.type, pgn.TimeControlType.STANDARD)
+    this.assertEqual(timeControl.parts.length, 3)
+
+    const [part1, part2, part3] = timeControl.parts
+    this.assertEqual(part1, new pgn.TimeControlPart(40, 7200))
+    this.assertEqual(part2, new pgn.TimeControlPart(20, 3600))
+    this.assertEqual(part3, new pgn.TimeControlPart(0, 900, 30))
+
+    this.assertEqual(
+      pgn.TimeControlType.BULLET,
+      pgn.parseTimeControl('60').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.BULLET,
+      pgn.parseTimeControl('60+1').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.BLITZ,
+      pgn.parseTimeControl('60+2').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.BLITZ,
+      pgn.parseTimeControl('300').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.BLITZ,
+      pgn.parseTimeControl('300+3').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.RAPID,
+      pgn.parseTimeControl('300+10').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.RAPID,
+      pgn.parseTimeControl('1800').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.RAPID,
+      pgn.parseTimeControl('1800+10').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.STANDARD,
+      pgn.parseTimeControl('1800+30').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.STANDARD,
+      pgn.parseTimeControl('5400').type,
+    )
+    this.assertEqual(
+      pgn.TimeControlType.STANDARD,
+      pgn.parseTimeControl('5400+30').type,
+    )
+
+    this.assertRaises(Error, () => pgn.parseTimeControl('300+a'))
+    this.assertRaises(Error, () => pgn.parseTimeControl('300+ad'))
+    this.assertRaises(Error, () => pgn.parseTimeControl('600:20/180'))
+    this.assertRaises(Error, () => pgn.parseTimeControl('abc'))
+    this.assertRaises(Error, () => pgn.parseTimeControl('40/abc'))
+  }
+
   testVisitBoard(): void {
     class TraceVisitor extends pgn.BaseVisitor<string[]> {
       trace: string[] = []
@@ -402,6 +564,45 @@ class PgnTestCase extends TestCase {
     this.assertEqual(game.toString(), expected)
   }
 
+  testResultTerminationMarker(): void {
+    const game = pgn.readGame(new pgn.StringIO('1. d4 1-0'))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.headers.get('Result'), '1-0')
+  }
+
+  testMissingSetupTag(): void {
+    const source = `[Event "Test position"]
+[Site "Black to move "]
+[Date "1997.10.26"]
+[Round "?"]
+[White "Pos  16"]
+[Black "VA33.EPD"]
+[Result "1-0"]
+[FEN "rbb1N1k1/pp1n1ppp/8/2Pp4/3P4/4P3/P1Q2PPq/R1BR1K2 b - - 0 1"]
+
+{Houdini 1.5 x64: 1)} 1... Nxc5 ({Houdini 1.5 x64: 2)} 1... Qh1+ 2. Ke2 Qxg2 3.
+Kd2 Nxc5 4. Qxc5 Bg4 5. Ba3 Qxf2+ 6. Kc3 Qxe3+ 7. Kb2 Qxe8 8. Re1 Be6 9. Rh1 a5
+10. Rag1 Ba7 11. Qc3 g6 12. Bc5 Qb5+ 13. Qb3 Qe2+ 14. Qc2 Qxc2+ 15. Kxc2 Bxc5
+16. dxc5 Rc8 17. Kd2 {-2.39/22}) 2. dxc5 Bg4 3. f3 Bxf3 4. Qf2 Bxd1 5. Nd6 Bxd6
+6. cxd6 Qxd6 7. Bb2 Ba4 8. Qf4 Bb5+ 9. Kf2 Qg6 10. Bd4 f6 11. Qc7 Bc6 12. a4 a6
+13. Qg3 Qxg3+ 14. Kxg3 Rc8 15. Rc1 Kf7 16. a5 h5 17. Rh1 {-2.63/23}
+1-0`
+
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertIn('FEN', game.headers)
+    this.assertNotIn('SetUp', game.headers)
+
+    const board = new chess.Board(
+      'rbb1N1k1/pp1n1ppp/8/2Pp4/3P4/4P3/P1Q2PPq/R1BR1K2 b - - 0 1',
+    )
+    this.assertEqual(game.board(), board)
+  }
+
   testErrors(): void {
     const handle = new pgn.StringIO(`
             1. e4 Qa1 e5 2. Qxf8
@@ -449,6 +650,25 @@ class PgnTestCase extends TestCase {
     this.assertEqual(game.headers.get('Result'), '1-0')
   }
 
+  testChessbaseEmptyLine(): void {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        '../../python-chess/data/pgn/chessbase-empty-line.pgn',
+      ),
+      'utf8',
+    )
+    const handle = new pgn.StringIO(source)
+    const game = pgn.readGame(handle)
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.headers.get('Event'), 'AlphaZero vs. Stockfish')
+    this.assertEqual(game.headers.get('Round'), '1')
+    this.assertEqual(game.next()?.move, chess.Move.fromUci('e2e4'))
+    this.assertEqual(pgn.readGame(handle), null)
+  }
+
   testSemicolonComment(): void {
     const game = pgn.readGame(new pgn.StringIO('1. e4 ; e5'))
     if (game === null) {
@@ -462,8 +682,80 @@ class PgnTestCase extends TestCase {
     this.assertTrue(node.isEnd())
   }
 
+  testLan(): void {
+    const game = pgn.readGame(new pgn.StringIO('1. e2-e4'))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.end().move, chess.Move.fromUci('e2e4'))
+  }
+
+  testCutechessFischerrandom(): void {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        '../../python-chess/data/pgn/cutechess-fischerrandom.pgn',
+      ),
+      'utf8',
+    )
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    const board = game.board()
+    this.assertTrue(board.chess960)
+    this.assertEqual(
+      board.fen(),
+      'nbbrknrq/pppppppp/8/8/8/8/PPPPPPPP/NBBRKNRQ w KQkq - 0 1',
+    )
+  }
+
+  testZ0(): void {
+    const source = readFileSync(
+      resolve(__dirname, '../../python-chess/data/pgn/anastasian-lewis.pgn'),
+      'utf8',
+    )
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(
+      game.end().board().fen(),
+      '5rk1/2p1R2p/p5pb/2PPR3/8/2Q2B2/5P2/4K2q w - - 3 43',
+    )
+  }
+
+  testUciMoves(): void {
+    const source = readFileSync(
+      resolve(__dirname, '../../python-chess/data/pgn/uci-moves.pgn'),
+      'utf8',
+    )
+    const game = pgn.readGame(new pgn.StringIO(source))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(
+      game.end().board().fen(),
+      '8/8/2B5/4k3/4Pp2/1b6/1P3K2/8 b - - 0 57',
+    )
+  }
+
+  testWierdHeader(): void {
+    const game = pgn.readGame(
+      new pgn.StringIO('[Black "[=0040.34h5a4]"]'),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.headers.get('Black'), '[=0040.34h5a4]')
+  }
+
+  testEmptyGame(): void {
+    this.assertEqual(pgn.readGame(new pgn.StringIO(' \n\n   ')), null)
+  }
+
   testNoMovetext(): void {
-    const handle = new pgn.StringIO('[Event "A"]\n\n\n[Event "B"]\n')
+    const handle = new pgn.StringIO('\n[Event "A"]\n\n\n[Event "B"]\n')
 
     let game = pgn.readGame(handle)
     if (game === null) {
@@ -502,6 +794,12 @@ class PgnTestCase extends TestCase {
       subgame.variations[1].move,
       chess.Move.fromUci('g1f3'),
     )
+  }
+
+  testIsWild(): void {
+    const headers = new pgn.Headers()
+    headers.set('Variant', 'wild/1')
+    this.assertTrue(headers.isWild())
   }
 
   testMyGameNode(): void {
@@ -775,6 +1073,14 @@ class PgnTestCase extends TestCase {
     this.assertEqual(game.comments, ['foo [%bar] baz'])
   }
 
+  testEval(): void {
+    const game = new pgn.Game()
+    for (let cp = 199; cp < 220; cp += 1) {
+      game.setEval(new PovScore(new Cp(cp), chess.WHITE))
+      this.assertEqual(game.eval()?.white().score(), cp)
+    }
+  }
+
   testFloatEmt(): void {
     const game = new pgn.Game()
     game.comments = ['[%emt 0:00:01.234]']
@@ -912,30 +1218,47 @@ class PgnTestCase extends TestCase {
 registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2097,
+    testGameWithoutTagRoster: 2155,
     testSetup: 2159,
     testPromoteToMain: 2198,
     testReadGame: 2210,
     testReadGameWithLeadingWhitespaceBeforeHeader: 2236,
     testReadGameWithMulticommentMove: 2254,
     testCommentAtEol: 2262,
+    testPromotionWithoutEquals: 2278,
+    testHeaderWithParen: 2315,
+    testSpecialTagNames: 2321,
+    testChess960WithoutFen: 2331,
     testVariationStack: 2341,
     testGameStartingComment: 2361,
     testGameStartingVariation: 2371,
     testAnnotationSymbols: 2389,
-    testVisitBoard: 2587,
-    testBlackToMove: 2631,
-    testGameFromBoard: 2694,
-    testErrors: 2709,
-    testSemicolonComment: 2797,
-    testNoMovetext: 2809,
-    testSubgame: 2824,
-    testMyGameNode: 2838,
-    testRecursion: 2855,
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
+    testParseTimeControl: 2540,
+    testVisitBoard: 2587,
+    testBlackToMove: 2631,
+    testResultTerminationMarker: 2654,
+    testMissingSetupTag: 2659,
+    testChessbaseEmptyLine: 2685,
+    testGameFromBoard: 2694,
+    testErrors: 2709,
     testAddLine: 2723,
     testMainline: 2740,
+    testLan: 2751,
+    testCutechessFischerrandom: 2773,
+    testZ0: 2780,
+    testUciMoves: 2786,
+    testWierdHeader: 2792,
+    testSemicolonComment: 2797,
+    testEmptyGame: 2804,
+    testNoMovetext: 2809,
+    testSubgame: 2824,
+    testIsWild: 2833,
+    testMyGameNode: 2838,
+    testRecursion: 2855,
     testAnnotations: 2865,
+    testEval: 2910,
     testFloatEmt: 2916,
     testFloatClk: 2929,
     testNodeTurn: 2942,

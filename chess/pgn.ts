@@ -2615,24 +2615,48 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
   const _parsePart = (part: string): TimeControlPart => {
     const tcp = new TimeControlPart()
 
+    const parseNumber = (value: string): number => {
+      if (
+        !/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(value)
+      ) {
+        throw new Error(`ValueError: invalid time control number: ${value}`)
+      }
+      const parsed = Number(value)
+      if (!Number.isFinite(parsed)) {
+        throw new Error(`ValueError: invalid time control number: ${value}`)
+      }
+      return parsed
+    }
+
+    const parseInteger = (value: string): number => {
+      if (!/^[+-]?\d+$/.test(value)) {
+        throw new Error(`ValueError: invalid time control integer: ${value}`)
+      }
+      const parsed = Number(value)
+      if (!Number.isSafeInteger(parsed)) {
+        throw new Error(`ValueError: invalid time control integer: ${value}`)
+      }
+      return parsed
+    }
+
     const [movesTime, ...bonus] = part.split('+')
 
-    if (bonus) {
+    if (bonus.length !== 0) {
       const _bonus = bonus[0]
       if (_bonus.toLowerCase().endsWith('d')) {
-        tcp.delay = parseFloat(_bonus.slice(0, -1))
+        tcp.delay = parseNumber(_bonus.slice(0, -1))
       } else {
-        tcp.increment = parseFloat(_bonus)
+        tcp.increment = parseNumber(_bonus)
       }
     }
 
     const [moves, ...time] = movesTime.split('/')
-    if (time) {
-      tcp.moves = parseInt(moves)
-      tcp.time = parseInt(time[0])
+    if (time.length !== 0) {
+      tcp.moves = parseInteger(moves)
+      tcp.time = parseInteger(time[0])
     } else {
       tcp.moves = 0
-      tcp.time = parseInt(moves)
+      tcp.time = parseInteger(moves)
     }
 
     return tcp
