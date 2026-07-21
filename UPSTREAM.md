@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-6b1cfedd442a05767ee28c7752a800ad4190f423
-v1.11.1-75-g6b1cfedd
-2025-10-03 — Fix Gaviota bytearray typing
+376d603694913a82bcb2efa594972a5fba5804f6
+v1.11.1-76-g376d6036
+2025-10-11 — Explicitly support Python 3.14
 ```
 
-This state adjusts Python bytearray construction in the unsupported pure-Python
-Gaviota tablebase module for newer mypy releases. No TypeScript runtime change
-applies.
+This state adds Python 3.14 to upstream packaging and CI metadata. It does not
+affect the TypeScript package's runtime or tooling.
 
 ### Synchronization log
 
@@ -77,6 +76,7 @@ applies.
 | `b2144c25` | Removed upstream's repository-specific CodeQL workflow; chess.ts has no corresponding copied workflow. |
 | `760360b8` | Applied explicit read-only repository contents permission to the chess.ts CI workflow. |
 | `6b1cfedd` | Adjusted Python bytearray construction in the unsupported Gaviota module for newer mypy releases; no TypeScript runtime change applies. |
+| `376d6036` | Added Python 3.14 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 
 ## Original baseline provenance
 
