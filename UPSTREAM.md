@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-f93a7ffb562bf5b9fe7156f5a4f15a7aa8fcb4bd
-v1.11.1-65-gf93a7ffb
-2025-01-20 — Correct a Syzygy documentation typo
+636e95fbf292f322fc4ab31b8c4add51f7534362
+v1.11.1-66-g636e95fb
+2025-02-23 — Revert the shortened Gaviota implementation
 ```
 
-This state corrects a documentation typo in the unsupported Syzygy module. No
-TypeScript runtime change applies.
+This state reverts the regressed Gaviota rewrite byte-for-byte to its prior
+implementation. Gaviota remains unsupported in chess.ts, so no TypeScript
+runtime change applies.
 
 ### Synchronization log
 
@@ -67,6 +68,7 @@ TypeScript runtime change applies.
 | `91699cd1` | Recorded the shorter Gaviota rewrite exactly. It remains unsupported in chess.ts and was later reverted upstream after regressions. |
 | `3a974697` | Narrowed imports in the unsupported Gaviota module to type-only symbols; no TypeScript runtime change applies. |
 | `f93a7ffb` | Corrected a documentation typo in the unsupported Syzygy module; no TypeScript runtime change applies. |
+| `636e95fb` | Reverted the regressed Gaviota rewrite byte-for-byte to its prior implementation; Gaviota remains unsupported in chess.ts. |
 
 ## Original baseline provenance
 
