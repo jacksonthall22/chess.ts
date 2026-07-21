@@ -5,15 +5,15 @@
 submodule currently pins:
 
 ```text
-63aac2ec65860a64256a190220b793e80b132b50
-v1.10.0-85-g63aac2ec
-2024-07-19 — Expose optional occupied parameter for attackers_mask (#1090)
+7836d446bf0cfc3b265e038fa381a7e52a543c41
+v1.10.0-86-g7836d446
+2024-07-19 — Add chess.svg.SvgWrapper._repr_html_() (closes #1096)
 ```
 
-This state exposes optional occupancy overrides on attack queries. The
-TypeScript API accepts bitboards or square iterables where upstream accepts an
-`IntoSquareSet`, preserves an explicit empty `0n` override, and uses the public
-`attackersMask()` method for castling X-ray checks.
+This state adds upstream notebook rich-display support through `SvgWrapper`.
+The chess.ts SVG module currently exposes only `Arrow` and all upstream SVG
+tests remain explicit TODOs, so rich display is pending that module's
+translation rather than being represented by an invented JavaScript API.
 
 ### Synchronization log
 
@@ -34,6 +34,7 @@ TypeScript API accepts bitboards or square iterables where upstream accepts an
 | `474c87bf` | Ported the additional SAN disambiguation regression assertion. |
 | `ec8ecec5` | Upstream README listing removal only; not applicable. |
 | `63aac2ec` | Exposed optional occupied masks on attack queries and characterized bitboard and iterable overrides. |
+| `7836d446` | Upstream SVG rich-display wrapper; pending the unsupported module's translation. |
 
 ## Original baseline provenance
 
