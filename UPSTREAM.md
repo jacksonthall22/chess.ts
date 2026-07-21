@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-4c7a9025e3442fb75a14eae367fd88200e210042
-v1.10.0-73-g4c7a9025
-2024-04-18 — Use typing_extensions.TypeAlias (#564)
+6af0ff4c8947486e3e3fa8e83ca88815301aaa37
+v1.10.0-74-g6af0ff4c
+2024-04-18 — Expand core constant definitions
 ```
 
-This state annotates Python aliases with `typing_extensions.TypeAlias`. The
-corresponding TypeScript declarations were already explicit `type` aliases, so
-it is an explicit TypeScript semantic no-op.
+This state expands Python's chained constant assignments into individually
+typed declarations. The TypeScript translation mirrors that structure while
+preserving its existing `PieceType` and `Square` enum API, and constructs the
+corresponding ordered arrays from the named constants.
 
 ### Synchronization log
 
@@ -22,6 +23,7 @@ it is an explicit TypeScript semantic no-op.
 | `315052c0` | Python annotation correction; TypeScript already used `ply: number`. |
 | `d1dce61a` | Python documentation dependency only; not applicable. |
 | `4c7a9025` | Python `TypeAlias` annotations; TypeScript aliases already explicit. |
+| `6af0ff4c` | Expanded core constants into individually typed declarations and named arrays. |
 
 ## Original baseline provenance
 
