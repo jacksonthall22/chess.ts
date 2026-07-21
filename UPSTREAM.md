@@ -5,13 +5,13 @@
 submodule currently pins:
 
 ```text
-3a974697b31e39ea8ad7e115350dc190464d7a76
-v1.11.1-63-g3a974697
-2025-01-11 — Use imports only for Gaviota types
+f93a7ffb562bf5b9fe7156f5a4f15a7aa8fcb4bd
+v1.11.1-65-gf93a7ffb
+2025-01-20 — Correct a Syzygy documentation typo
 ```
 
-This state narrows Python imports in the unsupported Gaviota module to
-type-only symbols. No TypeScript runtime change applies.
+This state corrects a documentation typo in the unsupported Syzygy module. No
+TypeScript runtime change applies.
 
 ### Synchronization log
 
@@ -66,6 +66,7 @@ type-only symbols. No TypeScript runtime change applies.
 | `bbf2a05e` | Updated upstream Gaviota tablebase data-source records; neither the unsupported module nor its data files are distributed by chess.ts. |
 | `91699cd1` | Recorded the shorter Gaviota rewrite exactly. It remains unsupported in chess.ts and was later reverted upstream after regressions. |
 | `3a974697` | Narrowed imports in the unsupported Gaviota module to type-only symbols; no TypeScript runtime change applies. |
+| `f93a7ffb` | Corrected a documentation typo in the unsupported Syzygy module; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
