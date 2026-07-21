@@ -165,8 +165,12 @@ describe('lc0-style null-move parsing', () => {
   })
 })
 
-test('mirrored python-chess version is independent of the npm package version', () => {
-  expect(chess.__version__).toBe('1.11.1')
+test('mirrored python-chess version tracks the upstream release', () => {
+  expect(chess.__version__).toBe('1.11.2')
+})
+
+test('historical transpiler version remains independently versioned', () => {
+  expect(chess.__transpiledVersion__).toBe('0.0.1')
 })
 
 /** Mechanical translation of python-chess `PieceTestCase` at cd7f5958. */

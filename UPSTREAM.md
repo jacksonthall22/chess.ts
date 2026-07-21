@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-45f616fae51a2b08ca4b4d0c01ddddf175d81ff9
-v1.11.1-69-g45f616fa
-2025-02-25 — Support Python 3.13
+b3c1f62c82b5fc40b14fa33bc9edd31cef68a944
+v1.11.1-70-gb3c1f62c
+2025-02-25 — Prepare python-chess 1.11.2
 ```
 
-This state adds Python 3.13 to upstream packaging and CI metadata. It does not
-affect the TypeScript package's runtime or tooling.
+This state updates the mirrored python-chess `__version__` to `1.11.2`. The npm
+package version and historical transpiler-version marker remain independently
+versioned and unchanged.
 
 ### Synchronization log
 
@@ -71,6 +72,7 @@ affect the TypeScript package's runtime or tooling.
 | `dd4d9c12` | Fixed en-passant resolution in the unsupported pure-Python Gaviota tablebase; `test_ep_is_best` is tracked explicitly as a translation TODO. |
 | `06de70e2` | Fixed checkmating en-passant captures in the unsupported pure-Python Gaviota tablebase; `test_ep_is_mate` is tracked explicitly as a translation TODO. |
 | `45f616fa` | Added Python 3.13 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
+| `b3c1f62c` | Prepared python-chess 1.11.2 and updated only the mirrored `__version__`; npm and historical transpiler versions remain unchanged. |
 
 ## Original baseline provenance
 
@@ -137,8 +139,10 @@ adds one translated regression test, and the UTF-8 BOM regression adds another,
 for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
-adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Nineteen chess.ts-only
+adds two untranslated engine tests, for a total of 87 of 288 methods and 201
+explicit TODOs at that checkpoint. The two later Gaviota regressions bring the
+current inventory to 87 of 290 upstream methods and 203 explicit TODOs. Twenty
+chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -155,7 +159,8 @@ instantiating the base class.
 Five characterize lc0-style `a1a1` null moves across raw parsing, board
 parsing, reversible push/pop, invalid same-square spellings, and the distinct
 raw-but-illegal `a1a1q` case.
-One guards the independently mirrored python-chess version constant.
+One guards the independently mirrored python-chess version constant, and
+another protects the unchanged historical transpiler-version marker.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
@@ -187,7 +192,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 201 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 203 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.
