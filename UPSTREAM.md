@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-46c28883f7846f87f419c5c83e7c61e3cdea5d36
-v1.11.0
-2024-10-04 — Revert release.py formatting changes
+08697b298d87e4fa01842bd82af96d71cb972c90
+v1.11.0-1-g08697b29
+2024-10-04 — Fix twine usage, stop uploading wheels
 ```
 
-This tagged upstream state reverts formatting in `release.py`. The upstream
-release tooling is not part of the TypeScript library, so no runtime change
-applies.
+This state changes upstream Twine and wheel publishing behavior in
+`release.py`. The upstream release tooling is not part of the TypeScript
+library, so no runtime change applies.
 
 ### Synchronization log
 
@@ -45,6 +45,7 @@ applies.
 | `c0d3c917` | Removed superfluous Python parentheses; TypeScript was already idiomatic. |
 | `30d99104` | Prepared upstream 1.11.0 and updated the mirrored library version. |
 | `46c28883` | Upstream `release.py` formatting revert only; not applicable. |
+| `08697b29` | Upstream Twine and wheel release tooling only; not applicable. |
 
 ## Original baseline provenance
 
@@ -109,9 +110,9 @@ The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one translated regression test, and the UTF-8 BOM regression adds another,
 for a current total of 86 of 285 upstream methods. The unsupported
-engine-dispatch regression is among the 199 explicit TODOs. Eight chess.ts-only
-characterizations
-cover the original three game-tree cases plus polymorphic `BaseBoard`
+engine-dispatch regression is among the 199 explicit TODOs. Eight
+chess.ts-only characterizations cover the original three game-tree cases plus
+polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
 comment sanitization, and attack-query occupancy overrides.
 
