@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-30d991046908ce7c5a7929987c1c2081f68641b4
-v1.10.0-105-g30d99104
-2024-10-04 — Prepare 1.11.0
+46c28883f7846f87f419c5c83e7c61e3cdea5d36
+v1.11.0
+2024-10-04 — Revert release.py formatting changes
 ```
 
-This state prepares upstream 1.11.0. The mirrored library `__version__` is now
-`1.11.0`; the independently versioned npm package remains unchanged.
+This tagged upstream state reverts formatting in `release.py`. The upstream
+release tooling is not part of the TypeScript library, so no runtime change
+applies.
 
 ### Synchronization log
 
@@ -43,6 +44,7 @@ This state prepares upstream 1.11.0. The mirrored library `__version__` is now
 | `0e7fabc8` | Added and ported the UTF-8 BOM PGN fixture regression. |
 | `c0d3c917` | Removed superfluous Python parentheses; TypeScript was already idiomatic. |
 | `30d99104` | Prepared upstream 1.11.0 and updated the mirrored library version. |
+| `46c28883` | Upstream `release.py` formatting revert only; not applicable. |
 
 ## Original baseline provenance
 
