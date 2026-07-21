@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-df714e39a559135c51228cca6a7cb5c716756ee3
-v1.10.0-76-gdf714e39
-2024-05-04 — Fixup invalid EPDs in chess960.perft file
+eaa6eb3b023e92441f9de810785bb1716dd4d0b5
+v1.10.0-77-geaa6eb3b
+2024-05-04 — Fixup invalid EPD in crazyhouse.perft file
 ```
 
-This state removes the now-invalid move counters from the upstream Chess960
-perft fixture. chess.ts does not mirror or consume that fixture, so no
-TypeScript runtime or test change applies.
+This state removes invalid move counters from one upstream Crazyhouse perft
+position. chess.ts does not mirror or consume that fixture, so no TypeScript
+runtime or test change applies.
 
 ### Synchronization log
 
@@ -25,6 +25,7 @@ TypeScript runtime or test change applies.
 | `6af0ff4c` | Expanded core constants into individually typed declarations and named arrays. |
 | `716a0b94` | Required EPD operation codes to begin with a Unicode letter and ported the regression test. |
 | `df714e39` | Corrected the upstream Chess960 perft fixture; chess.ts does not mirror that fixture. |
+| `eaa6eb3b` | Corrected the upstream Crazyhouse perft fixture; chess.ts does not mirror that fixture. |
 
 ## Original baseline provenance
 
