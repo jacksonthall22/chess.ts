@@ -217,6 +217,10 @@ Translating the variation-stack test brings the current inventory to 109 of
 292 methods and 183 explicit TODOs. It exposed and corrected a Python-list to
 JavaScript-array truthiness mismatch: a leading variation delimiter is valid
 only after at least one move has actually been pushed.
+Translating `Game.fromBoard()` and the 4,000-ply recursion regression brings
+the current inventory to 111 of 292 methods and 181 explicit TODOs. Both
+exposed the same root-position constructor defect: polymorphic board roots must
+pass `null` as the FEN and preserve Chess960 through the options object.
 Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware

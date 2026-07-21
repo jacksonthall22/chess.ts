@@ -433,6 +433,22 @@ class PgnTestCase extends TestCase {
     )
   }
 
+  testGameFromBoard(): void {
+    const setup = '3k4/8/4K3/8/8/8/8/2R5 b - - 0 1'
+    const board = new chess.Board(setup)
+    board.pushSan('Ke8')
+    board.pushSan('Rc8#')
+
+    const game = pgn.Game.fromBoard(board)
+    this.assertEqual(game.headers.get('FEN'), setup)
+
+    const endNode = game.end()
+    this.assertEqual(endNode.move, chess.Move.fromUci('c1c8'))
+    this.assertEqual(endNode.parent?.move, chess.Move.fromUci('d8e8'))
+
+    this.assertEqual(game.headers.get('Result'), '1-0')
+  }
+
   testSemicolonComment(): void {
     const game = pgn.readGame(new pgn.StringIO('1. e4 ; e5'))
     if (game === null) {
@@ -486,6 +502,18 @@ class PgnTestCase extends TestCase {
       subgame.variations[1].move,
       chess.Move.fromUci('g1f3'),
     )
+  }
+
+  testRecursion(): void {
+    const board = new chess.Board('4k3/8/8/8/8/8/8/4K3 w - - 0 1')
+    for (let i = 0; i < 1000; i += 1) {
+      board.push(new chess.Move(chess.E1, chess.E2))
+      board.push(new chess.Move(chess.E8, chess.E7))
+      board.push(new chess.Move(chess.E2, chess.E1))
+      board.push(new chess.Move(chess.E7, chess.E8))
+    }
+    const game = pgn.Game.fromBoard(board)
+    this.assertTrue(game.toString().endsWith('2000. Ke1 Ke8 1/2-1/2'))
   }
 
   testPromoteToMain(): void {
@@ -844,10 +872,12 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testAnnotationSymbols: 2389,
     testVisitBoard: 2587,
     testBlackToMove: 2631,
+    testGameFromBoard: 2694,
     testErrors: 2709,
     testSemicolonComment: 2797,
     testNoMovetext: 2809,
     testSubgame: 2824,
+    testRecursion: 2855,
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
     testAddLine: 2723,
