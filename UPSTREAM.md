@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-a41c3c88022fd97ab0eaf7b032a3158b69628b66
-v1.10.0-81-ga41c3c88
-2024-07-04 — Do not eagerly check syzygy max pieces (fixes #1093)
+95803fc64a89307bfe51910f9e9349d120b81705
+v1.10.0-82-g95803fc6
+2024-07-04 — Artificially limit syzygy ab search after relaxing bound
 ```
 
-This state defers the upstream Syzygy tablebase maximum-piece check until a
-probe. The chess.ts Syzygy module is still empty and every upstream Syzygy test
-remains an explicit TODO, so this change is pending that module's translation.
+This state limits the upstream Syzygy alpha-beta search after relaxing a bound.
+The chess.ts Syzygy module is still empty and every upstream Syzygy test remains
+an explicit TODO, so this change is pending that module's translation.
 
 ### Synchronization log
 
@@ -29,6 +29,7 @@ remains an explicit TODO, so this change is pending that module's translation.
 | `59cadb1f` | Upstream README external-project gallery only; not applicable. |
 | `3829d262` | Upstream Syzygy `Tablebase.add_file()` refactor; pending the unsupported module's translation. |
 | `a41c3c88` | Upstream Syzygy maximum-piece check deferral; pending the unsupported module's translation. |
+| `95803fc6` | Upstream Syzygy alpha-beta search limit; pending the unsupported module's translation. |
 
 ## Original baseline provenance
 
