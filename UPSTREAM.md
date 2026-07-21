@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-100b1c8b21846c0a9db2f237621368e02294da5f
-v1.11.0-50-g100b1c8b
-2024-10-13 — Fixup pyright usage in CI
+aa98f31961275818f829168de696eceac2c2f916
+v1.11.1-54-gaa98f319
+2024-12-20 — Merge the upstream 1.11.1 release branch
 ```
 
-This state corrects upstream's Pyright command-line invocation. It is a
-Python-only workflow adjustment with no TypeScript source or CI equivalent.
+This state merges the upstream 1.11.1 release metadata. The mirrored
+`__version__` is now `1.11.1`; the independently versioned npm package and the
+historical transpiler-version marker remain unchanged.
 
 ### Synchronization log
 
@@ -58,6 +59,9 @@ Python-only workflow adjustment with no TypeScript source or CI equivalent.
 | `0c8fed28` | Made PGN builders generic and preserved concrete `Game`/`Headers` subclasses through constructors, static helpers, and results. |
 | `ef13fdbf` | Upstream Pyright CI integration; strict TypeScript library/test compilation already covers the corresponding surface. |
 | `100b1c8b` | Upstream Pyright command-line workflow fix only; not applicable. |
+| `d625be1d` | Upstream UCI `movesleft` info parsing; pending the unsupported engine process layer, with exact test movement tracked as TODOs. |
+| `518d662e` | Accepted lc0's `a1a1` null-move spelling, restored `Board.parseUci()`'s null-move fast path, and characterized parsing plus reversible push/pop behavior. |
+| `aa98f319` | Merged upstream 1.11.1 release metadata and updated only the mirrored python-chess `__version__`; npm package versioning remains independent. |
 
 ## Original baseline provenance
 
@@ -125,7 +129,7 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Thirteen chess.ts-only
+and 201 explicit TODOs. Nineteen chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -139,6 +143,10 @@ Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while
 instantiating the base class.
+Five characterize lc0-style `a1a1` null moves across raw parsing, board
+parsing, reversible push/pop, invalid same-square spellings, and the distinct
+raw-but-illegal `a1a1q` case.
+One guards the independently mirrored python-chess version constant.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
