@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-ab0e066d444dd0d6e781e01ffd3db2aadefd98a0
-v1.11.0-39-gab0e066d
-2024-10-08 — Merge pull request #1113 from MarkZH/options-fix
+7f123cb5dd858978de4a32b7d2c8f8ea71a3552c
+v1.11.0-40-g7f123cb5
+2024-10-09 — Remove chess.svg.board(..., flipped), use orientation (#659)
 ```
 
-This state fixes parsing of UCI option names in the unsupported engine process
-layer and adds two upstream engine tests that remain explicit TODOs. Its
-Fairy-Stockfish CI setup and tox changes are not part of the TypeScript library.
+This state removes the deprecated `flipped` option from the upstream SVG board
+renderer. The board renderer remains unsupported in chess.ts, so no TypeScript
+runtime API applies yet.
 
 ### Synchronization log
 
@@ -48,6 +48,7 @@ Fairy-Stockfish CI setup and tox changes are not part of the TypeScript library.
 | `08697b29` | Upstream Twine and wheel release tooling only; not applicable. |
 | `d4b31904` | Replaced singular PGN comment storage with ordered arrays and ported multiple-comment parsing, traversal, annotations, and export. |
 | `ab0e066d` | UCI option parsing fix remains pending with the unsupported engine process layer; tracked its two new tests as TODOs. Upstream Fairy-Stockfish setup and tox changes are not applicable. |
+| `7f123cb5` | Removed deprecated `flipped` from the unsupported SVG board renderer; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
