@@ -5,15 +5,22 @@
 submodule currently pins:
 
 ```text
-315052c0105ea1e0d0b4e1cbee70577fd9349f2d
-v1.10.0-71-g315052c0
-2024-02-24 — Fix argument syntax
+d1dce61a45ed3784ce867ec0218d6fb3ca47e735
+v1.10.0-72-gd1dce61a
+2024-04-18 — Bump Sphinx to 7.3.6
 ```
 
-The preceding first-parent state added the Stockfish 16.1 WDL model. This state
-only corrects its Python `ply=int` annotation to `ply: int`; the mechanically
-translated TypeScript helper already required `ply: number`, so this explicit
-synchronization step has no TypeScript runtime or test delta.
+This upstream state changes only the Python documentation toolchain. It is an
+explicit TypeScript semantic no-op; advancing the pin still records that the
+state was reviewed rather than silently skipped.
+
+### Synchronization log
+
+| Upstream state | TypeScript disposition |
+| --- | --- |
+| `8e91525e` | Added Stockfish 16.1 WDL source and test behavior. |
+| `315052c0` | Python annotation correction; TypeScript already used `ply: number`. |
+| `d1dce61a` | Python documentation dependency only; not applicable. |
 
 ## Original baseline provenance
 
