@@ -108,7 +108,7 @@ Q . p . . . . .
 This package aims to be a direct port of `python-chess` to TypeScript, faithful down to the line.
 I compiled some notes about how I approached this massive transpilation effort [here](py-to-ts-tips.md).
 
-In the long run, this repo should aim to transpile everything from [python-chess core copy](./python-chess%20core%20copy/)
+In the long run, this repo should aim to transpile everything from the [pinned python-chess submodule](./python-chess/)
 over to the corresponding files in [`chess/`](chess/):
 - [x]  `__init__.py` → `index.ts`
 - [x]  `pgn.py` → `pgn.ts`
@@ -116,7 +116,7 @@ over to the corresponding files in [`chess/`](chess/):
 - [x]  Add a test harness and account for every frozen upstream test
 - [ ]  Complete the test-suite translation
 
-The exact upstream commit represented by the frozen source and test snapshot is
+The exact upstream commit represented by the pinned source and test snapshot is
 recorded in [UPSTREAM.md](UPSTREAM.md).
 
 PRs welcome!

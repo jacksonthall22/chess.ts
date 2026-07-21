@@ -1,9 +1,8 @@
 # python-chess baseline
 
 `chess.ts` is a mechanical TypeScript translation of
-[`python-chess`](https://github.com/niklasf/python-chess). The frozen Python
-sources in `python-chess core copy/` correspond byte-for-byte to the selected
-upstream baseline:
+[`python-chess`](https://github.com/niklasf/python-chess). The `python-chess/`
+submodule pins this selected upstream baseline:
 
 ```text
 cd7f5958289dd08156436a1f84b9ea03cb1f75a1
@@ -19,7 +18,8 @@ latest of those indistinguishable snapshots. The copied files alone therefore
 cannot prove which of the two commits was originally used. We select the later
 commit as the canonical pin so the repository has one deterministic baseline.
 
-Each frozen implementation file is identical to the file at that commit:
+Each originally copied implementation file is identical to the file at that
+commit:
 
 | File | Git blob |
 | --- | --- |
@@ -32,13 +32,13 @@ Each frozen implementation file is identical to the file at that commit:
 | `chess/syzygy.py` | `e1fe07eb716bda1abcd0bfc261354ba888ba9530` |
 | `chess/variant.py` | `6160696a2013bb1f38875cf5899f054303b7307f` |
 
-`python-chess core copy/test.py` and its PGN fixtures are copied from the same
-commit. TypeScript tests retain the upstream class name, method name, and source
-line so future upstream changes can be reviewed and translated one commit at a
-time.
+`python-chess/test.py`, its fixtures, and the implementation sources all come
+from that one gitlink. TypeScript tests retain the upstream class name, method
+name, and source line so future upstream changes can be reviewed and translated
+one commit at a time.
 
-The test-sync check verifies the Git blobs for the frozen implementation,
-`test.py`, and every copied PGN fixture before running the translated suite. A
+The test-sync check verifies the Git blobs for the pinned implementation,
+`test.py`, and every selected PGN fixture before running the translated suite. A
 generated TODO ledger accounts for every upstream test method, including tests
 for python-chess modules that chess.ts has not implemented yet; those entries
 remain visible instead of being silently dropped.
@@ -126,7 +126,13 @@ The intended update unit is one upstream python-chess commit together with the
 corresponding TypeScript source and test changes. Do not update the Python
 baseline independently of its translation.
 
-The next repository-structure step is to replace `python-chess core copy/`
-with a submodule pinned to the commit above. That should be a separate PR from
-the initial test-suite translation so both provenance changes remain easy to
-review.
+Clone this repository with `--recurse-submodules`, or initialize an existing
+checkout before testing:
+
+```sh
+git submodule update --init
+```
+
+The sync check verifies both the exact submodule commit and the relevant file
+blobs. Advance the gitlink by exactly one upstream commit only in the same
+change that translates and verifies that commit's source and test differences.

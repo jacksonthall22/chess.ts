@@ -23,7 +23,7 @@ from pathlib import Path
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
-UPSTREAM_ROOT = REPOSITORY_ROOT / "python-chess core copy"
+UPSTREAM_ROOT = REPOSITORY_ROOT / "python-chess"
 UPSTREAM_TEST = UPSTREAM_ROOT / "test.py"
 TYPESCRIPT_TEST_ROOT = REPOSITORY_ROOT / "chess" / "test"
 GENERATED_TODOS = TYPESCRIPT_TEST_ROOT / "upstream-todos.test.ts"
@@ -34,14 +34,14 @@ TYPESCRIPT_METADATA_EXTRACTOR = (
 UPSTREAM_COMMIT = "cd7f5958289dd08156436a1f84b9ea03cb1f75a1"
 
 EXPECTED_GIT_BLOBS = {
-    "__init__.py": "a9328a04b90ed60d52bfb83e193889cee55bea7a",
-    "engine.py": "b1d3896abb41faf15b4c1ff4223babcbdc926cb5",
-    "gaviota.py": "39173b5933324a48c3054a9e8d55ca9949b9725a",
-    "pgn.py": "55eddbc2942f0df8042a32eb99de31a2ce62b529",
-    "polyglot.py": "44a68caa53974b2edf3f1ba7ef496e24d6021417",
-    "svg.py": "d3d19e89e072bfbe3de3ff0341ab78e2161fb8c7",
-    "syzygy.py": "e1fe07eb716bda1abcd0bfc261354ba888ba9530",
-    "variant.py": "6160696a2013bb1f38875cf5899f054303b7307f",
+    "chess/__init__.py": "a9328a04b90ed60d52bfb83e193889cee55bea7a",
+    "chess/engine.py": "b1d3896abb41faf15b4c1ff4223babcbdc926cb5",
+    "chess/gaviota.py": "39173b5933324a48c3054a9e8d55ca9949b9725a",
+    "chess/pgn.py": "55eddbc2942f0df8042a32eb99de31a2ce62b529",
+    "chess/polyglot.py": "44a68caa53974b2edf3f1ba7ef496e24d6021417",
+    "chess/svg.py": "d3d19e89e072bfbe3de3ff0341ab78e2161fb8c7",
+    "chess/syzygy.py": "e1fe07eb716bda1abcd0bfc261354ba888ba9530",
+    "chess/variant.py": "6160696a2013bb1f38875cf5899f054303b7307f",
     "test.py": "e1d0d50c5bf15cfdb2aa06ae2d6290a385e3dc64",
     "data/pgn/anastasian-lewis.pgn": "04faad1e205c242877e7170f2ca5bda2ed0e2260",
     "data/pgn/antichess-programfox.pgn": "d4e9cce919ee16a9dabcd3395c00162fa8d3501d",
@@ -75,7 +75,42 @@ def git_blob_id(contents: bytes) -> str:
     return hashlib.sha1(header + contents).hexdigest()
 
 
-def verify_frozen_sources() -> None:
+def verify_submodule_pin() -> None:
+    top_level_result = subprocess.run(
+        ["git", "-C", str(UPSTREAM_ROOT), "rev-parse", "--show-toplevel"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if (
+        top_level_result.returncode != 0
+        or Path(top_level_result.stdout.strip()).resolve() != UPSTREAM_ROOT.resolve()
+    ):
+        raise SystemExit(
+            "The python-chess submodule is not initialized. Run "
+            "`git submodule update --init` and retry."
+        )
+
+    commit_result = subprocess.run(
+        ["git", "-C", str(UPSTREAM_ROOT), "rev-parse", "HEAD"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if commit_result.returncode != 0:
+        raise SystemExit(
+            "The python-chess submodule is not initialized. Run "
+            "`git submodule update --init` and retry."
+        )
+
+    actual_commit = commit_result.stdout.strip()
+    if actual_commit != UPSTREAM_COMMIT:
+        raise SystemExit(
+            f"python-chess must be pinned to {UPSTREAM_COMMIT}, got {actual_commit}"
+        )
+
+
+def verify_pinned_sources() -> None:
     mismatches = []
     for relative_path, expected in EXPECTED_GIT_BLOBS.items():
         source_path = UPSTREAM_ROOT / relative_path
@@ -201,7 +236,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    verify_frozen_sources()
+    verify_submodule_pin()
+    verify_pinned_sources()
     upstream_tests = extract_upstream_tests()
     tests_by_line = {test.line: test for test in upstream_tests}
     translated = translated_source_lines()
