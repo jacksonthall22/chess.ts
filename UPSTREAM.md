@@ -5,13 +5,15 @@
 submodule currently pins:
 
 ```text
-6228bac55b8e680362f35e69c1c72a4d53d00cf4
-v1.11.0-43-g6228bac5
-2024-10-12 — Update Sphinx
+e2041699939d7ae08811fe7a1391e8910d5ec62a
+v1.11.0-44-ge2041699
+2024-10-13 — Towards passing pyright
 ```
 
-This state updates upstream's Sphinx documentation dependency only. It has no
-TypeScript source, test, or tooling equivalent.
+This state begins upstream's static-typing cleanup. The supported core change
+aligns the en-passant capture-square expression with the move destination;
+Python-only definite assignment and unsupported engine/Syzygy changes have no
+TypeScript runtime equivalent.
 
 ### Synchronization log
 
@@ -51,6 +53,7 @@ TypeScript source, test, or tooling equivalent.
 | `f2b04523` | Removed deprecated `BaseVisitor.parseSan()` and routed PGN parsing directly through `Board.parseSan()`. |
 | `b2657ebc` | Removed deprecated `Wdl`/`PovWdl` tuple behavior while preserving dataclass-like exact-field value equality. |
 | `6228bac5` | Upstream Sphinx documentation dependency update only; not applicable. |
+| `e2041699` | Aligned the core en-passant capture-square expression; Python-only definite assignment and unsupported engine/Syzygy typing changes are not applicable. |
 
 ## Original baseline provenance
 

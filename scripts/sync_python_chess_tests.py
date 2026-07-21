@@ -31,16 +31,16 @@ TYPESCRIPT_METADATA_EXTRACTOR = (
     REPOSITORY_ROOT / "scripts" / "extract_typescript_test_metadata.mjs"
 )
 
-UPSTREAM_COMMIT = "6228bac55b8e680362f35e69c1c72a4d53d00cf4"
+UPSTREAM_COMMIT = "e2041699939d7ae08811fe7a1391e8910d5ec62a"
 
 EXPECTED_GIT_BLOBS = {
-    "chess/__init__.py": "147f24be75cefbf5f0b7fb8642f656716173c98d",
-    "chess/engine.py": "64a3926b7deba810f3d70de56c18a37608e9269d",
+    "chess/__init__.py": "4f5791f7ca1ea8d2188b3e17e565049a53cae1b9",
+    "chess/engine.py": "c961d0da1ce2f14a655e0ee74821f008f25adcbd",
     "chess/gaviota.py": "39173b5933324a48c3054a9e8d55ca9949b9725a",
     "chess/pgn.py": "eddb6bc5260e524754853255f4f4a9f4ba727e3b",
     "chess/polyglot.py": "44a68caa53974b2edf3f1ba7ef496e24d6021417",
     "chess/svg.py": "7e8facf99b22ab7b07c6413bfacc92dd3479f926",
-    "chess/syzygy.py": "77a6eeded5f10a4acd9e828fb9c4f554c3835b14",
+    "chess/syzygy.py": "89f8c25967d62a829b21eb65f39f6dcfdb7ccac9",
     "chess/variant.py": "6e9161dc89faeda13f563ddcc7dbe589ee44a2a9",
     "test.py": "68904a50ee6ecc677d6eac93933d7ab691d2da45",
     "data/pgn/anastasian-lewis.pgn": "04faad1e205c242877e7170f2ca5bda2ed0e2260",
