@@ -6,5 +6,6 @@
     "noEmit": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["../*.ts", "./**/*.ts"]
+  "include": ["../*.ts", "./**/*.ts"],
+  "exclude": []
 }
