@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-b2657ebc4768e2815cb8ddeb8c9ed13109332e15
-v1.11.0-42-gb2657ebc
-2024-10-09 — Remove deprecated chess.engine.Wdl tuple behavior (#659)
+100b1c8b21846c0a9db2f237621368e02294da5f
+v1.11.0-50-g100b1c8b
+2024-10-13 — Fixup pyright usage in CI
 ```
 
-This state deliberately removes deprecated tuple behavior from `Wdl` and
-`PovWdl`. They retain dataclass-like value equality, and `PovWdl` equality now
-compares both its relative value and exact point of view.
+This state corrects upstream's Pyright command-line invocation. It is a
+Python-only workflow adjustment with no TypeScript source or CI equivalent.
 
 ### Synchronization log
 
@@ -51,6 +50,14 @@ compares both its relative value and exact point of view.
 | `7f123cb5` | Removed deprecated `flipped` from the unsupported SVG board renderer; no TypeScript runtime change applies. |
 | `f2b04523` | Removed deprecated `BaseVisitor.parseSan()` and routed PGN parsing directly through `Board.parseSan()`. |
 | `b2657ebc` | Removed deprecated `Wdl`/`PovWdl` tuple behavior while preserving dataclass-like exact-field value equality. |
+| `6228bac5` | Upstream Sphinx documentation dependency update only; not applicable. |
+| `e2041699` | Aligned the core en-passant capture-square expression; Python-only definite assignment and unsupported engine/Syzygy typing changes are not applicable. |
+| `c42749de` | Upstream engine protocol `options` abstraction; pending the unsupported engine protocol's translation. |
+| `7553d411` | Made `GameNode.parent` and `GameNode.move` getter-only, with narrowed immutable accessors on roots and child nodes. This prevents consumers from corrupting ancestry or move identity and is an upstream-compatible breaking change. |
+| `f7736478` | Initialized the PGN reader board stack before the skip-game branch, matching upstream control-flow typing. |
+| `0c8fed28` | Made PGN builders generic and preserved concrete `Game`/`Headers` subclasses through constructors, static helpers, and results. |
+| `ef13fdbf` | Upstream Pyright CI integration; strict TypeScript library/test compilation already covers the corresponding surface. |
+| `100b1c8b` | Upstream Pyright command-line workflow fix only; not applicable. |
 
 ## Original baseline provenance
 
@@ -118,7 +125,7 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Eleven chess.ts-only
+and 201 explicit TODOs. Thirteen chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -126,6 +133,12 @@ TypeScript's parser-versus-tree comment visitor boundary. One also guards the
 Python-list/JavaScript-array truthiness adaptation in `GameNode.next()`.
 The latest characterization protects `Wdl` and `PovWdl` value equality while
 proving that their deprecated tuple-era surface is gone.
+Getter-only node identity is protected by both compile-time assignment
+failures and runtime mutation checks.
+Another checks both compile-time inference and runtime construction for
+subclass-preserving PGN builders. Specialized builders must receive their
+concrete constructor, so their result types can not claim a subclass while
+instantiating the base class.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
@@ -157,7 +170,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 199 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 201 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.
