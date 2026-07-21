@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-d4b31904675d83325883b4e24f45f786689f8f8f
-v1.11.0-34-gd4b31904
-2024-10-04 — Merge pull request #1068 from MarkZH/multiple-move-comments
+b2657ebc4768e2815cb8ddeb8c9ed13109332e15
+v1.11.0-42-gb2657ebc
+2024-10-09 — Remove deprecated chess.engine.Wdl tuple behavior (#659)
 ```
 
-This state deliberately replaces each PGN node's singular comment strings
-with ordered comment arrays, allowing parsing and export to preserve multiple
-comments attached to the same move.
+This state deliberately removes deprecated tuple behavior from `Wdl` and
+`PovWdl`. They retain dataclass-like value equality, and `PovWdl` equality now
+compares both its relative value and exact point of view.
 
 ### Synchronization log
 
@@ -47,6 +47,10 @@ comments attached to the same move.
 | `46c28883` | Upstream `release.py` formatting revert only; not applicable. |
 | `08697b29` | Upstream Twine and wheel release tooling only; not applicable. |
 | `d4b31904` | Replaced singular PGN comment storage with ordered arrays and ported multiple-comment parsing, traversal, annotations, and export. |
+| `ab0e066d` | UCI option parsing fix remains pending with the unsupported engine process layer; tracked its two new tests as TODOs. Upstream Fairy-Stockfish setup and tox changes are not applicable. |
+| `7f123cb5` | Removed deprecated `flipped` from the unsupported SVG board renderer; no TypeScript runtime change applies. |
+| `f2b04523` | Removed deprecated `BaseVisitor.parseSan()` and routed PGN parsing directly through `Board.parseSan()`. |
+| `b2657ebc` | Removed deprecated `Wdl`/`PovWdl` tuple behavior while preserving dataclass-like exact-field value equality. |
 
 ## Original baseline provenance
 
@@ -112,13 +116,16 @@ bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one translated regression test, and the UTF-8 BOM regression adds another,
 for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
-total of 87 of 286 upstream methods. The unsupported engine-dispatch
-regression is among the 199 explicit TODOs. Ten chess.ts-only
+total of 87 of 286 upstream methods at that checkpoint. The UCI option update
+adds two untranslated engine tests, for a current total of 87 of 288 methods
+and 201 explicit TODOs. Eleven chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
 TypeScript's parser-versus-tree comment visitor boundary. One also guards the
 Python-list/JavaScript-array truthiness adaptation in `GameNode.next()`.
+The latest characterization protects `Wdl` and `PovWdl` value equality while
+proving that their deprecated tuple-era surface is gone.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
@@ -212,6 +219,22 @@ tree traversal sends the node's actual array once. TypeScript visitor methods
 therefore honestly accept `string | string[]` at that boundary. Export emits
 each stored entry as its own `{ ... }` comment, preserves entry whitespace,
 and removes braces from comment content.
+
+## Deprecated API removals
+
+The `f2b04523` and `b2657ebc` states deliberately remove deprecated behavior
+rather than retaining TypeScript-only aliases. `BaseVisitor.parseSan()` is no
+longer an interception point: `readGame()` calls `beginParseSan()` and then
+parses the recognized token on the board itself. `PovWdl` no longer exposes
+`iter()`, `len()`, `getitem()`, or equality with arrays, and `Wdl` no longer
+exposes `iter()` or `reversed()`.
+
+Python supplies value equality for `Wdl` and `PovWdl` through dataclasses.
+TypeScript preserves that semantic explicitly with `equals()`: `Wdl` compares
+its three numeric fields, while `PovWdl` compares the relative `Wdl` by value
+and requires the same exact `turn`; both also require the same runtime class,
+as Python dataclass equality does. In particular, opposite-turn values that
+normalize to the same White point of view are no longer equal.
 
 ## Update discipline
 
