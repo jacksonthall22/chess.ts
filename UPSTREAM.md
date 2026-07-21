@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-bbf2a05e6b6e3a83651b4333584940bc652cdea2
-v1.11.1-58-gbbf2a05e
-2025-01-08 — Update the source of Gaviota tables
+91699cd1eb1785e501e68b208b68b9ca9a3c2543
+v1.11.1-62-g91699cd1
+2025-01-11 — Shorten the Gaviota implementation
 ```
 
-This state updates provenance files for bundled Gaviota tablebase data. The
-Gaviota module and its data files remain unsupported in chess.ts.
+This state rewrites the unsupported Gaviota module. Upstream later reverted
+this rewrite because of functional regressions; chess.ts has no corresponding
+runtime code, and this intermediate state is retained only for exact history.
 
 ### Synchronization log
 
@@ -64,6 +65,7 @@ Gaviota module and its data files remain unsupported in chess.ts.
 | `78c765b4` | Simplified portable `os.O_BINARY` access in the unsupported Polyglot and Syzygy modules; no TypeScript runtime change applies. |
 | `18d53b92` | Removed an unused Python `Generic` import; TypeScript generic declarations are unaffected. |
 | `bbf2a05e` | Updated upstream Gaviota tablebase data-source records; neither the unsupported module nor its data files are distributed by chess.ts. |
+| `91699cd1` | Recorded the shorter Gaviota rewrite exactly. It remains unsupported in chess.ts and was later reverted upstream after regressions. |
 
 ## Original baseline provenance
 
