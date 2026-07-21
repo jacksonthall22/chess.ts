@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
@@ -368,6 +371,29 @@ class PgnTestCase extends TestCase {
     )
     this.assertEqual(game.mainlineMoves().toString(), '1. d3 Nf6 2. e4')
   }
+
+  testUtf8Bom(): void {
+    const source = readFileSync(
+      resolve(__dirname, '../../python-chess/data/pgn/utf8-bom.pgn'),
+      'utf8',
+    )
+    const handle = new pgn.StringIO(source)
+
+    let game = pgn.readGame(handle)
+    if (game === null) {
+      throw new Error('Expected the PGN to contain the first game')
+    }
+    this.assertEqual(game.headers.get('Event'), 'A')
+
+    game = pgn.readGame(handle)
+    if (game === null) {
+      throw new Error('Expected the PGN to contain the second game')
+    }
+    this.assertEqual(game.headers.get('Event'), 'B')
+
+    game = pgn.readGame(handle)
+    this.assertEqual(game, null)
+  }
 }
 
 registerTestCase('PgnTestCase', PgnTestCase, {
@@ -384,6 +410,7 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testAnnotations: 2831,
     testFloatEmt: 2882,
     testFloatClk: 2895,
+    testUtf8Bom: 2950,
   },
 })
 

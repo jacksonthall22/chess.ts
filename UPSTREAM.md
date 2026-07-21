@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-7299216641f5bd0434c06111608892617aa39147
-v1.10.0-100-g72992166
-2024-07-31 — Immediately dispatch line/termination/finish (fixes #1049, fixes #1071)
+08697b298d87e4fa01842bd82af96d71cb972c90
+v1.11.0-1-g08697b29
+2024-10-04 — Fix twine usage, stop uploading wheels
 ```
 
-This state fixes immediate line, termination, and finish dispatch in the
-unsupported engine protocol. The new upstream
-`EngineTestCase.test_uci_output_after_command` regression remains an explicit
-generated TODO because chess.ts has no engine protocol runtime to exercise.
+This state changes upstream Twine and wheel publishing behavior in
+`release.py`. The upstream release tooling is not part of the TypeScript
+library, so no runtime change applies.
 
 ### Synchronization log
 
@@ -41,6 +40,12 @@ generated TODO because chess.ts has no engine protocol runtime to exercise.
 | `caefd4dc` | Engine protocol `_next_token()` cosmetics; unsupported module, so not applicable. |
 | `71e7c31f` | Engine protocol assertion diagnostics; unsupported module, so not applicable. |
 | `72992166` | Engine protocol dispatch fix and regression test; runtime remains unsupported and the test is tracked as a TODO. |
+| `5826ef5d` | SVG board-offset fix; pending the unsupported board renderer's translation. |
+| `0e7fabc8` | Added and ported the UTF-8 BOM PGN fixture regression. |
+| `c0d3c917` | Removed superfluous Python parentheses; TypeScript was already idiomatic. |
+| `30d99104` | Prepared upstream 1.11.0 and updated the mirrored library version. |
+| `46c28883` | Upstream `release.py` formatting revert only; not applicable. |
+| `08697b29` | Upstream Twine and wheel release tooling only; not applicable. |
 
 ## Original baseline provenance
 
@@ -103,10 +108,11 @@ count of the remaining work.
 
 The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
-adds one more translated regression test, for a current total of 85 passing
-upstream methods. The later unsupported engine-dispatch regression brings the
-explicit TODO count to 199. Eight chess.ts-only characterizations
-cover the original three game-tree cases plus polymorphic `BaseBoard`
+adds one translated regression test, and the UTF-8 BOM regression adds another,
+for a current total of 86 of 285 upstream methods. The unsupported
+engine-dispatch regression is among the 199 explicit TODOs. Eight
+chess.ts-only characterizations cover the original three game-tree cases plus
+polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
 comment sanitization, and attack-query occupancy overrides.
 
