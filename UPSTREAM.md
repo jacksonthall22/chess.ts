@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-08697b298d87e4fa01842bd82af96d71cb972c90
-v1.11.0-1-g08697b29
-2024-10-04 — Fix twine usage, stop uploading wheels
+d4b31904675d83325883b4e24f45f786689f8f8f
+v1.11.0-34-gd4b31904
+2024-10-04 — Merge pull request #1068 from MarkZH/multiple-move-comments
 ```
 
-This state changes upstream Twine and wheel publishing behavior in
-`release.py`. The upstream release tooling is not part of the TypeScript
-library, so no runtime change applies.
+This state deliberately replaces each PGN node's singular comment strings
+with ordered comment arrays, allowing parsing and export to preserve multiple
+comments attached to the same move.
 
 ### Synchronization log
 
@@ -46,6 +46,7 @@ library, so no runtime change applies.
 | `30d99104` | Prepared upstream 1.11.0 and updated the mirrored library version. |
 | `46c28883` | Upstream `release.py` formatting revert only; not applicable. |
 | `08697b29` | Upstream Twine and wheel release tooling only; not applicable. |
+| `d4b31904` | Replaced singular PGN comment storage with ordered arrays and ported multiple-comment parsing, traversal, annotations, and export. |
 
 ## Original baseline provenance
 
@@ -109,12 +110,14 @@ count of the remaining work.
 The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one translated regression test, and the UTF-8 BOM regression adds another,
-for a current total of 86 of 285 upstream methods. The unsupported
-engine-dispatch regression is among the 199 explicit TODOs. Eight
-chess.ts-only characterizations cover the original three game-tree cases plus
-polymorphic `BaseBoard`
-construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
-comment sanitization, and attack-query occupancy overrides.
+for a total of 86 of 285 upstream methods at that checkpoint. The
+multiple-comment update adds one translated PGN regression, for a current
+total of 87 of 286 upstream methods. The unsupported engine-dispatch
+regression is among the 199 explicit TODOs. Nine chess.ts-only
+characterizations cover the original three game-tree cases plus polymorphic
+`BaseBoard` construction, Python-compatible float formatting, Unicode-aware
+PGN wrapping, comment sanitization, attack-query occupancy overrides, and
+TypeScript's parser-versus-tree comment visitor boundary.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
@@ -191,6 +194,23 @@ The chess.ts characterization tests preserve this current behavior. A future
 collaboration layer may choose to converge concurrent identical moves into one
 child, but that would be an explicit Hyperchess product policy that narrows the
 general python-chess model—not a parity fix in this library.
+
+## Multiple PGN comments
+
+The `d4b31904` synchronization is an intentional, upstream-compatible breaking
+change: `GameNode.comment` and `ChildNode.startingComment` are replaced by the
+sole mutable representations `comments: string[]` and
+`startingComments: string[]`. There are no singular compatibility aliases,
+because maintaining two writable representations would allow them to diverge.
+
+The singular constructor option names remain compatible with upstream and
+accept either one string or an array. Empty inputs normalize to a fresh empty
+array; a non-empty input array remains aliased exactly as it does upstream.
+The PGN parser still sends one string per parsed comment to visitors, while
+tree traversal sends the node's actual array once. TypeScript visitor methods
+therefore honestly accept `string | string[]` at that boundary. Export emits
+each stored entry as its own `{ ... }` comment, preserves entry whitespace,
+and removes braces from comment content.
 
 ## Update discipline
 
