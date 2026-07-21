@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-b2657ebc4768e2815cb8ddeb8c9ed13109332e15
-v1.11.0-42-gb2657ebc
-2024-10-09 — Remove deprecated chess.engine.Wdl tuple behavior (#659)
+6228bac55b8e680362f35e69c1c72a4d53d00cf4
+v1.11.0-43-g6228bac5
+2024-10-12 — Update Sphinx
 ```
 
-This state deliberately removes deprecated tuple behavior from `Wdl` and
-`PovWdl`. They retain dataclass-like value equality, and `PovWdl` equality now
-compares both its relative value and exact point of view.
+This state updates upstream's Sphinx documentation dependency only. It has no
+TypeScript source, test, or tooling equivalent.
 
 ### Synchronization log
 
@@ -51,6 +50,7 @@ compares both its relative value and exact point of view.
 | `7f123cb5` | Removed deprecated `flipped` from the unsupported SVG board renderer; no TypeScript runtime change applies. |
 | `f2b04523` | Removed deprecated `BaseVisitor.parseSan()` and routed PGN parsing directly through `Board.parseSan()`. |
 | `b2657ebc` | Removed deprecated `Wdl`/`PovWdl` tuple behavior while preserving dataclass-like exact-field value equality. |
+| `6228bac5` | Upstream Sphinx documentation dependency update only; not applicable. |
 
 ## Original baseline provenance
 
