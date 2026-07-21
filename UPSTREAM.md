@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-8330cfd5dbb9401f0e85be92cf408d6482505642
-v1.11.1-104-g8330cfd5
-2026-06-07 — Reject positions with multiple stepping checkers
+24c2d5a231ecd79e2ba0b11cb87514f69da2e927
+v1.11.1-106-g24c2d5a2
+2026-07-11 — Merge pull request #1197 from philipmk42/remove-test-badge
 ```
 
-This state rejects impossible positions where more than one pawn, knight, or
-king checks the side to move. The complete upstream board-status regression is
-translated, while Atomic's variant-specific exception remains pending with the
-unsupported variant module.
+This state removes an obsolete workflow badge from the upstream README. The
+badge and upstream README are not copied into chess.ts, so no TypeScript
+runtime or test change applies.
 
 ### Synchronization log
 
@@ -95,6 +94,7 @@ unsupported variant module.
 | `b53c6e60` | Corrected `Board.chess960Pos()` documentation from the incomplete 0–956 range to all indices 0–959. |
 | `77f1dab8` | Inserted the conventional space after the ellipsis when `Board.variationSan()` begins with a black move and updated the translated regression expectation. |
 | `8330cfd5` | Rejected positions with multiple stepping checkers and translated the complete `BoardTestCase.test_status` regression. Atomic's exception remains pending with the unsupported variant module. |
+| `24c2d5a2` | Removed an obsolete status badge from the upstream README; chess.ts does not copy that README badge. |
 
 ### Intentional upstream divergence
 
