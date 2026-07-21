@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-0e7fabc8ae0127a994aaece31e3c69a510cef527
-v1.10.0-103-g0e7fabc8
-2024-09-27 — Test reading PGN with UTF-8 BOM
+c0d3c9171d22d0168a6cf7a584cdcf50909832e6
+v1.10.0-104-gc0d3c917
+2024-10-04 — chess\\__init__.py superfluous-parens
 ```
 
-This state adds the upstream UTF-8 BOM PGN fixture and ports its regression
-test. The test reads the exact fixture bytes as ordinary UTF-8, proving that
-the parser ignores the leading BOM and then reads both games from one stream.
+This state removes superfluous parentheses from one upstream bitwise
+expression. The TypeScript translation was already in the resulting idiomatic
+form, so no runtime change applies.
 
 ### Synchronization log
 
@@ -42,6 +42,7 @@ the parser ignores the leading BOM and then reads both games from one stream.
 | `72992166` | Engine protocol dispatch fix and regression test; runtime remains unsupported and the test is tracked as a TODO. |
 | `5826ef5d` | SVG board-offset fix; pending the unsupported board renderer's translation. |
 | `0e7fabc8` | Added and ported the UTF-8 BOM PGN fixture regression. |
+| `c0d3c917` | Removed superfluous Python parentheses; TypeScript was already idiomatic. |
 
 ## Original baseline provenance
 
@@ -106,7 +107,8 @@ The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one translated regression test, and the UTF-8 BOM regression adds another,
 for a current total of 86 of 285 upstream methods. The unsupported
-engine-dispatch regression is among the 199 explicit TODOs. Eight chess.ts-only characterizations
+engine-dispatch regression is among the 199 explicit TODOs. Eight chess.ts-only
+characterizations
 cover the original three game-tree cases plus polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
 comment sanitization, and attack-query occupancy overrides.
