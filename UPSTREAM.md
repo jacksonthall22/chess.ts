@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-95803fc64a89307bfe51910f9e9349d120b81705
-v1.10.0-82-g95803fc6
-2024-07-04 — Artificially limit syzygy ab search after relaxing bound
+474c87bfcccb8e2aa78a4a94414af3b747340f31
+v1.10.0-83-g474c87bf
+2024-07-10 — Add another SAN disambiguation test (niklasf/shakmaty#77)
 ```
 
-This state limits the upstream Syzygy alpha-beta search after relaxing a bound.
-The chess.ts Syzygy module is still empty and every upstream Syzygy test remains
-an explicit TODO, so this change is pending that module's translation.
+This state adds a regression assertion for rank-only SAN disambiguation in a
+checkmating capture. The assertion is ported into the already translated
+`BoardTestCase.testSan` method.
 
 ### Synchronization log
 
@@ -30,6 +30,7 @@ an explicit TODO, so this change is pending that module's translation.
 | `3829d262` | Upstream Syzygy `Tablebase.add_file()` refactor; pending the unsupported module's translation. |
 | `a41c3c88` | Upstream Syzygy maximum-piece check deferral; pending the unsupported module's translation. |
 | `95803fc6` | Upstream Syzygy alpha-beta search limit; pending the unsupported module's translation. |
+| `474c87bf` | Ported the additional SAN disambiguation regression assertion. |
 
 ## Original baseline provenance
 

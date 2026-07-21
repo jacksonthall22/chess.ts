@@ -84,10 +84,10 @@ class LegalMoveGeneratorTestCase extends TestCase {
 
 registerTestCase('LegalMoveGeneratorTestCase', LegalMoveGeneratorTestCase, {
   lines: {
-    testListConversion: 1721,
-    testNonzero: 1724,
-    testStringConversion: 1732,
-    testTraverseOnce: 1743,
+    testListConversion: 1726,
+    testNonzero: 1729,
+    testStringConversion: 1737,
+    testTraverseOnce: 1748,
   },
 })
 
@@ -105,7 +105,7 @@ class BaseBoardTestCase extends TestCase {
 
 registerTestCase('BaseBoardTestCase', BaseBoardTestCase, {
   lines: {
-    testSetPieceMap: 1761,
+    testSetPieceMap: 1766,
   },
 })
 
@@ -409,20 +409,20 @@ class SquareSetTestCase extends TestCase {
 
 registerTestCase('SquareSetTestCase', SquareSetTestCase, {
   lines: {
-    testEquality: 1772,
-    testStringConversion: 1794,
-    testIter: 1808,
-    testReversed: 1812,
-    testArithmetic: 1816,
-    testImmutableSetOperations: 1838,
-    testMutableSetOperations: 1864,
-    testFromSquare: 1902,
-    testCarryRippler: 1906,
-    testMirror: 1910,
-    testFlip: 1914,
-    testLenOfComplenent: 1926,
-    testIntConversion: 1933,
-    testTolist: 1938,
-    testFlipDucktyping: 1941,
+    testEquality: 1777,
+    testStringConversion: 1799,
+    testIter: 1813,
+    testReversed: 1817,
+    testArithmetic: 1821,
+    testImmutableSetOperations: 1843,
+    testMutableSetOperations: 1869,
+    testFromSquare: 1907,
+    testCarryRippler: 1911,
+    testMirror: 1915,
+    testFlip: 1919,
+    testLenOfComplenent: 1931,
+    testIntConversion: 1938,
+    testTolist: 1943,
+    testFlipDucktyping: 1946,
   },
 })

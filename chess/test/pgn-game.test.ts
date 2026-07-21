@@ -372,18 +372,18 @@ class PgnTestCase extends TestCase {
 
 registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
-    testExporter: 2084,
-    testPromoteToMain: 2185,
-    testCommentAtEol: 2223,
-    testGameStartingComment: 2322,
-    testGameStartingVariation: 2332,
-    testTreeTraversal: 2372,
-    testPromoteDemote: 2403,
-    testAddLine: 2684,
-    testMainline: 2701,
-    testAnnotations: 2826,
-    testFloatEmt: 2877,
-    testFloatClk: 2890,
+    testExporter: 2089,
+    testPromoteToMain: 2190,
+    testCommentAtEol: 2228,
+    testGameStartingComment: 2327,
+    testGameStartingVariation: 2337,
+    testTreeTraversal: 2377,
+    testPromoteDemote: 2408,
+    testAddLine: 2689,
+    testMainline: 2706,
+    testAnnotations: 2831,
+    testFloatEmt: 2882,
+    testFloatClk: 2895,
   },
 })
 

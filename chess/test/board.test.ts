@@ -543,6 +543,11 @@ class BoardTestCase extends TestCase {
     this.assertEqual(board.san(chess.Move.fromUci('h4g6')), 'Nh4g6')
     this.assertEqual(board.fen(), fen)
 
+    // Test a bug where shakmaty used overly specific disambiguation.
+    fen = '8/2KN1p2/5p2/3N1B1k/5PNp/7P/7P/8 w - -'
+    board = new chess.Board(fen)
+    this.assertEqual(board.san(chess.Move.fromUci('d5f6')), 'N5xf6#')
+
     // Do not disambiguate illegal alternatives.
     fen = '8/8/8/R2nkn2/8/8/2K5/8 b - - 0 1'
     board = new chess.Board(fen)
@@ -698,7 +703,7 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testEmpty: 218,
     testPly: 223,
     testFromEpd: 235,
-    testSetFenAsEpd: 1146,
+    testSetFenAsEpd: 1151,
     testMoveMaking: 241,
     testFen: 247,
     testXfen: 258,
@@ -724,12 +729,12 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testScholarsMate: 610,
     testResult: 654,
     testSan: 680,
-    testLan: 719,
-    testSanNewline: 741,
-    testPawnCaptureSanWithoutFile: 748,
-    testVariationSan: 756,
-    testMoveStackUsage: 791,
-    testIsLegalMove: 805,
-    testMoveCount: 828,
+    testLan: 724,
+    testSanNewline: 746,
+    testPawnCaptureSanWithoutFile: 753,
+    testVariationSan: 761,
+    testMoveStackUsage: 796,
+    testIsLegalMove: 810,
+    testMoveCount: 833,
   },
 })
