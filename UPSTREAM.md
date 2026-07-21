@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-b3c1f62c82b5fc40b14fa33bc9edd31cef68a944
-v1.11.1-70-gb3c1f62c
-2025-02-25 — Prepare python-chess 1.11.2
+624d3a730c180e749ea04a473a828b9c31ff52a4
+v1.11.1-80-g624d3a73
+2025-10-11 — Preserve results from all CI matrix jobs
 ```
 
-This state updates the mirrored python-chess `__version__` to `1.11.2`. The npm
-package version and historical transpiler-version marker remain independently
-versioned and unchanged.
+This state disables fail-fast behavior in upstream's operating-system and
+Python-version CI matrices. The chess.ts workflow has no matrix, so no
+corresponding workflow change applies.
 
 ### Synchronization log
 
@@ -73,6 +73,15 @@ versioned and unchanged.
 | `06de70e2` | Fixed checkmating en-passant captures in the unsupported pure-Python Gaviota tablebase; `test_ep_is_mate` is tracked explicitly as a translation TODO. |
 | `45f616fa` | Added Python 3.13 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 | `b3c1f62c` | Prepared python-chess 1.11.2 and updated only the mirrored `__version__`; npm and historical transpiler versions remain unchanged. |
+| `ffa04827` | Added public API documentation for board mutation, move legality, game-over detection, and result reporting, using camel-cased TypeScript links. |
+| `b2144c25` | Removed upstream's repository-specific CodeQL workflow; chess.ts has no corresponding copied workflow. |
+| `760360b8` | Applied explicit read-only repository contents permission to the chess.ts CI workflow. |
+| `6b1cfedd` | Adjusted Python bytearray construction in the unsupported Gaviota module for newer mypy releases; no TypeScript runtime change applies. |
+| `376d6036` | Added Python 3.14 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
+| `e4386c2f` | Removed Python's deprecated `DefaultEventLoopPolicy` compatibility layer from the unsupported engine process module; no TypeScript runtime change applies. |
+| `e974a37e` | Narrowed the external Stockfish forced-mate test horizon to avoid an ambiguous mating line; the unsupported integration test remains an explicit TODO. |
+| `8412bd56` | Updated coroutine-function introspection in the unsupported Python engine process layer for Python 3.15 compatibility; no TypeScript runtime change applies. |
+| `624d3a73` | Disabled fail-fast behavior in upstream's CI matrices so all job results remain visible; the chess.ts workflow has no matrix. |
 
 ## Original baseline provenance
 
