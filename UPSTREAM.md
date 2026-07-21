@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-8330cfd5dbb9401f0e85be92cf408d6482505642
-v1.11.1-104-g8330cfd5
-2026-06-07 — Reject positions with multiple stepping checkers
+9c24454dcea4f8a30259d811a2f10b26e911deb4
+v1.11.1-110-g9c24454d
+2026-07-12 — expand racing kings perft (near-discovered-check)
 ```
 
-This state rejects impossible positions where more than one pawn, knight, or
-king checks the side to move. The complete upstream board-status regression is
-translated, while Atomic's variant-specific exception remains pending with the
-unsupported variant module.
+This state expands upstream's Racing Kings perft data with deeper and
+near-discovered-check positions. The variant and perft fixture remain
+unsupported in chess.ts, so no TypeScript runtime or test change applies.
 
 ### Synchronization log
 
@@ -95,6 +94,9 @@ unsupported variant module.
 | `b53c6e60` | Corrected `Board.chess960Pos()` documentation from the incomplete 0–956 range to all indices 0–959. |
 | `77f1dab8` | Inserted the conventional space after the ellipsis when `Board.variationSan()` begins with a black move and updated the translated regression expectation. |
 | `8330cfd5` | Rejected positions with multiple stepping checkers and translated the complete `BoardTestCase.test_status` regression. Atomic's exception remains pending with the unsupported variant module. |
+| `24c2d5a2` | Removed an obsolete status badge from the upstream README; chess.ts does not copy that README badge. |
+| `e88e7f05` | Accepted Python-whitespace indentation before PGN headers and translated the complete parser regression. Added exact Python `lstrip()`/`isspace()` characterizations because ECMAScript whitespace semantics differ. |
+| `9c24454d` | Expanded upstream's Racing Kings perft data with depth-five and near-discovered-check positions; the unsupported variant fixture is not copied into chess.ts. |
 
 ### Intentional upstream divergence
 
@@ -196,7 +198,9 @@ Adding `BaseBoard.pieceCount()` and translating the complete board-clearing
 test brings the current inventory to 90 of 291 methods and 201 explicit TODOs.
 Translating the complete board-status test brings the current inventory to 91
 of 291 methods and 200 explicit TODOs.
-Thirty-seven chess.ts-only
+Translating the leading-whitespace PGN regression brings the current inventory
+to 92 of 292 methods and 200 explicit TODOs.
+Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -224,6 +228,9 @@ One focused subclass characterization proves that `_effectivePromoted()`
 controls default FEN output, unique-king lookup, castling, position status,
 Chess960 recognition, and transposition equality without replacing or losing
 the raw promotion bitboard.
+Five more distinguish Python's exact whitespace set from ECMAScript's, preserve
+initial multi-BOM handling as a separate PGN rule, and prove that header
+probing does not mutate the raw line later consumed as movetext.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected

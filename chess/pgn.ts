@@ -2257,7 +2257,7 @@ export function readGame<ResultT>(
   let unmanagedHeaders: Headers | null = null
 
   // Ignore leading empty lines and comments.
-  let line: string = handle.readline().replace(/^\ufeff/, '')
+  let line: string = handle.readline().replace(/^\ufeff+/u, '')
   while (utils.isspace(line) || line.startsWith('%') || line.startsWith(';')) {
     line = handle.readline()
   }
@@ -2290,14 +2290,15 @@ export function readGame<ResultT>(
       }
     }
 
-    if (!line.startsWith('[')) {
+    const stripped = utils.lstrip(line)
+    if (!stripped.startsWith('[')) {
       break
     }
 
     consecutiveEmptyLines = 0
 
     if (!skippingGame) {
-      const tagMatch = line.match(TAG_REGEX)
+      const tagMatch = stripped.match(TAG_REGEX)
       if (tagMatch) {
         visitor.visitHeader(tagMatch[1], tagMatch[2])
         if (unmanagedHeaders !== null) {
