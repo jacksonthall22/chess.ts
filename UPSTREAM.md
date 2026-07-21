@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-1ce4d3f8e2f6073ccb90f0fba9ddcf7d75fb068f
-v1.11.1-83-g1ce4d3f8
-2025-10-11 — Add public rank and file constants and helpers
+4d9b3bfd860bfa95731d4e208fd98c7c10a15533
+v1.11.1-84-g4d9b3bfd
+2025-10-27 — Open Gaviota tablebases read-only
 ```
 
-This state adds public rank and file aliases, named constants, collections,
-parsers, formatters, and more precise square-helper signatures. TypeScript
-keeps both aliases structurally identical to the existing unbranded
-`RankOrFileIndex` union.
+This state prevents the pure-Python Gaviota implementation from opening table
+files with write access. Gaviota remains an explicitly unsupported chess.ts
+module, so no TypeScript runtime change applies.
 
 ### Synchronization log
 
@@ -84,6 +83,7 @@ keeps both aliases structurally identical to the existing unbranded
 | `8412bd56` | Updated coroutine-function introspection in the unsupported Python engine process layer for Python 3.15 compatibility; no TypeScript runtime change applies. |
 | `624d3a73` | Disabled fail-fast behavior in upstream's CI matrices so all job results remain visible; the chess.ts workflow has no matrix. |
 | `1ce4d3f8` | Added public rank/file aliases, constants, collections, parsers, formatters, and square-helper signatures. The TypeScript parsers fail explicitly instead of leaking JavaScript's `indexOf()` sentinel. |
+| `4d9b3bfd` | Opened Gaviota table files read-only upstream; pending the unsupported module's translation. |
 
 ### Intentional upstream divergence
 
