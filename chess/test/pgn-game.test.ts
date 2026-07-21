@@ -11,12 +11,12 @@ import { registerTestCase, TestCase } from './unittest'
 
 /**
  * Mechanical translation of the variation-tree portions of python-chess
- * `PgnTestCase` at cd7f5958.
+ * `PgnTestCase` at the pinned upstream state. The baseline began at cd7f5958.
  */
 class PgnTestCase extends TestCase {
   testExporter(): void {
     const game = new pgn.Game()
-    game.comment = 'Test game:'
+    game.comments = ['Test game:']
     game.headers.set('Result', '*')
     game.headers.set(
       'VeryLongHeader',
@@ -24,24 +24,24 @@ class PgnTestCase extends TestCase {
     )
 
     const e4 = game.addVariation(game.board().parseSan('e4'))
-    e4.comment = 'Scandinavian Defense:'
+    e4.comments = ['Scandinavian Defense:']
 
     const e4D5 = e4.addVariation(e4.board().parseSan('d5'))
 
     const e4H5 = e4.addVariation(e4.board().parseSan('h5'))
     e4H5.nags.add(pgn.NAG_MISTAKE)
-    e4H5.startingComment = 'This'
-    e4H5.comment = 'is nonsense'
+    e4H5.startingComments = ['This']
+    e4H5.comments = ['is nonsense']
 
     const e4E5 = e4.addVariation(e4.board().parseSan('e5'))
     const e4E5Qf3 = e4E5.addVariation(e4E5.board().parseSan('Qf3'))
     e4E5Qf3.nags.add(pgn.NAG_MISTAKE)
 
     const e4C5 = e4.addVariation(e4.board().parseSan('c5'))
-    e4C5.comment = 'Sicilian'
+    e4C5.comments = ['Sicilian']
 
     const e4D5Exd5 = e4D5.addMainVariation(e4D5.board().parseSan('exd5'))
-    e4D5Exd5.comment = 'Best'
+    e4D5Exd5.comments = ['Best', 'and the end of this {example}']
 
     let exporter = new pgn.StringExporter({
       headers: false,
@@ -71,13 +71,31 @@ class PgnTestCase extends TestCase {
 
 { Test game: } 1. e4 { Scandinavian Defense: } 1... d5 ( { This } 1... h5 $2
 { is nonsense } ) ( 1... e5 2. Qf3 $2 ) ( 1... c5 { Sicilian } ) 2. exd5
-{ Best } *`
+{ Best } { and the end of this example } *`
     this.assertEqual(exporter.toString(), exported)
 
     const virtualFile = new pgn.StringIO()
     const fileExporter = new pgn.FileExporter(virtualFile)
     game.accept(fileExporter)
     this.assertEqual(virtualFile.read(), `${exported}\n\n`)
+  }
+
+  testReadGameWithMulticommentMove(): void {
+    const game = pgn.readGame(
+      new pgn.StringIO(
+        '1. e4 {A common opening} 1... e5 {A common response} {An uncommon comment}',
+      ),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    const firstMove = game.variation(0)
+    this.assertEqual(firstMove.comments, ['A common opening'])
+    const secondMove = firstMove.variation(0)
+    this.assertEqual(secondMove.comments, [
+      'A common response',
+      'An uncommon comment',
+    ])
   }
 
   testCommentAtEol(): void {
@@ -99,7 +117,7 @@ class PgnTestCase extends TestCase {
 
     // Make sure the comment for the second variation is there.
     this.assertIn(5, node.getitem(1).nags)
-    this.assertEqual(node.getitem(1).comment, '\n/\\ Ne7, c6')
+    this.assertEqual(node.getitem(1).comments, ['\n/\\ Ne7, c6'])
   }
 
   testGameStartingComment(): void {
@@ -109,7 +127,7 @@ class PgnTestCase extends TestCase {
     if (game === null) {
       throw new Error('Expected the PGN to contain a game')
     }
-    this.assertEqual(game.comment, 'Game starting comment')
+    this.assertEqual(game.comments, ['Game starting comment'])
     this.assertEqual(game.getitem(0).san(), 'd3')
 
     game = pgn.readGame(
@@ -118,7 +136,7 @@ class PgnTestCase extends TestCase {
     if (game === null) {
       throw new Error('Expected the PGN to contain a game')
     }
-    this.assertEqual(game.comment, 'Empty game, but has a comment')
+    this.assertEqual(game.comments, ['Empty game, but has a comment'])
   }
 
   testGameStartingVariation(): void {
@@ -128,17 +146,17 @@ class PgnTestCase extends TestCase {
     if (game === null) {
       throw new Error('Expected the PGN to contain a game')
     }
-    this.assertEqual(game.comment, 'Start of game')
+    this.assertEqual(game.comments, ['Start of game'])
 
     let node = game.getitem(0)
     this.assertEqual(node.move, chess.Move.fromUci('e2e4'))
-    this.assertFalse(node.comment)
-    this.assertFalse(node.startingComment)
+    this.assertFalse(node.comments.length !== 0)
+    this.assertFalse(node.startingComments.length !== 0)
 
     node = game.getitem(1)
     this.assertEqual(node.move, chess.Move.fromUci('d2d4'))
-    this.assertFalse(node.comment)
-    this.assertEqual(node.startingComment, 'Start of variation')
+    this.assertFalse(node.comments.length !== 0)
+    this.assertEqual(node.startingComments, ['Start of variation'])
   }
 
   testPromoteToMain(): void {
@@ -238,30 +256,30 @@ class PgnTestCase extends TestCase {
     })
 
     this.assertEqual(tail.parent?.move, chess.Move.fromUci('g1f3'))
-    this.assertEqual(tail.parent?.startingComment, 'start')
-    this.assertEqual(tail.parent?.comment, '')
+    this.assertEqual(tail.parent?.startingComments, ['start'])
+    this.assertEqual(tail.parent?.comments, [])
     this.assertEqual(tail.parent?.nags.size, 0)
 
     this.assertEqual(tail.move, chess.Move.fromUci('d7d5'))
-    this.assertEqual(tail.comment, 'end')
+    this.assertEqual(tail.comments, ['end'])
     this.assertIn(42, tail.nags)
   }
 
   testAnnotations(): void {
     const game = new pgn.Game()
-    game.comment = 'foo [%bar] baz'
+    game.comments = ['foo [%bar] baz']
 
     this.assertTrue(game.clock() === null)
     const clock = 12345
     game.setClock(clock)
-    this.assertEqual(game.comment, 'foo [%bar] baz [%clk 3:25:45]')
+    this.assertEqual(game.comments, ['foo [%bar] baz', '[%clk 3:25:45]'])
     this.assertEqual(game.clock(), clock)
 
     this.assertTrue(game.eval() === null)
     game.setEval(new PovScore(new Cp(-80), chess.WHITE))
     this.assertEqual(
-      game.comment,
-      'foo [%bar] baz [%clk 3:25:45] [%eval -0.80]',
+      game.comments,
+      ['foo [%bar] baz', '[%clk 3:25:45]', '[%eval -0.80]'],
     )
     const centipawnEval = game.eval()
     if (centipawnEval === null) {
@@ -272,8 +290,8 @@ class PgnTestCase extends TestCase {
 
     game.setEval(new PovScore(new Mate(1), chess.WHITE), 5)
     this.assertEqual(
-      game.comment,
-      'foo [%bar] baz [%clk 3:25:45] [%eval #1,5]',
+      game.comments,
+      ['foo [%bar] baz', '[%clk 3:25:45]', '[%eval #1,5]'],
     )
     const mateEval = game.eval()
     if (mateEval === null) {
@@ -293,8 +311,13 @@ class PgnTestCase extends TestCase {
       new Arrow(chess.B1, chess.B8),
     ])
     this.assertEqual(
-      game.comment,
-      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5]',
+      game.comments,
+      [
+        '[%csl Ga1][%cal Ra1h1,Gb1b8]',
+        'foo [%bar] baz',
+        '[%clk 3:25:45]',
+        '[%eval #1,5]',
+      ],
     )
     const arrows = game.arrows()
     this.assertEqual(arrows.length, 3)
@@ -306,53 +329,68 @@ class PgnTestCase extends TestCase {
     const emt = 321
     game.setEmt(emt)
     this.assertEqual(
-      game.comment,
-      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5] [%emt 0:05:21]',
+      game.comments,
+      [
+        '[%csl Ga1][%cal Ra1h1,Gb1b8]',
+        'foo [%bar] baz',
+        '[%clk 3:25:45]',
+        '[%eval #1,5]',
+        '[%emt 0:05:21]',
+      ],
     )
     this.assertEqual(game.emt(), emt)
 
     game.setEval(null)
     this.assertEqual(
-      game.comment,
-      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%emt 0:05:21]',
+      game.comments,
+      [
+        '[%csl Ga1][%cal Ra1h1,Gb1b8]',
+        'foo [%bar] baz',
+        '[%clk 3:25:45]',
+        '[%emt 0:05:21]',
+      ],
     )
 
     game.setEmt(null)
     this.assertEqual(
-      game.comment,
-      '[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45]',
+      game.comments,
+      [
+        '[%csl Ga1][%cal Ra1h1,Gb1b8]',
+        'foo [%bar] baz',
+        '[%clk 3:25:45]',
+      ],
     )
 
     game.setClock(null)
     game.setArrows([])
-    this.assertEqual(game.comment, 'foo [%bar] baz')
+    this.assertEqual(game.comments, ['foo [%bar] baz'])
   }
 
   testFloatEmt(): void {
     const game = new pgn.Game()
-    game.comment = '[%emt 0:00:01.234]'
+    game.comments = ['[%emt 0:00:01.234]']
     this.assertEqual(game.emt(), 1.234)
 
     game.setEmt(6.54321)
-    this.assertEqual(game.comment, '[%emt 0:00:06.543]')
+    this.assertEqual(game.comments, ['[%emt 0:00:06.543]'])
     this.assertEqual(game.emt(), 6.543)
 
     game.setEmt(-70)
-    this.assertEqual(game.comment, '[%emt 0:00:00]')
+    this.assertEqual(game.comments, ['[%emt 0:00:00]'])
     this.assertEqual(game.emt(), 0)
   }
 
   testFloatClk(): void {
     const game = new pgn.Game()
-    game.comment = '[%clk 0:00:01.234]'
+    game.comments = ['[%clk 0:00:01.234]']
     this.assertEqual(game.clock(), 1.234)
 
     game.setClock(6.54321)
-    this.assertEqual(game.comment, '[%clk 0:00:06.543]')
+    this.assertEqual(game.comments, ['[%clk 0:00:06.543]'])
     this.assertEqual(game.clock(), 6.543)
 
     game.setClock(-70)
-    this.assertEqual(game.comment, '[%clk 0:00:00]')
+    this.assertEqual(game.comments, ['[%clk 0:00:00]'])
     this.assertEqual(game.clock(), 0)
   }
 
@@ -400,21 +438,68 @@ registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2089,
     testPromoteToMain: 2190,
-    testCommentAtEol: 2228,
-    testGameStartingComment: 2327,
-    testGameStartingVariation: 2337,
-    testTreeTraversal: 2377,
-    testPromoteDemote: 2408,
-    testAddLine: 2689,
-    testMainline: 2706,
-    testAnnotations: 2831,
-    testFloatEmt: 2882,
-    testFloatClk: 2895,
-    testUtf8Bom: 2950,
+    testReadGameWithMulticommentMove: 2228,
+    testCommentAtEol: 2236,
+    testGameStartingComment: 2335,
+    testGameStartingVariation: 2345,
+    testTreeTraversal: 2385,
+    testPromoteDemote: 2416,
+    testAddLine: 2697,
+    testMainline: 2714,
+    testAnnotations: 2839,
+    testFloatEmt: 2890,
+    testFloatClk: 2903,
+    testUtf8Bom: 2958,
   },
 })
 
 describe('GameNode parity characterizations not covered upstream', () => {
+  test('comment normalization preserves aliases and visitor boundary shapes', () => {
+    class CommentBoundaryVisitor extends pgn.BaseVisitor<
+      Array<string | string[]>
+    > {
+      seen: Array<string | string[]> = []
+
+      visitComment(comment: string | string[]): void {
+        this.seen.push(comment)
+      }
+
+      result(): Array<string | string[]> {
+        return this.seen
+      }
+    }
+
+    const empty: string[] = []
+    expect(pgn._standardizeComments(empty)).toEqual([])
+    expect(pgn._standardizeComments(empty)).not.toBe(empty)
+
+    const suppliedComments = ['tree comment']
+    expect(pgn._standardizeComments(suppliedComments)).toBe(suppliedComments)
+
+    const parsedComments = pgn.readGame(
+      new pgn.StringIO('1. e4 {parser comment}'),
+      { Visitor: CommentBoundaryVisitor },
+    )
+    expect(parsedComments).toEqual(['parser comment'])
+    expect(typeof parsedComments?.[0]).toBe('string')
+
+    const game = new pgn.Game()
+    game.comments = []
+    const suppliedStartingComments = ['starting tree comment']
+    const node = game.addVariation(chess.Move.fromUci('e2e4'), {
+      comment: suppliedComments,
+      startingComment: suppliedStartingComments,
+    })
+    expect(node.comments).toBe(suppliedComments)
+    expect(node.startingComments).toBe(suppliedStartingComments)
+
+    node.startingComments = []
+
+    const traversedComments = game.accept(new CommentBoundaryVisitor())
+    expect(traversedComments).toEqual([['tree comment']])
+    expect(traversedComments[0]).toBe(node.comments)
+  })
+
   test('StringExporter output round-trips the mainline and sidelines', () => {
     const game = new pgn.Game()
     const e4 = game.addVariation(chess.Move.fromUci('e2e4'))
@@ -429,11 +514,11 @@ describe('GameNode parity characterizations not covered upstream', () => {
     expect(
       parsed?.variations[0].variations.map(node => [
         node.move.uci(),
-        node.comment,
+        node.comments,
       ]),
     ).toEqual([
-      ['e7e5', 'open'],
-      ['c7c5', 'sicilian'],
+      ['e7e5', ['open']],
+      ['c7c5', ['sicilian']],
     ])
     expect(parsed?.toString()).toBe(exported)
   })
@@ -454,9 +539,9 @@ describe('GameNode parity characterizations not covered upstream', () => {
     expect(game.variation(move)).toBe(first)
     expect(game.variation(first)).toBe(first)
     expect(game.variation(second)).toBe(second)
-    expect(game.variations.map(node => node.comment)).toEqual([
-      'first',
-      'second',
+    expect(game.variations.map(node => node.comments)).toEqual([
+      ['first'],
+      ['second'],
     ])
 
     const exported = game.toString()
@@ -465,22 +550,22 @@ describe('GameNode parity characterizations not covered upstream', () => {
     expect(
       parsed?.variations.map(node => ({
         move: node.move.uci(),
-        comment: node.comment,
+        comments: node.comments,
         child: node.variations[0]?.move.uci(),
-        childComment: node.variations[0]?.comment,
+        childComments: node.variations[0]?.comments,
       })),
     ).toEqual([
       {
         move: 'e2e4',
-        comment: 'first',
+        comments: ['first'],
         child: 'e7e5',
-        childComment: 'first child',
+        childComments: ['first child'],
       },
       {
         move: 'e2e4',
-        comment: 'second',
+        comments: ['second'],
         child: 'c7c5',
-        childComment: 'second child',
+        childComments: ['second child'],
       },
     ])
     expect(parsed?.toString()).toBe(exported)
@@ -513,29 +598,29 @@ describe('GameNode parity characterizations not covered upstream', () => {
     ] as const
 
     for (const [seconds, formatted] of cases) {
-      game.comment = ''
+      game.comments = []
       game.setClock(seconds)
-      expect(game.comment).toBe(`[%clk 0:00:${formatted}]`)
+      expect(game.comments).toEqual([`[%clk 0:00:${formatted}]`])
 
-      game.comment = ''
+      game.comments = []
       game.setEmt(seconds)
-      expect(game.comment).toBe(`[%emt 0:00:${formatted}]`)
+      expect(game.comments).toEqual([`[%emt 0:00:${formatted}]`])
     }
   })
 
   test('export wrapping counts Unicode code points', () => {
     const game = new pgn.Game()
     const comment = `${'x'.repeat(72)}😀`
-    game.comment = comment
+    game.comments = [comment]
 
     expect(
       game.accept(new pgn.StringExporter({ headers: false, columns: 80 })),
     ).toBe(`{ ${comment} } *`)
   })
 
-  test('export removes every closing brace from comments', () => {
+  test('export removes every brace from comments', () => {
     const game = new pgn.Game()
-    game.comment = 'a}b}c'
+    game.comments = ['{a}b{c}']
 
     expect(
       game.accept(new pgn.StringExporter({ headers: false, columns: null })),

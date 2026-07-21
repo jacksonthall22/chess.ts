@@ -90,7 +90,7 @@ class EngineTestCase extends TestCase {
 
 registerTestCase('EngineTestCase', EngineTestCase, {
   lines: {
-    testScoreOrdering: 2995,
-    testWdlModel: 3054,
+    testScoreOrdering: 3003,
+    testWdlModel: 3062,
   },
 })
