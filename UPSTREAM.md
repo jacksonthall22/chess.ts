@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-760360b8ddb65129aea46f84d99b5491e6ed6435
-v1.11.1-74-g760360b8
-2025-10-03 — Explicitly specify CI workflow permissions
+6b1cfedd442a05767ee28c7752a800ad4190f423
+v1.11.1-75-g6b1cfedd
+2025-10-03 — Fix Gaviota bytearray typing
 ```
 
-This state applies least-privilege read-only repository contents permission to
-the chess.ts CI workflow, matching the upstream workflow-hardening intent.
+This state adjusts Python bytearray construction in the unsupported pure-Python
+Gaviota tablebase module for newer mypy releases. No TypeScript runtime change
+applies.
 
 ### Synchronization log
 
@@ -75,6 +76,7 @@ the chess.ts CI workflow, matching the upstream workflow-hardening intent.
 | `ffa04827` | Added public API documentation for board mutation, move legality, game-over detection, and result reporting, using camel-cased TypeScript links. |
 | `b2144c25` | Removed upstream's repository-specific CodeQL workflow; chess.ts has no corresponding copied workflow. |
 | `760360b8` | Applied explicit read-only repository contents permission to the chess.ts CI workflow. |
+| `6b1cfedd` | Adjusted Python bytearray construction in the unsupported Gaviota module for newer mypy releases; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
