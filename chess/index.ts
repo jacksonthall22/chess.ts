@@ -1305,7 +1305,7 @@ export class BaseBoard {
   king(color: Color): Square | null {
     const kingMask =
       this.occupiedCo[colorIdx(color)] & this.kings & ~this.promoted
-    return kingMask ? msb(kingMask) : null
+    return kingMask && popcount(kingMask) === 1 ? msb(kingMask) : null
   }
 
   attacksMask(square: Square): Bitboard {

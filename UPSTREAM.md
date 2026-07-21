@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-11399c63ea5531cfac5b8d56d8f4064fa1c7430b
-v1.11.1-90-g11399c63
-2026-01-03 — Ensure hash is always set after threads
+76cbe9843b7be94676cf19ea2a446e4eb3ac4291
+v1.11.1-91-g76cbe984
+2026-02-13 — Multiple kings per color
 ```
 
-This state reorders UCI engine configuration so `Hash` is sent after `Threads`,
-as recommended by Stockfish. The engine process layer remains unsupported in
-`chess.ts`, so this state changes only the exact upstream pin and source
-inventory.
+This state makes `BaseBoard.king()` return `null` unless exactly one eligible
+king exists for the requested color. This prevents callers from arbitrarily
+selecting one king from an invalid multiple-king position.
 
 ### Synchronization log
 
@@ -87,6 +86,7 @@ inventory.
 | `4d9b3bfd` | Opened Gaviota table files read-only upstream; pending the unsupported module's translation. |
 | `0e900e24` | Added `Board.givesCheckmate()` with restoration guarantees for both successful probes and exceptions. |
 | `11399c63` | Reordered UCI engine configuration so `Hash` follows `Threads`; pending the unsupported engine process layer's translation. |
+| `76cbe984` | Required `BaseBoard.king()` to find exactly one eligible king and ported the multiple-king regression test. |
 
 ### Intentional upstream divergence
 
@@ -163,9 +163,10 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a total of 87 of 288 methods and 201
-explicit TODOs at that checkpoint. The two later Gaviota regressions bring the
-current inventory to 87 of 290 upstream methods and 203 explicit TODOs. Thirty-six
-chess.ts-only
+explicit TODOs at that checkpoint. The two later Gaviota regressions bring that
+inventory to 87 of 290 upstream methods and 203 explicit TODOs. The
+multiple-king regression brings the current inventory to 88 of 291 upstream
+methods while leaving 203 explicit TODOs. Thirty-six chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and

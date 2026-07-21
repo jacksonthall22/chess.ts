@@ -696,6 +696,11 @@ class BoardTestCase extends TestCase {
     )
     this.assertEqual(board.pseudoLegalMoves.count(), 8 + 4 + 3 + 2 + 1 + 6 + 9)
   }
+
+  testMultipleKings(): void {
+    const board = new chess.Board('KKKK1kkk/8/8/8/8/8/8/8 w - - 0 1')
+    this.assertEqual(board.king(chess.WHITE), null)
+  }
 }
 
 registerTestCase('BoardTestCase', BoardTestCase, {
@@ -737,6 +742,7 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testMoveStackUsage: 796,
     testIsLegalMove: 810,
     testMoveCount: 833,
+    testMultipleKings: 1723,
   },
 })
 
