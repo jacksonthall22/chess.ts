@@ -5,19 +5,14 @@
 submodule currently pins:
 
 ```text
-ec399d1b0298353b1eee7bf63df03401a00a409a
-v1.10.0-97-gec399d1b
-2024-07-31 — Merge pull request #1100 from niklasf/stricter-subclass-typing
+caefd4dc6c25369750f6cc461885adfbbd52f09c
+v1.10.0-98-gcaefd4dc
+2024-07-31 — chess.engine._next_token() cosmetics
 ```
 
-This aggregate merge removes the generic `_BoardState` subclass hook and has
-`Board.push()` construct the concrete state snapshot directly. The TypeScript
-port deliberately mirrors that breaking removal even though the hook is
-underscore-prefixed: subclasses that overrode `_boardState()` must stop doing
-so. The upstream engine protocol, Syzygy, and variant typing changes remain
-pending because those modules are not implemented here. Existing dynamic
-construction in `Board.root()` is unchanged; this synchronization commit does
-not silently repair that pre-existing translation drift.
+This state changes only the formatting of the unsupported engine protocol's
+private `_next_token()` helper. There is no TypeScript runtime equivalent to
+update.
 
 ### Synchronization log
 
@@ -42,6 +37,7 @@ not silently repair that pre-existing translation drift.
 | `247d8a06` | Upstream changelog only; not applicable. |
 | `32253d6c` | Renamed `TimeControlType.UNKNOW` to `UNKNOWN` and updated the default. |
 | `ec399d1b` | Removed the generic `_BoardState` subclass hook; engine protocol, Syzygy, and variant typing changes remain unsupported. |
+| `caefd4dc` | Engine protocol `_next_token()` cosmetics; unsupported module, so not applicable. |
 
 ## Original baseline provenance
 
