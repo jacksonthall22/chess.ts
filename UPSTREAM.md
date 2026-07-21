@@ -221,7 +221,12 @@ Translating `Game.fromBoard()` and the 4,000-ply recursion regression brings
 the current inventory to 111 of 292 methods and 181 explicit TODOs. Both
 exposed the same root-position constructor defect: polymorphic board roots must
 pass `null` as the FEN and preserve Chess960 through the options object.
-Forty-two chess.ts-only
+Translating the custom-game-node regression brings the current inventory to
+112 of 292 methods and 180 explicit TODOs. `readGame()` now accepts an explicit
+`visitorFactory` when visitor creation needs runtime arguments, while retaining
+the constructor-only `Visitor` path. The two options are mutually exclusive;
+the parser never guesses by invoking one form and falling back to another.
+Forty-three chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and

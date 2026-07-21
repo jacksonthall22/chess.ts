@@ -2190,10 +2190,22 @@ export class FileExporter extends StringExporterMixin<number> {
   }
 }
 
+export type VisitorConstructor<ResultT> = new () => BaseVisitor<ResultT>
+
+export type ReadGameOptions<ResultT> =
+  | {
+      Visitor: VisitorConstructor<ResultT>
+      visitorFactory?: never
+    }
+  | {
+      Visitor?: never
+      visitorFactory: () => BaseVisitor<ResultT>
+    }
+
 export function readGame(handle: StringIO): Game | null
 export function readGame<ResultT>(
   handle: StringIO,
-  { Visitor }: { Visitor?: typeof BaseVisitor<ResultT> },
+  options: ReadGameOptions<ResultT>,
 ): ResultT | null
 /**
  * Reads a game from a file opened in text mode.
@@ -2243,13 +2255,31 @@ export function readGame<ResultT>(
  * collected in :data:`Game.errors <pgn.Game.errors>`. This behavior can
  * be :func:`overridden <pgn.GameBuilder.handleError>`.
  *
+ * Pass `Visitor` for a visitor class with a no-argument constructor. Pass
+ * `visitorFactory` when visitor creation requires runtime arguments, such as
+ * `() => CustomGame.builder()`. These options are mutually exclusive and the
+ * parser never retries one creation strategy as the other.
+ *
  * Returns the parsed game or ``null`` if the end of file is reached.
  */
 export function readGame<ResultT>(
   handle: StringIO,
-  { Visitor = GameBuilder }: { Visitor?: any } = {},
+  {
+    Visitor,
+    visitorFactory,
+  }: {
+    Visitor?: VisitorConstructor<ResultT>
+    visitorFactory?: () => BaseVisitor<ResultT>
+  } = {},
 ): ResultT | null {
-  const visitor = new Visitor()
+  if (Visitor && visitorFactory) {
+    throw new TypeError('Visitor and visitorFactory are mutually exclusive')
+  }
+
+  const visitor = visitorFactory
+    ? visitorFactory()
+    : new (Visitor ||
+        (GameBuilder as unknown as VisitorConstructor<ResultT>))()
 
   let foundGame = false
   let skippingGame = false
@@ -2283,8 +2313,10 @@ export function readGame<ResultT>(
       foundGame = true
       skippingGame = visitor.beginGame() === SKIP
       if (!skippingGame) {
-        managedHeaders = visitor.beginHeaders()
-        if (!(managedHeaders instanceof Headers)) {
+        const visitorHeaders = visitor.beginHeaders()
+        if (visitorHeaders instanceof Headers) {
+          managedHeaders = visitorHeaders
+        } else {
           unmanagedHeaders = new Headers(new Map<string, string>())
         }
       }
@@ -2337,6 +2369,9 @@ export function readGame<ResultT>(
     try {
       VariantBoard = headers.variant()
     } catch (error) {
+      if (!(error instanceof Error)) {
+        throw error
+      }
       visitor.handleError(error)
       VariantBoard = Board
     }
@@ -2349,6 +2384,9 @@ export function readGame<ResultT>(
       boardStack = [board]
       visitor.visitBoard(board)
     } catch (error) {
+      if (!(error instanceof Error)) {
+        throw error
+      }
       visitor.handleError(error)
       skippingGame = true
     }
@@ -2486,9 +2524,12 @@ export function readGame<ResultT>(
         if (visitor.beginParseSan(boardStack!.at(-1)!, token) !== SKIP) {
           try {
             const move = boardStack!.at(-1)!.parseSan(token)
-            visitor.visitMove(boardStack!.at(-1), move)
+            visitor.visitMove(boardStack!.at(-1)!, move)
             boardStack!.at(-1)!.push(move)
           } catch (error) {
+            if (!(error instanceof Error)) {
+              throw error
+            }
             visitor.handleError(error)
             skipVariationDepth = 1
           }

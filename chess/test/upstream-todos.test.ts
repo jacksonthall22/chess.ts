@@ -75,7 +75,6 @@ describe('PgnTestCase — translation pending', () => {
   test.todo('test_wierd_header (python-chess test.py:2792)',)
   test.todo('test_empty_game (python-chess test.py:2804)',)
   test.todo('test_is_wild (python-chess test.py:2833)',)
-  test.todo('test_my_game_node (python-chess test.py:2838)',)
   test.todo('test_eval (python-chess test.py:2910)',)
 })
 
@@ -230,5 +229,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Upstream pin: python-chess 9c24454dcea4f8a30259d811a2f10b26e911deb4
 // Total upstream tests: 292
-// Translated tests: 111
-// Pending tests: 181
+// Translated tests: 112
+// Pending tests: 180

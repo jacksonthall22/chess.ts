@@ -365,7 +365,7 @@ class PgnTestCase extends TestCase {
       }),
     )
 
-    const game = pgn.readGame<pgn.Game>(new pgn.StringIO(source), {})
+    const game = pgn.readGame(new pgn.StringIO(source))
     if (game === null) {
       throw new Error('Expected the PGN to contain a game')
     }
@@ -502,6 +502,58 @@ class PgnTestCase extends TestCase {
       subgame.variations[1].move,
       chess.Move.fromUci('g1f3'),
     )
+  }
+
+  testMyGameNode(): void {
+    type VariationOptions = {
+      comment?: string | string[]
+      startingComment?: string | string[]
+      nags?: Iterable<number>
+    }
+
+    class MyChildNode extends pgn.ChildNode {
+      addVariation(
+        move: chess.Move,
+        {
+          comment = '',
+          startingComment = '',
+          nags = [],
+        }: VariationOptions = {},
+      ): MyChildNode {
+        return new MyChildNode(this, move, {
+          comment,
+          startingComment,
+          nags,
+        })
+      }
+    }
+
+    class MyGame extends pgn.Game {
+      addVariation(
+        move: chess.Move,
+        {
+          comment = '',
+          startingComment = '',
+          nags = [],
+        }: VariationOptions = {},
+      ): MyChildNode {
+        return new MyChildNode(this, move, {
+          comment,
+          startingComment,
+          nags,
+        })
+      }
+    }
+
+    const game = pgn.readGame(new pgn.StringIO('1. e4'), {
+      visitorFactory: () => MyGame.builder(),
+    })
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertTrue(game instanceof MyGame)
+    const node = game.variation(chess.Move.fromUci('e2e4'))
+    this.assertTrue(node instanceof MyChildNode)
   }
 
   testRecursion(): void {
@@ -806,7 +858,7 @@ class PgnTestCase extends TestCase {
     )
 
     // Driven by game tree traversal.
-    const parsed = pgn.readGame<pgn.Game>(new pgn.StringIO(source), {})
+    const parsed = pgn.readGame(new pgn.StringIO(source))
     if (parsed === null) {
       throw new Error('Expected the PGN to contain a game')
     }
@@ -877,6 +929,7 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testSemicolonComment: 2797,
     testNoMovetext: 2809,
     testSubgame: 2824,
+    testMyGameNode: 2838,
     testRecursion: 2855,
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
@@ -892,6 +945,18 @@ registerTestCase('PgnTestCase', PgnTestCase, {
 })
 
 describe('GameNode parity characterizations not covered upstream', () => {
+  test('readGame rejects conflicting visitor creation strategies at runtime', () => {
+    expect(() =>
+      pgn.readGame(
+        new pgn.StringIO('1. e4'),
+        {
+          Visitor: pgn.GameBuilder,
+          visitorFactory: () => new pgn.GameBuilder(),
+        } as unknown as pgn.ReadGameOptions<pgn.Game>,
+      ),
+    ).toThrowError('Visitor and visitorFactory are mutually exclusive')
+  })
+
   test('parent and move identity are getter-only', () => {
     const game = new pgn.Game()
     const move = chess.Move.fromUci('e2e4')
