@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-b2144c2564f740ea120d037e9ec6129d8a3bea2c
-v1.11.1-73-gb2144c25
-2025-10-03 — Remove explicit CodeQL configuration
+760360b8ddb65129aea46f84d99b5491e6ed6435
+v1.11.1-74-g760360b8
+2025-10-03 — Explicitly specify CI workflow permissions
 ```
 
-This state removes an upstream repository-specific CodeQL workflow. chess.ts
-has no corresponding copied workflow, so no TypeScript runtime or CI change
-applies.
+This state applies least-privilege read-only repository contents permission to
+the chess.ts CI workflow, matching the upstream workflow-hardening intent.
 
 ### Synchronization log
 
@@ -75,6 +74,7 @@ applies.
 | `b3c1f62c` | Prepared python-chess 1.11.2 and updated only the mirrored `__version__`; npm and historical transpiler versions remain unchanged. |
 | `ffa04827` | Added public API documentation for board mutation, move legality, game-over detection, and result reporting, using camel-cased TypeScript links. |
 | `b2144c25` | Removed upstream's repository-specific CodeQL workflow; chess.ts has no corresponding copied workflow. |
+| `760360b8` | Applied explicit read-only repository contents permission to the chess.ts CI workflow. |
 
 ## Original baseline provenance
 
