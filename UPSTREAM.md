@@ -5,13 +5,15 @@
 submodule currently pins:
 
 ```text
-71e7c31fba31554a2b174ff7fb88a77b61674543
-v1.10.0-99-g71e7c31f
-2024-07-31 — Show actual state in engine command state assertions (#1049, #1071)
+7299216641f5bd0434c06111608892617aa39147
+v1.10.0-100-g72992166
+2024-07-31 — Immediately dispatch line/termination/finish (fixes #1049, fixes #1071)
 ```
 
-This state adds diagnostic values to assertions inside the unsupported engine
-protocol. There is no TypeScript runtime equivalent to update.
+This state fixes immediate line, termination, and finish dispatch in the
+unsupported engine protocol. The new upstream
+`EngineTestCase.test_uci_output_after_command` regression remains an explicit
+generated TODO because chess.ts has no engine protocol runtime to exercise.
 
 ### Synchronization log
 
@@ -38,6 +40,7 @@ protocol. There is no TypeScript runtime equivalent to update.
 | `ec399d1b` | Removed the generic `_BoardState` subclass hook; engine protocol, Syzygy, and variant typing changes remain unsupported. |
 | `caefd4dc` | Engine protocol `_next_token()` cosmetics; unsupported module, so not applicable. |
 | `71e7c31f` | Engine protocol assertion diagnostics; unsupported module, so not applicable. |
+| `72992166` | Engine protocol dispatch fix and regression test; runtime remains unsupported and the test is tracked as a TODO. |
 
 ## Original baseline provenance
 
@@ -100,8 +103,9 @@ count of the remaining work.
 
 The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
-adds one more translated regression test, so the current total is 85 passing
-upstream methods and 198 explicit TODOs. Eight chess.ts-only characterizations
+adds one more translated regression test, for a current total of 85 passing
+upstream methods. The later unsupported engine-dispatch regression brings the
+explicit TODO count to 199. Eight chess.ts-only characterizations
 cover the original three game-tree cases plus polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
 comment sanitization, and attack-query occupancy overrides.
@@ -136,7 +140,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 198 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 199 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.
