@@ -5,13 +5,14 @@
 submodule currently pins:
 
 ```text
-59cadb1f06a4a36499e006e2534289e52cb36c2f
-v1.10.0-79-g59cadb1f
-2024-05-25 — Merge pull request #1084 from 3d12/add-selected-project
+3829d262c325b61b0004a314347f985008a9eb84
+v1.10.0-80-g3829d262
+2024-06-17 — Factor out Tablebase.add_file()
 ```
 
-This state adds an external project to the upstream README gallery. It does not
-change the python-chess API, runtime, or tests, so no TypeScript change applies.
+This state factors out `Tablebase.add_file()` in the upstream Syzygy module.
+The chess.ts Syzygy module is still empty and every upstream Syzygy test remains
+an explicit TODO, so this change is recorded as pending that module's translation.
 
 ### Synchronization log
 
@@ -26,6 +27,7 @@ change the python-chess API, runtime, or tests, so no TypeScript change applies.
 | `df714e39` | Corrected the upstream Chess960 perft fixture; chess.ts does not mirror that fixture. |
 | `eaa6eb3b` | Corrected the upstream Crazyhouse perft fixture; chess.ts does not mirror that fixture. |
 | `59cadb1f` | Upstream README external-project gallery only; not applicable. |
+| `3829d262` | Upstream Syzygy `Tablebase.add_file()` refactor; pending the unsupported module's translation. |
 
 ## Original baseline provenance
 
