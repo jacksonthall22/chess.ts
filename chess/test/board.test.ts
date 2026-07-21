@@ -36,6 +36,11 @@ class BoardTestCase extends TestCase {
     this.assertEqual(board.fen(), `${baseEpd} 0 1`)
   }
 
+  testSetFenAsEpd(): void {
+    const board = new chess.Board()
+    this.assertRaises(Error, () => board.setEpd(board.fen()))
+  }
+
   testMoveMaking(): void {
     const board = new chess.Board()
     const move = new chess.Move(chess.E2, chess.E4)
@@ -693,6 +698,7 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testEmpty: 218,
     testPly: 223,
     testFromEpd: 235,
+    testSetFenAsEpd: 1146,
     testMoveMaking: 241,
     testFen: 247,
     testXfen: 258,

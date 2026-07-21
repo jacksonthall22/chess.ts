@@ -5,15 +5,15 @@
 submodule currently pins:
 
 ```text
-6af0ff4c8947486e3e3fa8e83ca88815301aaa37
-v1.10.0-74-g6af0ff4c
-2024-04-18 — Expand core constant definitions
+716a0b9459480b852b5169a0f1b0b3dbecd3be31
+v1.10.0-75-g716a0b94
+2024-05-04 — Require that EPD opcodes start with letter (fixes #1080)
 ```
 
-This state expands Python's chained constant assignments into individually
-typed declarations. The TypeScript translation mirrors that structure while
-preserving its existing `PieceType` and `Square` enum API, and constructs the
-corresponding ordered arrays from the named constants.
+This state rejects malformed EPD operation codes that do not begin with a
+letter. The TypeScript translation uses a Unicode letter property escape to
+preserve Python's `str.isalpha()` behavior for the first code point and ports
+the upstream regression test that rejects a full FEN passed as an EPD.
 
 ### Synchronization log
 
@@ -24,6 +24,7 @@ corresponding ordered arrays from the named constants.
 | `d1dce61a` | Python documentation dependency only; not applicable. |
 | `4c7a9025` | Python `TypeAlias` annotations; TypeScript aliases already explicit. |
 | `6af0ff4c` | Expanded core constants into individually typed declarations and named arrays. |
+| `716a0b94` | Required EPD operation codes to begin with a Unicode letter and ported the regression test. |
 
 ## Original baseline provenance
 
@@ -85,10 +86,12 @@ for distinct same-move child variations. The generated
 count of the remaining work.
 
 The first parity pass translates six additional PGN tests and two Engine tests,
-bringing the current total to 84 passing upstream methods and 198 explicit
-TODOs. Seven chess.ts-only characterizations cover the original three game-tree
-cases plus polymorphic `BaseBoard` construction, Python-compatible float
-formatting, Unicode-aware PGN wrapping, and comment sanitization.
+bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
+adds one more translated regression test, so the current total is 85 passing
+upstream methods and 198 explicit TODOs. Seven chess.ts-only characterizations
+cover the original three game-tree cases plus polymorphic `BaseBoard`
+construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
+and comment sanitization.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected

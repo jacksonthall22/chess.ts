@@ -3624,16 +3624,7 @@ export class Board extends BaseBoard {
     let firstOp = true
 
     operations.forEach((operand, opcode) => {
-      if (opcode === '-') {
-        throw new Error('dash (-) is not a valid epd opcode')
-      }
-      ;[' ', '\n', '\t', '\r'].forEach(blacklisted => {
-        if (opcode.includes(blacklisted)) {
-          throw new Error(
-            `invalid character ${blacklisted} in epd opcode: ${opcode}`,
-          )
-        }
-      })
+      this._validateEpdOpcode(opcode)
 
       if (!firstOp) {
         epd.push(' ')
@@ -3762,6 +3753,27 @@ export class Board extends BaseBoard {
     return epd.join(' ')
   }
 
+  _validateEpdOpcode(opcode: string): void {
+    if (!opcode) {
+      throw new Error('empty string is not a valid epd opcode')
+    }
+    if (opcode === '-') {
+      throw new Error('dash (-) is not a valid epd opcode')
+    }
+    if (!/^\p{L}/u.test(opcode)) {
+      throw new Error(
+        `expected epd opcode to start with a letter, got: ${opcode}`,
+      )
+    }
+    for (const blacklisted of [' ', '\n', '\t', '\r']) {
+      if (opcode.includes(blacklisted)) {
+        throw new Error(
+          `invalid character ${blacklisted} in epd opcode: ${opcode}`,
+        )
+      }
+    }
+  }
+
   _parseEpdOps<T extends Board>(
     operationPart: string,
     makeBoard: () => T,
@@ -3780,6 +3792,7 @@ export class Board extends BaseBoard {
             if (opcode === '-') {
               opcode = ''
             } else if (opcode) {
+              this._validateEpdOpcode(opcode)
               state = 'after_opcode'
             }
           } else if (ch === null || ch === ';') {
