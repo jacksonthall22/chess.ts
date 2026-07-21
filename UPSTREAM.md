@@ -113,11 +113,12 @@ adds one translated regression test, and the UTF-8 BOM regression adds another,
 for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods. The unsupported engine-dispatch
-regression is among the 199 explicit TODOs. Nine chess.ts-only
+regression is among the 199 explicit TODOs. Ten chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
-TypeScript's parser-versus-tree comment visitor boundary.
+TypeScript's parser-versus-tree comment visitor boundary. One also guards the
+Python-list/JavaScript-array truthiness adaptation in `GameNode.next()`.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
