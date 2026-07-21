@@ -299,6 +299,65 @@ class PgnTestCase extends TestCase {
     this.assertEqual(node.nags.size, 1)
   }
 
+  testVisitBoard(): void {
+    class TraceVisitor extends pgn.BaseVisitor<string[]> {
+      trace: string[] = []
+
+      visitBoard(board: chess.Board): void {
+        this.trace.push(board.fen())
+      }
+
+      visitMove(board: chess.Board, move: chess.Move): void {
+        this.trace.push(board.san(move))
+      }
+
+      result(): string[] {
+        return this.trace
+      }
+    }
+
+    const source = `[FEN "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
+
+1... e5 (1... d5 2. exd5) (1... c5) 2. Nf3 Nc6
+`
+
+    const trace = [
+      'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+      'e5',
+      'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      'd5',
+      'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      'exd5',
+      'rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2',
+      'c5',
+      'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      'Nf3',
+      'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+      'Nc6',
+      'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3',
+    ]
+
+    this.assertEqual(
+      trace,
+      pgn.readGame<string[]>(new pgn.StringIO(source), {
+        Visitor: TraceVisitor,
+      }),
+    )
+
+    const game = pgn.readGame<pgn.Game>(new pgn.StringIO(source), {})
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(trace, game.accept(new TraceVisitor()))
+
+    this.assertEqual(
+      new chess.Board(trace.at(-1)),
+      pgn.readGame<chess.Board>(new pgn.StringIO(source), {
+        Visitor: pgn.BoardBuilder,
+      }),
+    )
+  }
+
   testBlackToMove(): void {
     const game = new pgn.Game()
     game.setup('8/8/4k3/8/4P3/4K3/8/8 b - - 0 17')
@@ -660,6 +719,55 @@ class PgnTestCase extends TestCase {
     this.assertEqual(node.turn(), chess.BLACK)
   }
 
+  testSkipInnerVariation(): void {
+    class BlackVariationsOnly extends pgn.GameBuilder {
+      skipping = false
+
+      beginVariation(): pgn.SkipType | void {
+        this.skipping = this.variationStack.at(-1)!.turn() !== chess.WHITE
+        if (this.skipping) {
+          return pgn.SKIP
+        }
+        return super.beginVariation()
+      }
+
+      endVariation(): void {
+        if (this.skipping) {
+          this.skipping = false
+        } else {
+          super.endVariation()
+        }
+      }
+    }
+
+    const source =
+      '1. e4 e5 ( 1... d5 2. exd5 Qxd5 3. Nc3 ( 3. c4 ) 3... Qa5 ) *'
+    const expected = '1. e4 e5 ( 1... d5 2. exd5 Qxd5 3. Nc3 Qa5 ) *'
+
+    // Driven by parser.
+    let game = pgn.readGame<pgn.Game>(new pgn.StringIO(source), {
+      Visitor: BlackVariationsOnly,
+    })
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(
+      game.accept(new pgn.StringExporter({ headers: false })),
+      expected,
+    )
+
+    // Driven by game tree traversal.
+    const parsed = pgn.readGame<pgn.Game>(new pgn.StringIO(source), {})
+    if (parsed === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    game = parsed.accept(new BlackVariationsOnly())
+    this.assertEqual(
+      game.accept(new pgn.StringExporter({ headers: false })),
+      expected,
+    )
+  }
+
   testMainline(): void {
     const moves = ['d2d3', 'g8f6', 'e2e4'].map(chess.Move.fromUci)
 
@@ -712,6 +820,7 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testGameStartingComment: 2361,
     testGameStartingVariation: 2371,
     testAnnotationSymbols: 2389,
+    testVisitBoard: 2587,
     testBlackToMove: 2631,
     testErrors: 2709,
     testSemicolonComment: 2797,
@@ -725,6 +834,7 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testFloatEmt: 2916,
     testFloatClk: 2929,
     testNodeTurn: 2942,
+    testSkipInnerVariation: 2958,
     testUtf8Bom: 2984,
   },
 })

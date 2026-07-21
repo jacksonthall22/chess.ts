@@ -209,6 +209,10 @@ Translating nine already-supported PGN behaviors—game setup, sequential fixtur
 reading, annotation symbols, black-to-move export, parser error recovery,
 semicolon termination, header-only games, subgame projection, and node turns—
 brings the current inventory to 106 of 292 methods and 186 explicit TODOs.
+Translating the board-visitor trace and nested-variation skipping tests brings
+the current inventory to 108 of 292 methods and 184 explicit TODOs. The stream
+trace uses fresh `StringIO` instances because the minimal TypeScript stream
+does not expose Python's unrelated `seek()` API.
 Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
