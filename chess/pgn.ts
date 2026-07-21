@@ -2438,7 +2438,7 @@ export function readGame<ResultT>(
       } else if (token === '(') {
         if (skipVariationDepth) {
           skipVariationDepth += 1
-        } else if (boardStack!.at(-1)!.moveStack) {
+        } else if (boardStack!.at(-1)!.moveStack.length !== 0) {
           if (visitor.beginVariation() === SKIP) {
             skipVariationDepth = 1
           } else {

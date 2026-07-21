@@ -233,6 +233,27 @@ class PgnTestCase extends TestCase {
     this.assertEqual(node.getitem(1).comments, ['\n/\\ Ne7, c6'])
   }
 
+  testVariationStack(): void {
+    // Survive superfluous closing brackets.
+    let game = pgn.readGame(new pgn.StringIO('1. e4 (1. d4))) !? *'))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.getitem(0).san(), 'e4')
+    this.assertEqual(game.getitem(0).uci(), 'e2e4')
+    this.assertEqual(game.getitem(1).san(), 'd4')
+    this.assertEqual(game.getitem(1).uci(), 'd2d4')
+    this.assertEqual(game.errors.length, 0)
+
+    // Survive superfluous opening brackets.
+    game = pgn.readGame(new pgn.StringIO('((( 1. c4 *'))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    this.assertEqual(game.getitem(0).san(), 'c4')
+    this.assertEqual(game.errors.length, 0)
+  }
+
   testGameStartingComment(): void {
     let game = pgn.readGame(
       new pgn.StringIO('{ Game starting comment } 1. d3'),
@@ -817,6 +838,7 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testReadGameWithLeadingWhitespaceBeforeHeader: 2236,
     testReadGameWithMulticommentMove: 2254,
     testCommentAtEol: 2262,
+    testVariationStack: 2341,
     testGameStartingComment: 2361,
     testGameStartingVariation: 2371,
     testAnnotationSymbols: 2389,

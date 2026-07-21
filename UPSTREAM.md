@@ -213,6 +213,10 @@ Translating the board-visitor trace and nested-variation skipping tests brings
 the current inventory to 108 of 292 methods and 184 explicit TODOs. The stream
 trace uses fresh `StringIO` instances because the minimal TypeScript stream
 does not expose Python's unrelated `seek()` API.
+Translating the variation-stack test brings the current inventory to 109 of
+292 methods and 183 explicit TODOs. It exposed and corrected a Python-list to
+JavaScript-array truthiness mismatch: a leading variation delimiter is valid
+only after at least one move has actually been pushed.
 Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
