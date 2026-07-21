@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-eaa6eb3b023e92441f9de810785bb1716dd4d0b5
-v1.10.0-77-geaa6eb3b
-2024-05-04 — Fixup invalid EPD in crazyhouse.perft file
+59cadb1f06a4a36499e006e2534289e52cb36c2f
+v1.10.0-79-g59cadb1f
+2024-05-25 — Merge pull request #1084 from 3d12/add-selected-project
 ```
 
-This state removes invalid move counters from one upstream Crazyhouse perft
-position. chess.ts does not mirror or consume that fixture, so no TypeScript
-runtime or test change applies.
+This state adds an external project to the upstream README gallery. It does not
+change the python-chess API, runtime, or tests, so no TypeScript change applies.
 
 ### Synchronization log
 
@@ -26,6 +25,7 @@ runtime or test change applies.
 | `716a0b94` | Required EPD operation codes to begin with a Unicode letter and ported the regression test. |
 | `df714e39` | Corrected the upstream Chess960 perft fixture; chess.ts does not mirror that fixture. |
 | `eaa6eb3b` | Corrected the upstream Crazyhouse perft fixture; chess.ts does not mirror that fixture. |
+| `59cadb1f` | Upstream README external-project gallery only; not applicable. |
 
 ## Original baseline provenance
 
