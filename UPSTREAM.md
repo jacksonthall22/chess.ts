@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-c0d3c9171d22d0168a6cf7a584cdcf50909832e6
-v1.10.0-104-gc0d3c917
-2024-10-04 — chess\\__init__.py superfluous-parens
+30d991046908ce7c5a7929987c1c2081f68641b4
+v1.10.0-105-g30d99104
+2024-10-04 — Prepare 1.11.0
 ```
 
-This state removes superfluous parentheses from one upstream bitwise
-expression. The TypeScript translation was already in the resulting idiomatic
-form, so no runtime change applies.
+This state prepares upstream 1.11.0. The mirrored library `__version__` is now
+`1.11.0`; the independently versioned npm package remains unchanged.
 
 ### Synchronization log
 
@@ -43,6 +42,7 @@ form, so no runtime change applies.
 | `5826ef5d` | SVG board-offset fix; pending the unsupported board renderer's translation. |
 | `0e7fabc8` | Added and ported the UTF-8 BOM PGN fixture regression. |
 | `c0d3c917` | Removed superfluous Python parentheses; TypeScript was already idiomatic. |
+| `30d99104` | Prepared upstream 1.11.0 and updated the mirrored library version. |
 
 ## Original baseline provenance
 
