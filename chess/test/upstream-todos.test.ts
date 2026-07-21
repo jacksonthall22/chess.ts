@@ -55,27 +55,10 @@ describe('PolyglotTestCase — translation pending', () => {
 })
 
 describe('PgnTestCase — translation pending', () => {
-  test.todo('test_game_without_tag_roster (python-chess test.py:2155)',)
-  test.todo('test_promotion_without_equals (python-chess test.py:2278)',)
-  test.todo('test_header_with_paren (python-chess test.py:2315)',)
-  test.todo('test_special_tag_names (python-chess test.py:2321)',)
-  test.todo('test_chess960_without_fen (python-chess test.py:2331)',)
   test.todo('test_skip_game (python-chess test.py:2469)',)
   test.todo('test_tricky_skip_game (python-chess test.py:2490)',)
   test.todo('test_read_headers (python-chess test.py:2523)',)
-  test.todo('test_parse_time_control (python-chess test.py:2540)',)
-  test.todo('test_result_termination_marker (python-chess test.py:2654)',)
-  test.todo('test_missing_setup_tag (python-chess test.py:2659)',)
-  test.todo('test_chessbase_empty_line (python-chess test.py:2685)',)
-  test.todo('test_lan (python-chess test.py:2751)',)
   test.todo('test_variants (python-chess test.py:2756)',)
-  test.todo('test_cutechess_fischerrandom (python-chess test.py:2773)',)
-  test.todo('test_z0 (python-chess test.py:2780)',)
-  test.todo('test_uci_moves (python-chess test.py:2786)',)
-  test.todo('test_wierd_header (python-chess test.py:2792)',)
-  test.todo('test_empty_game (python-chess test.py:2804)',)
-  test.todo('test_is_wild (python-chess test.py:2833)',)
-  test.todo('test_eval (python-chess test.py:2910)',)
 })
 
 describe('EngineTestCase — translation pending', () => {
@@ -229,5 +212,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Upstream pin: python-chess 9c24454dcea4f8a30259d811a2f10b26e911deb4
 // Total upstream tests: 292
-// Translated tests: 112
-// Pending tests: 180
+// Translated tests: 129
+// Pending tests: 163
