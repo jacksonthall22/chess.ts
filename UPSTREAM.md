@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-e88e7f0531b39b70fcd42e000d472f26a39ed847
-v1.11.1-109-ge88e7f05
-2026-07-12 — Merge pull request #1195 from gaoflow/fix/1115-pgn-whitespace-headers
+9c24454dcea4f8a30259d811a2f10b26e911deb4
+v1.11.1-110-g9c24454d
+2026-07-12 — expand racing kings perft (near-discovered-check)
 ```
 
-This state accepts Python-whitespace indentation before PGN tag pairs. The
-translated reader strips only a local header candidate, retains the raw line
-for movetext parsing, and shares an exact Python whitespace definition with
-the existing `isspace()` compatibility helper.
+This state expands upstream's Racing Kings perft data with deeper and
+near-discovered-check positions. The variant and perft fixture remain
+unsupported in chess.ts, so no TypeScript runtime or test change applies.
 
 ### Synchronization log
 
@@ -97,6 +96,7 @@ the existing `isspace()` compatibility helper.
 | `8330cfd5` | Rejected positions with multiple stepping checkers and translated the complete `BoardTestCase.test_status` regression. Atomic's exception remains pending with the unsupported variant module. |
 | `24c2d5a2` | Removed an obsolete status badge from the upstream README; chess.ts does not copy that README badge. |
 | `e88e7f05` | Accepted Python-whitespace indentation before PGN headers and translated the complete parser regression. Added exact Python `lstrip()`/`isspace()` characterizations because ECMAScript whitespace semantics differ. |
+| `9c24454d` | Expanded upstream's Racing Kings perft data with depth-five and near-discovered-check positions; the unsupported variant fixture is not copied into chess.ts. |
 
 ### Intentional upstream divergence
 
