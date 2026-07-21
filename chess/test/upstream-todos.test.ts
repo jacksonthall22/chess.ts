@@ -248,7 +248,7 @@ describe('GiveawayTestCase — translation pending', () => {
   test.todo('test_antichess_pgn (python-chess test.py:4920)',)
 })
 
-// Upstream pin: python-chess c42749dee7e06f1215ad159d58452d571810b8db
+// Upstream pin: python-chess 7553d4115f69368e2d7bf07a90773cea128d7d11
 // Total upstream tests: 288
 // Translated tests: 87
 // Pending tests: 201

@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-c42749dee7e06f1215ad159d58452d571810b8db
-v1.11.0-45-gc42749de
-2024-10-13 — Make chess.engine.Protocol.options an abstract property
+7553d4115f69368e2d7bf07a90773cea128d7d11
+v1.11.0-46-g7553d411
+2024-10-13 — Make chess.pgn.GameNode pass pyright subtyping check
 ```
 
-This state makes the upstream engine protocol's `options` property abstract.
-The engine protocol runtime remains unsupported, so there is no TypeScript
-source equivalent yet.
+This state makes `GameNode.parent` and `GameNode.move` getter-only, with
+narrowed accessors on `Game` and `ChildNode`. This matches upstream's runtime
+contract and prevents consumers from corrupting ancestry or move identity.
 
 ### Synchronization log
 
@@ -54,6 +54,7 @@ source equivalent yet.
 | `6228bac5` | Upstream Sphinx documentation dependency update only; not applicable. |
 | `e2041699` | Aligned the core en-passant capture-square expression; Python-only definite assignment and unsupported engine/Syzygy typing changes are not applicable. |
 | `c42749de` | Upstream engine protocol `options` abstraction; pending the unsupported engine protocol's translation. |
+| `7553d411` | Made `GameNode.parent` and `GameNode.move` getter-only, with narrowed immutable accessors on roots and child nodes. This prevents consumers from corrupting ancestry or move identity and is an upstream-compatible breaking change. |
 
 ## Original baseline provenance
 
@@ -121,7 +122,7 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Eleven chess.ts-only
+and 201 explicit TODOs. Twelve chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -129,6 +130,8 @@ TypeScript's parser-versus-tree comment visitor boundary. One also guards the
 Python-list/JavaScript-array truthiness adaptation in `GameNode.next()`.
 The latest characterization protects `Wdl` and `PovWdl` value equality while
 proving that their deprecated tuple-era surface is gone.
+Getter-only node identity is protected by both compile-time assignment
+failures and runtime mutation checks.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
