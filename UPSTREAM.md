@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-eaa6eb3b023e92441f9de810785bb1716dd4d0b5
-v1.10.0-77-geaa6eb3b
-2024-05-04 — Fixup invalid EPD in crazyhouse.perft file
+32253d6cfdbc1939f78f03892fa848412cf4b4fa
+v1.10.0-89-g32253d6c
+2024-07-27 — Merge pull request #1098 from deepyaman/patch-1
 ```
 
-This state removes invalid move counters from one upstream Crazyhouse perft
-position. chess.ts does not mirror or consume that fixture, so no TypeScript
-runtime or test change applies.
+This state corrects the public time-control enum member from `UNKNOW` to
+`UNKNOWN`. The TypeScript enum and its `TimeControl` default mirror that rename
+without retaining a compatibility alias that does not exist upstream.
 
 ### Synchronization log
 
@@ -26,6 +26,16 @@ runtime or test change applies.
 | `716a0b94` | Required EPD operation codes to begin with a Unicode letter and ported the regression test. |
 | `df714e39` | Corrected the upstream Chess960 perft fixture; chess.ts does not mirror that fixture. |
 | `eaa6eb3b` | Corrected the upstream Crazyhouse perft fixture; chess.ts does not mirror that fixture. |
+| `59cadb1f` | Upstream README external-project gallery only; not applicable. |
+| `3829d262` | Upstream Syzygy `Tablebase.add_file()` refactor; pending the unsupported module's translation. |
+| `a41c3c88` | Upstream Syzygy maximum-piece check deferral; pending the unsupported module's translation. |
+| `95803fc6` | Upstream Syzygy alpha-beta search limit; pending the unsupported module's translation. |
+| `474c87bf` | Ported the additional SAN disambiguation regression assertion. |
+| `ec8ecec5` | Upstream README listing removal only; not applicable. |
+| `63aac2ec` | Exposed optional occupied masks on attack queries and characterized bitboard and iterable overrides. |
+| `7836d446` | Upstream SVG rich-display wrapper; pending the unsupported module's translation. |
+| `247d8a06` | Upstream changelog only; not applicable. |
+| `32253d6c` | Renamed `TimeControlType.UNKNOW` to `UNKNOWN` and updated the default. |
 
 ## Original baseline provenance
 
@@ -89,10 +99,10 @@ count of the remaining work.
 The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one more translated regression test, so the current total is 85 passing
-upstream methods and 198 explicit TODOs. Seven chess.ts-only characterizations
+upstream methods and 198 explicit TODOs. Eight chess.ts-only characterizations
 cover the original three game-tree cases plus polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
-and comment sanitization.
+comment sanitization, and attack-query occupancy overrides.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
