@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-247d8a06a6b2c2dc06f9ce0b7f3e94dbd9b816bd
-v1.10.0-87-g247d8a06
-2024-07-19 — Update changelog for soon to be released final 1.x
+32253d6cfdbc1939f78f03892fa848412cf4b4fa
+v1.10.0-89-g32253d6c
+2024-07-27 — Merge pull request #1098 from deepyaman/patch-1
 ```
 
-This state updates only the upstream changelog in preparation for the final
-1.x release. It does not change the python-chess API, runtime, or tests, so no
-TypeScript change applies.
+This state corrects the public time-control enum member from `UNKNOW` to
+`UNKNOWN`. The TypeScript enum and its `TimeControl` default mirror that rename
+without retaining a compatibility alias that does not exist upstream.
 
 ### Synchronization log
 
@@ -35,6 +35,7 @@ TypeScript change applies.
 | `63aac2ec` | Exposed optional occupied masks on attack queries and characterized bitboard and iterable overrides. |
 | `7836d446` | Upstream SVG rich-display wrapper; pending the unsupported module's translation. |
 | `247d8a06` | Upstream changelog only; not applicable. |
+| `32253d6c` | Renamed `TimeControlType.UNKNOW` to `UNKNOWN` and updated the default. |
 
 ## Original baseline provenance
 
