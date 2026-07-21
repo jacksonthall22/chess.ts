@@ -1,5 +1,5 @@
 import * as chess from '../index'
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 import { registerTestCase, TestCase } from './unittest'
 
 /** Mechanical translation of python-chess `SquareTestCase` at cd7f5958. */
@@ -86,6 +86,56 @@ registerTestCase('SquareTestCase', SquareTestCase, {
     testSquareManhattanDistance: 87,
     testSquareKnightDistance: 94,
   },
+})
+
+describe('rank and file public API', () => {
+  test('constants and names round-trip exhaustively', () => {
+    expect(chess.FILES).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+    expect(chess.RANKS).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+
+    for (const [index, name] of chess.FILE_NAMES.entries()) {
+      const file = chess.FILES[index]
+      expect(chess.fileName(file)).toBe(name)
+      expect(chess.parseFile(name)).toBe(file)
+    }
+
+    for (const [index, name] of chess.RANK_NAMES.entries()) {
+      const rank = chess.RANKS[index]
+      expect(chess.rankName(rank)).toBe(name)
+      expect(chess.parseRank(name)).toBe(rank)
+    }
+  })
+
+  test.each(['', 'A', 'aa', '1', 'i'])('parseFile rejects %j', invalid => {
+    expect(() => chess.parseFile(invalid)).toThrow(Error)
+  })
+
+  test.each(['', '0', '9', 'a', '11'])('parseRank rejects %j', invalid => {
+    expect(() => chess.parseRank(invalid)).toThrow(Error)
+  })
+
+  test('aliases preserve the existing unbranded index signatures', () => {
+    expectTypeOf(chess.FILE_A).toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.RANK_1).toEqualTypeOf<chess.Rank>()
+    expectTypeOf(chess.FILES).toEqualTypeOf<chess.File[]>()
+    expectTypeOf(chess.RANKS).toEqualTypeOf<chess.Rank[]>()
+    expectTypeOf(chess.parseFile).toEqualTypeOf<
+      (name: string) => chess.File
+    >()
+    expectTypeOf(chess.fileName).toEqualTypeOf<
+      (file: chess.File) => string
+    >()
+    expectTypeOf(chess.parseRank).toEqualTypeOf<
+      (name: string) => chess.Rank
+    >()
+    expectTypeOf(chess.rankName).toEqualTypeOf<
+      (rank: chess.Rank) => string
+    >()
+    expectTypeOf(chess.square).parameter(0).toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.square).parameter(1).toEqualTypeOf<chess.Rank>()
+    expectTypeOf(chess.squareFile).returns.toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.squareRank).returns.toEqualTypeOf<chess.Rank>()
+  })
 })
 
 /** Mechanical translation of python-chess `MoveTestCase` at cd7f5958. */
