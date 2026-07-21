@@ -113,7 +113,11 @@ over to the corresponding files in [`chess/`](chess/):
 - [x]  `__init__.py` → `index.ts`
 - [x]  `pgn.py` → `pgn.ts`
 - [ ]  `engine.py` → `engine.ts` (WIP: minimal functionality for `pgn.ts` to work)
-- [ ]  Transpile testing suite
+- [x]  Add a test harness and account for every frozen upstream test
+- [ ]  Complete the test-suite translation
+
+The exact upstream commit represented by the frozen source and test snapshot is
+recorded in [UPSTREAM.md](UPSTREAM.md).
 
 PRs welcome!
 
@@ -128,6 +132,8 @@ To use it, just run `python transpilation_helper.py` to open a CLI where you can
 and drag to select multiple code lines, including leading indents). Press `Enter` and the transpiled code will be copied to the clipboard
 (you may need `pip install pyperclip`). Paste it into a TypeScript file, continue to make edits until warnings disappear, and check the
 final TypeScript against the Python in a splitscreen to verify it works the same.
+The `py_to_ts()` function can also be imported by scripts without installing
+the CLI-only clipboard dependency.
 
 ### `chess.ts`'s GPT
 I made a GPT to help with this project, [`python-chess` to `chess.ts` helper](https://chat.openai.com/g/g-Ht5toEWik-python-chess-to-chess-ts-helper).

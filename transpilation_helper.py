@@ -1,7 +1,6 @@
 import os
 import re
 from typing import List
-import pyperclip as pc
 
 
 def split_not_in_brackets(
@@ -670,6 +669,8 @@ def py_to_ts(py_str: str) -> str:
 
 
 def main():
+    import pyperclip as pc
+
     while True:
         input('Press Enter to paste Python code and convert it to TypeScript...')
         s = pc.paste()
