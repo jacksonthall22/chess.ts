@@ -1,7 +1,7 @@
 import { Cp, Mate, MateGiven, Score, Wdl, WdlModel } from '../engine'
 import { registerTestCase, TestCase } from './unittest'
 
-/** Mechanical translation of python-chess `EngineTestCase` at cd7f5958. */
+/** Mechanical translation of python-chess `EngineTestCase` at 8e91525e. */
 class EngineTestCase extends TestCase {
   testScoreOrdering(): void {
     const order: Score[] = [
@@ -32,7 +32,14 @@ class EngineTestCase extends TestCase {
             (b.score({ mateScore: 100000 }) as number),
         )
 
-        const models: WdlModel[] = ['sf12', 'sf14', 'sf15', 'sf15.1', 'sf16']
+        const models: WdlModel[] = [
+          'sf12',
+          'sf14',
+          'sf15',
+          'sf15.1',
+          'sf16',
+          'sf16.1',
+        ]
         for (const model of models) {
           this.assertTrue(
             !(i < j) ||
@@ -73,6 +80,10 @@ class EngineTestCase extends TestCase {
     this.assertEqual(
       new Cp(-52).wdl({ model: 'sf16', ply: 63 }),
       new Wdl(0, 932, 68),
+    )
+    this.assertEqual(
+      new Cp(51).wdl({ model: 'sf16.1', ply: 158 }),
+      new Wdl(36, 964, 0),
     )
   }
 }

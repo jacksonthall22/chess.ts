@@ -1,8 +1,22 @@
-# python-chess baseline
+# python-chess synchronization
 
 `chess.ts` is a mechanical TypeScript translation of
 [`python-chess`](https://github.com/niklasf/python-chess). The `python-chess/`
-submodule pins this selected upstream baseline:
+submodule currently pins:
+
+```text
+8e91525e47593932911951919a6855f2ea2aa170
+v1.10.0-70-g8e91525e
+2024-02-24 — Add sf16.1 WDL model
+```
+
+This is the first canonical `master` first-parent state after the recovered
+original baseline. Its gitlink advance, TypeScript source change, and affected
+tests land together.
+
+## Original baseline provenance
+
+The original selected upstream baseline is:
 
 ```text
 cd7f5958289dd08156436a1f84b9ea03cb1f75a1
@@ -115,7 +129,7 @@ incomplete runtime metadata.
 
 ## Frozen upstream verification
 
-The selected upstream commit was also run directly under Python 3.14.5:
+The original selected baseline was also run directly under Python 3.14.5:
 
 ```text
 Ran 282 tests
