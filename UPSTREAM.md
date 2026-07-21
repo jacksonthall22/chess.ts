@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-77f1dab824757695d0a648fd337af5563b2ead1c
-v1.11.1-103-g77f1dab8
-2026-05-31 — Add spacing after black variation ellipses
+8330cfd5dbb9401f0e85be92cf408d6482505642
+v1.11.1-104-g8330cfd5
+2026-06-07 — Reject positions with multiple stepping checkers
 ```
 
-This state makes `Board.variationSan()` render a space between a black move
-number's ellipsis and the move SAN, for example `19... Kxh7`. The translated
-upstream regression now requires that exact output.
+This state rejects impossible positions where more than one pawn, knight, or
+king checks the side to move. The complete upstream board-status regression is
+translated, while Atomic's variant-specific exception remains pending with the
+unsupported variant module.
 
 ### Synchronization log
 
@@ -93,6 +94,7 @@ upstream regression now requires that exact output.
 | `2b2f1497` | Added `BaseBoard.pieceCount()` and ported the complete board-clearing regression test. Gaviota and Syzygy call-site updates remain pending with those unsupported modules. |
 | `b53c6e60` | Corrected `Board.chess960Pos()` documentation from the incomplete 0–956 range to all indices 0–959. |
 | `77f1dab8` | Inserted the conventional space after the ellipsis when `Board.variationSan()` begins with a black move and updated the translated regression expectation. |
+| `8330cfd5` | Rejected positions with multiple stepping checkers and translated the complete `BoardTestCase.test_status` regression. Atomic's exception remains pending with the unsupported variant module. |
 
 ### Intentional upstream divergence
 
@@ -192,6 +194,8 @@ and 203 explicit TODOs. Translating the promoted-comparison test brings the
 current inventory to 89 of 291 upstream methods and 202 explicit TODOs.
 Adding `BaseBoard.pieceCount()` and translating the complete board-clearing
 test brings the current inventory to 90 of 291 methods and 201 explicit TODOs.
+Translating the complete board-status test brings the current inventory to 91
+of 291 methods and 200 explicit TODOs.
 Thirty-seven chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
@@ -251,7 +255,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 201 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 200 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.
