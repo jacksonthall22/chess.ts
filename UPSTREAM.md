@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-e2041699939d7ae08811fe7a1391e8910d5ec62a
-v1.11.0-44-ge2041699
-2024-10-13 — Towards passing pyright
+c42749dee7e06f1215ad159d58452d571810b8db
+v1.11.0-45-gc42749de
+2024-10-13 — Make chess.engine.Protocol.options an abstract property
 ```
 
-This state begins upstream's static-typing cleanup. The supported core change
-aligns the en-passant capture-square expression with the move destination;
-Python-only definite assignment and unsupported engine/Syzygy changes have no
-TypeScript runtime equivalent.
+This state makes the upstream engine protocol's `options` property abstract.
+The engine protocol runtime remains unsupported, so there is no TypeScript
+source equivalent yet.
 
 ### Synchronization log
 
@@ -54,6 +53,7 @@ TypeScript runtime equivalent.
 | `b2657ebc` | Removed deprecated `Wdl`/`PovWdl` tuple behavior while preserving dataclass-like exact-field value equality. |
 | `6228bac5` | Upstream Sphinx documentation dependency update only; not applicable. |
 | `e2041699` | Aligned the core en-passant capture-square expression; Python-only definite assignment and unsupported engine/Syzygy typing changes are not applicable. |
+| `c42749de` | Upstream engine protocol `options` abstraction; pending the unsupported engine protocol's translation. |
 
 ## Original baseline provenance
 
