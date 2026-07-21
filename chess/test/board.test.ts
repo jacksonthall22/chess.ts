@@ -634,7 +634,7 @@ class BoardTestCase extends TestCase {
     const varB = board.variationSan(variation.map(chess.Move.fromUci))
     this.assertEqual(
       varB,
-      '19...Kxh7 20. Qh5+ Kg8 21. Rg3 Bf8 22. Bg5 Re7 23. Bf6 Nd7 24. Qh6 Nxf6 25. exf6 g6 26. fxe7 Bxe7',
+      '19... Kxh7 20. Qh5+ Kg8 21. Rg3 Bf8 22. Bg5 Re7 23. Bf6 Nd7 24. Qh6 Nxf6 25. exf6 g6 26. fxe7 Bxe7',
     )
 
     const illegalVariation = ['d3h7', 'g8h7', 'f3h6', 'h7g8']
