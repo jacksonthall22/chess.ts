@@ -1,4 +1,5 @@
 import * as chess from '../index'
+import { describe, expect, test } from 'vitest'
 import { registerTestCase, TestCase } from './unittest'
 
 /** Mechanical translation of python-chess `BoardTestCase` at cd7f5958. */
@@ -737,4 +738,39 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testIsLegalMove: 810,
     testMoveCount: 833,
   },
+})
+
+describe('Board lc0-style null-move handling', () => {
+  test('parseUci accepts both canonical and a1a1 null-move spellings', () => {
+    const board = new chess.Board()
+
+    expect(board.parseUci('0000').equals(chess.Move.null())).toBe(true)
+    expect(board.parseUci('a1a1').equals(chess.Move.null())).toBe(true)
+  })
+
+  test('an a1a1 null move can be pushed and popped without state drift', () => {
+    const board = new chess.Board()
+    board.pushSan('e4')
+    const before = board.fen({ enPassant: 'fen' })
+
+    const move = board.pushUci('a1a1')
+    expect(move.equals(chess.Move.null())).toBe(true)
+    expect(board.turn).toBe(chess.WHITE)
+    expect(board.epSquare).toBeNull()
+    expect(board.moveStack).toHaveLength(2)
+
+    expect(board.pop().equals(chess.Move.null())).toBe(true)
+    expect(board.fen({ enPassant: 'fen' })).toBe(before)
+    expect(board.moveStack).toHaveLength(1)
+  })
+
+  test('a1a1q is raw UCI syntax but not a legal board move', () => {
+    const raw = chess.Move.fromUci('a1a1q')
+
+    expect(raw.uci()).toBe('a1a1q')
+    expect(raw.bool()).toBe(true)
+    expect(() => new chess.Board().parseUci('a1a1q')).toThrow(
+      chess.IllegalMoveError,
+    )
+  })
 })

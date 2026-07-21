@@ -1008,7 +1008,7 @@ export class Move {
       if (fromSquare === -1 || toSquare === -1 || promotion === -1) {
         throw new InvalidMoveError(`invalid uci: {$uci}`)
       }
-      if (fromSquare === toSquare) {
+      if (fromSquare === toSquare && fromSquare !== A1) {
         throw new InvalidMoveError(
           `invalid uci (use 0000 for null moves): ${uci}`,
         )
@@ -4371,6 +4371,10 @@ export class Board extends BaseBoard {
    */
   parseUci(uci: string): Move {
     let move = Move.fromUci(uci)
+
+    if (!move.bool()) {
+      return move
+    }
 
     move = this._toChess960(move)
     move = this._fromChess960(

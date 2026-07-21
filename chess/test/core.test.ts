@@ -1,4 +1,5 @@
 import * as chess from '../index'
+import { describe, expect, test } from 'vitest'
 import { registerTestCase, TestCase } from './unittest'
 
 /** Mechanical translation of python-chess `SquareTestCase` at cd7f5958. */
@@ -147,6 +148,21 @@ registerTestCase('MoveTestCase', MoveTestCase, {
     testXboardMove: 144,
     testCopy: 151,
   },
+})
+
+describe('lc0-style null-move parsing', () => {
+  test('Move.fromUci normalizes a1a1 to the canonical null move', () => {
+    const move = chess.Move.fromUci('a1a1')
+
+    expect(move.equals(chess.Move.null())).toBe(true)
+    expect(move.bool()).toBe(false)
+    expect(move.uci()).toBe('0000')
+  })
+
+  test('same-square moves remain invalid away from a1', () => {
+    expect(() => chess.Move.fromUci('b1b1')).toThrow(chess.InvalidMoveError)
+    expect(() => chess.Move.fromUci('h8h8')).toThrow(chess.InvalidMoveError)
+  })
 })
 
 /** Mechanical translation of python-chess `PieceTestCase` at cd7f5958. */

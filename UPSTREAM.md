@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-d625be1da24ddd18e27a44c42c6bbb53ae308edc
-v1.11.0-53-gd625be1d
-2024-10-27 — Add `movesleft` parameter to UCI info parsing
+518d662e5467c13630cfe98f9b99e720775d80b1
+v1.11.0-54-g518d662e
+2024-11-09 — Accept `a1a1` as UCI null move
 ```
 
-This state teaches upstream's UCI info parser about `movesleft`. The engine
-process layer remains unsupported in chess.ts, so its exact test movement is
-tracked in the generated TODO ledger without adding a partial implementation.
+This state accepts lc0's `a1a1` spelling of a null move while retaining `0000`
+as its canonical UCI serialization. All other unpromoted same-square moves
+remain invalid.
 
 ### Synchronization log
 
@@ -60,6 +60,7 @@ tracked in the generated TODO ledger without adding a partial implementation.
 | `ef13fdbf` | Upstream Pyright CI integration; strict TypeScript library/test compilation already covers the corresponding surface. |
 | `100b1c8b` | Upstream Pyright command-line workflow fix only; not applicable. |
 | `d625be1d` | Upstream UCI `movesleft` info parsing; pending the unsupported engine process layer, with exact test movement tracked as TODOs. |
+| `518d662e` | Accepted lc0's `a1a1` null-move spelling, restored `Board.parseUci()`'s null-move fast path, and characterized parsing plus reversible push/pop behavior. |
 
 ## Original baseline provenance
 
@@ -127,7 +128,7 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Thirteen chess.ts-only
+and 201 explicit TODOs. Eighteen chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -141,6 +142,9 @@ Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while
 instantiating the base class.
+Five characterize lc0-style `a1a1` null moves across raw parsing, board
+parsing, reversible push/pop, invalid same-square spellings, and the distinct
+raw-but-illegal `a1a1q` case.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
