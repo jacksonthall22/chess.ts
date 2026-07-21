@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-7299216641f5bd0434c06111608892617aa39147
-v1.10.0-100-g72992166
-2024-07-31 — Immediately dispatch line/termination/finish (fixes #1049, fixes #1071)
+5826ef5dd1c463654d2479408a7ddf56a91603d6
+v1.10.0-102-g5826ef5d
+2024-09-09 — Merge pull request #1104 from Lukasel/master
 ```
 
-This state fixes immediate line, termination, and finish dispatch in the
-unsupported engine protocol. The new upstream
-`EngineTestCase.test_uci_output_after_command` regression remains an explicit
-generated TODO because chess.ts has no engine protocol runtime to exercise.
+This state fixes SVG board offsets when borders are enabled. chess.ts currently
+implements only `svg.Arrow`, so the unsupported board renderer change is
+recorded without a TypeScript runtime change.
 
 ### Synchronization log
 
@@ -41,6 +40,7 @@ generated TODO because chess.ts has no engine protocol runtime to exercise.
 | `caefd4dc` | Engine protocol `_next_token()` cosmetics; unsupported module, so not applicable. |
 | `71e7c31f` | Engine protocol assertion diagnostics; unsupported module, so not applicable. |
 | `72992166` | Engine protocol dispatch fix and regression test; runtime remains unsupported and the test is tracked as a TODO. |
+| `5826ef5d` | SVG board-offset fix; pending the unsupported board renderer's translation. |
 
 ## Original baseline provenance
 
