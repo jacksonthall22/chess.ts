@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-f7736478cbe6e99bb77a7719bfafa79e9a40eef0
-v1.11.0-47-gf7736478
-2024-10-13 — Initialize board_stack even on skip_game path
+0c8fed280f5d0ea237dc5a667081665d65412643
+v1.11.0-48-g0c8fed28
+2024-10-13 — Fix builder constructor typing
 ```
 
-This state gives the PGN reader's board stack an explicit empty initial value
-before header processing. Skip paths still return before movetext parsing, but
-the variable now has one well-defined value on every control-flow path.
+This state makes `GameBuilder` and `HeadersBuilder` generic over their concrete
+model subclasses. Constructor inference, the models' static `builder()` helpers,
+and builder results now retain that subtype in TypeScript as well as at runtime.
 
 ### Synchronization log
 
@@ -56,6 +56,7 @@ the variable now has one well-defined value on every control-flow path.
 | `c42749de` | Upstream engine protocol `options` abstraction; pending the unsupported engine protocol's translation. |
 | `7553d411` | Made `GameNode.parent` and `GameNode.move` getter-only, with narrowed immutable accessors on roots and child nodes. This prevents consumers from corrupting ancestry or move identity and is an upstream-compatible breaking change. |
 | `f7736478` | Initialized the PGN reader board stack before the skip-game branch, matching upstream control-flow typing. |
+| `0c8fed28` | Made PGN builders generic and preserved concrete `Game`/`Headers` subclasses through constructors, static helpers, and results. |
 
 ## Original baseline provenance
 
@@ -123,7 +124,7 @@ for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a current total of 87 of 288 methods
-and 201 explicit TODOs. Twelve chess.ts-only
+and 201 explicit TODOs. Thirteen chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -133,6 +134,10 @@ The latest characterization protects `Wdl` and `PovWdl` value equality while
 proving that their deprecated tuple-era surface is gone.
 Getter-only node identity is protected by both compile-time assignment
 failures and runtime mutation checks.
+Another checks both compile-time inference and runtime construction for
+subclass-preserving PGN builders. Specialized builders must receive their
+concrete constructor, so their result types can not claim a subclass while
+instantiating the base class.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected
