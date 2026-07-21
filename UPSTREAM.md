@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-caefd4dc6c25369750f6cc461885adfbbd52f09c
-v1.10.0-98-gcaefd4dc
-2024-07-31 — chess.engine._next_token() cosmetics
+71e7c31fba31554a2b174ff7fb88a77b61674543
+v1.10.0-99-g71e7c31f
+2024-07-31 — Show actual state in engine command state assertions (#1049, #1071)
 ```
 
-This state changes only the formatting of the unsupported engine protocol's
-private `_next_token()` helper. There is no TypeScript runtime equivalent to
-update.
+This state adds diagnostic values to assertions inside the unsupported engine
+protocol. There is no TypeScript runtime equivalent to update.
 
 ### Synchronization log
 
@@ -38,6 +37,7 @@ update.
 | `32253d6c` | Renamed `TimeControlType.UNKNOW` to `UNKNOWN` and updated the default. |
 | `ec399d1b` | Removed the generic `_BoardState` subclass hook; engine protocol, Syzygy, and variant typing changes remain unsupported. |
 | `caefd4dc` | Engine protocol `_next_token()` cosmetics; unsupported module, so not applicable. |
+| `71e7c31f` | Engine protocol assertion diagnostics; unsupported module, so not applicable. |
 
 ## Original baseline provenance
 
