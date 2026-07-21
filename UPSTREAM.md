@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-d4b31904675d83325883b4e24f45f786689f8f8f
-v1.11.0-34-gd4b31904
-2024-10-04 — Merge pull request #1068 from MarkZH/multiple-move-comments
+ab0e066d444dd0d6e781e01ffd3db2aadefd98a0
+v1.11.0-39-gab0e066d
+2024-10-08 — Merge pull request #1113 from MarkZH/options-fix
 ```
 
-This state deliberately replaces each PGN node's singular comment strings
-with ordered comment arrays, allowing parsing and export to preserve multiple
-comments attached to the same move.
+This state fixes parsing of UCI option names in the unsupported engine process
+layer and adds two upstream engine tests that remain explicit TODOs. Its
+Fairy-Stockfish CI setup and tox changes are not part of the TypeScript library.
 
 ### Synchronization log
 
@@ -47,6 +47,7 @@ comments attached to the same move.
 | `46c28883` | Upstream `release.py` formatting revert only; not applicable. |
 | `08697b29` | Upstream Twine and wheel release tooling only; not applicable. |
 | `d4b31904` | Replaced singular PGN comment storage with ordered arrays and ported multiple-comment parsing, traversal, annotations, and export. |
+| `ab0e066d` | UCI option parsing fix remains pending with the unsupported engine process layer; tracked its two new tests as TODOs. Upstream Fairy-Stockfish setup and tox changes are not applicable. |
 
 ## Original baseline provenance
 
@@ -112,8 +113,9 @@ bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
 adds one translated regression test, and the UTF-8 BOM regression adds another,
 for a total of 86 of 285 upstream methods at that checkpoint. The
 multiple-comment update adds one translated PGN regression, for a current
-total of 87 of 286 upstream methods. The unsupported engine-dispatch
-regression is among the 199 explicit TODOs. Ten chess.ts-only
+total of 87 of 286 upstream methods at that checkpoint. The UCI option update
+adds two untranslated engine tests, for a current total of 87 of 288 methods
+and 201 explicit TODOs. Ten chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
