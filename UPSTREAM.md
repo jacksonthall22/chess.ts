@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-4d9b3bfd860bfa95731d4e208fd98c7c10a15533
-v1.11.1-84-g4d9b3bfd
-2025-10-27 — Open Gaviota tablebases read-only
+0e900e248f0047e6dff0476494d78b9421b0c13e
+v1.11.1-86-g0e900e24
+2025-12-07 — Add Board.gives_checkmate()
 ```
 
-This state prevents the pure-Python Gaviota implementation from opening table
-files with write access. Gaviota remains an explicitly unsupported chess.ts
-module, so no TypeScript runtime change applies.
+This state adds `Board.givesCheckmate()`, a reversible probe that pushes a
+pseudo-legal move, tests the resulting checkmate state, and always restores the
+board after the test completes or throws.
 
 ### Synchronization log
 
@@ -84,6 +84,7 @@ module, so no TypeScript runtime change applies.
 | `624d3a73` | Disabled fail-fast behavior in upstream's CI matrices so all job results remain visible; the chess.ts workflow has no matrix. |
 | `1ce4d3f8` | Added public rank/file aliases, constants, collections, parsers, formatters, and square-helper signatures. The TypeScript parsers fail explicitly instead of leaking JavaScript's `indexOf()` sentinel. |
 | `4d9b3bfd` | Opened Gaviota table files read-only upstream; pending the unsupported module's translation. |
+| `0e900e24` | Added `Board.givesCheckmate()` with restoration guarantees for both successful probes and exceptions. |
 
 ### Intentional upstream divergence
 
@@ -161,7 +162,7 @@ multiple-comment update adds one translated PGN regression, for a current
 total of 87 of 286 upstream methods at that checkpoint. The UCI option update
 adds two untranslated engine tests, for a total of 87 of 288 methods and 201
 explicit TODOs at that checkpoint. The two later Gaviota regressions bring the
-current inventory to 87 of 290 upstream methods and 203 explicit TODOs. Twenty
+current inventory to 87 of 290 upstream methods and 203 explicit TODOs. Thirty-six
 chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
@@ -181,6 +182,11 @@ parsing, reversible push/pop, invalid same-square spellings, and the distinct
 raw-but-illegal `a1a1q` case.
 One guards the independently mirrored python-chess version constant, and
 another protects the unchanged historical transpiler-version marker.
+Twelve cases exhaustively cover the public rank/file constants, names,
+parsers, invalid-input matrix, and unbranded TypeScript signatures. Four more
+cover mating, checking-but-not-mating, non-checking, and exceptional
+`Board.givesCheckmate()` probes while requiring exact FEN and move-stack
+restoration.
 
 An untranslated upstream test is a visible `test.todo`. A translated test that
 exposes an existing parity defect is instead an executable Vitest expected

@@ -774,3 +774,55 @@ describe('Board lc0-style null-move handling', () => {
     )
   })
 })
+
+describe('Board.givesCheckmate state restoration', () => {
+  const snapshot = (board: chess.Board) => ({
+    fen: board.fen({ enPassant: 'fen' }),
+    moveStack: board.moveStack.map(move => move.uci()),
+  })
+
+  test('identifies a mating move without changing the board', () => {
+    const board = new chess.Board()
+    for (const san of ['e4', 'e5', 'Qf3', 'Nc6', 'Bc4', 'Rb8']) {
+      board.pushSan(san)
+    }
+    const before = snapshot(board)
+
+    expect(board.givesCheckmate(chess.Move.fromUci('f3f7'))).toBe(true)
+    expect(snapshot(board)).toEqual(before)
+  })
+
+  test('distinguishes a checking move that is not mate', () => {
+    const board = new chess.Board('4k3/8/8/8/8/8/4R3/4K3 w - - 0 1')
+    const before = snapshot(board)
+
+    expect(board.givesCheckmate(chess.Move.fromUci('e2e7'))).toBe(false)
+    expect(snapshot(board)).toEqual(before)
+  })
+
+  test('returns false for a non-checking move', () => {
+    const board = new chess.Board()
+    const before = snapshot(board)
+
+    expect(board.givesCheckmate(chess.Move.fromUci('e2e4'))).toBe(false)
+    expect(snapshot(board)).toEqual(before)
+  })
+
+  test('restores the board and propagates an isCheckmate failure', () => {
+    const expected = new Error('isCheckmate failed')
+    class ThrowingBoard extends chess.Board {
+      isCheckmate(): boolean {
+        throw expected
+      }
+    }
+
+    const board = new ThrowingBoard()
+    board.pushSan('e4')
+    const before = snapshot(board)
+
+    expect(() => board.givesCheckmate(chess.Move.fromUci('e7e5'))).toThrow(
+      expected,
+    )
+    expect(snapshot(board)).toEqual(before)
+  })
+})
