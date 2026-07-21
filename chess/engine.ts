@@ -4,6 +4,43 @@ import { WHITE, BLACK, Color } from './index'
 // prettier-ignore
 export type WdlModel = "sf" | "sf16" | "sf15.1" | "sf15" | "sf14" | "sf12" | "lichess"
 
+type ScoreTuple = [boolean, boolean, boolean, number, number | null]
+
+const scoreTuplesEqual = (left: ScoreTuple, right: ScoreTuple): boolean =>
+  left.every((value, index) => value === right[index])
+
+const compareScoreTupleValues = (
+  left: boolean | number | null,
+  right: boolean | number | null,
+): number => {
+  if (left === right) {
+    return 0
+  }
+
+  // Valid Score tuples only compare null with null: the preceding tuple
+  // fields distinguish centipawn scores from mate scores. Preserve Python's
+  // failure for an invalid tuple that reaches an ordering comparison between
+  // None and a number.
+  if (left === null || right === null) {
+    throw new TypeError('cannot order a null score value')
+  }
+
+  const normalizedLeft = typeof left === 'boolean' ? Number(left) : left
+  const normalizedRight = typeof right === 'boolean' ? Number(right) : right
+  return normalizedLeft < normalizedRight ? -1 : 1
+}
+
+const compareScoreTuples = (left: ScoreTuple, right: ScoreTuple): number => {
+  for (let index = 0; index < left.length; index += 1) {
+    const comparison = compareScoreTupleValues(left[index], right[index])
+    if (comparison !== 0) {
+      return comparison
+    }
+  }
+
+  return 0
+}
+
 // NOTE: Skipping a bunch of stuff in `python-chess` for running analysis
 
 /**
@@ -176,7 +213,7 @@ export abstract class Score {
 
   abstract abs(): Score
 
-  _scoreTuple(): [boolean, boolean, boolean, number, number | null] {
+  _scoreTuple(): ScoreTuple {
     const mate = this.mate()
     return [
       this instanceof MateGivenType,
@@ -190,7 +227,7 @@ export abstract class Score {
   // __eq__()
   equals(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() === other._scoreTuple()
+      return scoreTuplesEqual(this._scoreTuple(), other._scoreTuple())
     } else {
       return false
     }
@@ -199,7 +236,7 @@ export abstract class Score {
   // __lt__()
   lt(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() < other._scoreTuple()
+      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) < 0
     } else {
       return false
     }
@@ -208,7 +245,7 @@ export abstract class Score {
   // __le__()
   le(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() <= other._scoreTuple()
+      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) <= 0
     } else {
       return false
     }
@@ -217,7 +254,7 @@ export abstract class Score {
   // __gt__()
   gt(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() > other._scoreTuple()
+      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) > 0
     } else {
       return false
     }
@@ -226,7 +263,7 @@ export abstract class Score {
   // __ge__()
   ge(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() >= other._scoreTuple()
+      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) >= 0
     } else {
       return false
     }

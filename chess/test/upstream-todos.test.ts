@@ -104,9 +104,7 @@ describe('PgnTestCase — translation pending', () => {
 describe('EngineTestCase — translation pending', () => {
   test.todo('test_uci_option_map_equality (python-chess test.py:2944)',)
   test.todo('test_uci_option_map_len (python-chess test.py:2963)',)
-  test.todo('test_score_ordering (python-chess test.py:2973)',)
   test.todo('test_score (python-chess test.py:3003)',)
-  test.todo('test_wdl_model (python-chess test.py:3032)',)
   test.todo('test_sf_forced_mates (python-chess test.py:3040)',)
   test.todo('test_sf_options (python-chess test.py:3055)',)
   test.todo('test_sf_analysis (python-chess test.py:3062)',)
@@ -249,5 +247,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Baseline: python-chess cd7f5958289dd08156436a1f84b9ea03cb1f75a1
 // Total upstream tests: 282
-// Translated tests: 82
-// Pending tests: 200
+// Translated tests: 84
+// Pending tests: 198
