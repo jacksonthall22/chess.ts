@@ -5,13 +5,13 @@
 submodule currently pins:
 
 ```text
-18d53b9265c13d6edb6e0ad1bd7e59ab3c8fd25a
-v1.11.1-57-g18d53b92
-2024-12-31 — Remove a redundant Python typing import
+bbf2a05e6b6e3a83651b4333584940bc652cdea2
+v1.11.1-58-gbbf2a05e
+2025-01-08 — Update the source of Gaviota tables
 ```
 
-This state removes an unused Python `Generic` import. TypeScript already has
-its own explicit generic declarations, so no runtime or API change applies.
+This state updates provenance files for bundled Gaviota tablebase data. The
+Gaviota module and its data files remain unsupported in chess.ts.
 
 ### Synchronization log
 
@@ -63,6 +63,7 @@ its own explicit generic declarations, so no runtime or API change applies.
 | `aa98f319` | Merged upstream 1.11.1 release metadata and updated only the mirrored python-chess `__version__`; npm package versioning remains independent. |
 | `78c765b4` | Simplified portable `os.O_BINARY` access in the unsupported Polyglot and Syzygy modules; no TypeScript runtime change applies. |
 | `18d53b92` | Removed an unused Python `Generic` import; TypeScript generic declarations are unaffected. |
+| `bbf2a05e` | Updated upstream Gaviota tablebase data-source records; neither the unsupported module nor its data files are distributed by chess.ts. |
 
 ## Original baseline provenance
 
