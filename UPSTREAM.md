@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-312f3bf07758628e4ee9befbd9e3df7dd5eccea6
-v1.11.1-92-g312f3bf0
-2026-02-13 — Introduce Board._effective_promoted()
+f780f420a3638ded111d619f810c8820ec01b382
+v1.11.1-94-gf780f420
+2026-04-03 — Correct GameNode.add_variation() comment typo
 ```
 
-This state separates the raw promoted-piece bitboard from the promotion mask
-that affects variant-facing rules. Standard chess has no effective promoted
-pieces, while future variant translations can override the hook without
-duplicating core rule and serialization paths.
+This state corrects the spelling of "instantiate" in the one implementation
+comment that identifies `GameNode.addVariation()` as the canonical child-node
+constructor path. There is no runtime behavior change.
 
 ### Synchronization log
 
@@ -89,6 +88,7 @@ duplicating core rule and serialization paths.
 | `11399c63` | Reordered UCI engine configuration so `Hash` follows `Threads`; pending the unsupported engine process layer's translation. |
 | `76cbe984` | Required `BaseBoard.king()` to find exactly one eligible king and ported the multiple-king regression test. |
 | `312f3bf0` | Introduced `_effectivePromoted()` and routed default FEN rendering, king and castling rules, position status, Chess960 recognition, and transposition identity through it. Variant overrides remain pending with the unsupported variant module. Ported the existing promoted-comparison test. |
+| `f780f420` | Corrected the spelling of "instantiate" in the canonical `GameNode.addVariation()` child-construction comment; no runtime behavior changed. |
 
 ### Intentional upstream divergence
 
