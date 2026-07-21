@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-f780f420a3638ded111d619f810c8820ec01b382
-v1.11.1-94-gf780f420
-2026-04-03 — Correct GameNode.add_variation() comment typo
+c0c5cb08436e923c6a925297efe448b907a33480
+v1.11.1-96-gc0c5cb08
+2026-04-03 — Correct README project-description typo
 ```
 
-This state corrects the spelling of "instantiate" in the one implementation
-comment that identifies `GameNode.addVariation()` as the canonical child-node
-constructor path. There is no runtime behavior change.
+This state corrects a spelling mistake in one external-project description in
+upstream's reStructuredText README. The copied chess.ts README does not contain
+that gallery, so no TypeScript documentation or runtime change applies.
 
 ### Synchronization log
 
@@ -89,6 +89,7 @@ constructor path. There is no runtime behavior change.
 | `76cbe984` | Required `BaseBoard.king()` to find exactly one eligible king and ported the multiple-king regression test. |
 | `312f3bf0` | Introduced `_effectivePromoted()` and routed default FEN rendering, king and castling rules, position status, Chess960 recognition, and transposition identity through it. Variant overrides remain pending with the unsupported variant module. Ported the existing promoted-comparison test. |
 | `f780f420` | Corrected the spelling of "instantiate" in the canonical `GameNode.addVariation()` child-construction comment; no runtime behavior changed. |
+| `c0c5cb08` | Corrected a spelling mistake in an upstream README external-project description; the gallery is not copied into chess.ts. |
 
 ### Intentional upstream divergence
 
