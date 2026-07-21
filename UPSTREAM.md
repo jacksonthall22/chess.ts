@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-0c8fed280f5d0ea237dc5a667081665d65412643
-v1.11.0-48-g0c8fed28
-2024-10-13 — Fix builder constructor typing
+ef13fdbfdb03a10e520a834b32e8a6cac988323a
+v1.11.0-49-gef13fdbf
+2024-10-13 — Run pyright in CI
 ```
 
-This state makes `GameBuilder` and `HeadersBuilder` generic over their concrete
-model subclasses. Constructor inference, the models' static `builder()` helpers,
-and builder results now retain that subtype in TypeScript as well as at runtime.
+This state adds Pyright to upstream's Python CI. chess.ts already runs strict
+TypeScript compilation for both library and test sources, so no workflow or
+runtime change applies.
 
 ### Synchronization log
 
@@ -57,6 +57,7 @@ and builder results now retain that subtype in TypeScript as well as at runtime.
 | `7553d411` | Made `GameNode.parent` and `GameNode.move` getter-only, with narrowed immutable accessors on roots and child nodes. This prevents consumers from corrupting ancestry or move identity and is an upstream-compatible breaking change. |
 | `f7736478` | Initialized the PGN reader board stack before the skip-game branch, matching upstream control-flow typing. |
 | `0c8fed28` | Made PGN builders generic and preserved concrete `Game`/`Headers` subclasses through constructors, static helpers, and results. |
+| `ef13fdbf` | Upstream Pyright CI integration; strict TypeScript library/test compilation already covers the corresponding surface. |
 
 ## Original baseline provenance
 
