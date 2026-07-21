@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-2b2f1497de4131c3b7fb967c0578e063d2b9908d
-v1.11.1-99-g2b2f1497
-2026-04-03 — Add BaseBoard.piece_count()
+b53c6e60d996a5a674efc036f8fd14965591ae4c
+v1.11.1-101-gb53c6e60
+2026-05-30 — Correct Board.chess960_pos() range documentation
 ```
 
-This state adds the public `BaseBoard.pieceCount()` convenience method and
-ports the complete upstream board-clearing test that now exercises it. The
-Gaviota and Syzygy call-site updates remain within unsupported modules.
+This state corrects `Board.chess960Pos()` documentation to cover all 960
+Scharnagl indices, from 0 through 959. There is no runtime behavior change.
 
 ### Synchronization log
 
@@ -91,6 +90,7 @@ Gaviota and Syzygy call-site updates remain within unsupported modules.
 | `f780f420` | Corrected the spelling of "instantiate" in the canonical `GameNode.addVariation()` child-construction comment; no runtime behavior changed. |
 | `c0c5cb08` | Corrected a spelling mistake in an upstream README external-project description; the gallery is not copied into chess.ts. |
 | `2b2f1497` | Added `BaseBoard.pieceCount()` and ported the complete board-clearing regression test. Gaviota and Syzygy call-site updates remain pending with those unsupported modules. |
+| `b53c6e60` | Corrected `Board.chess960Pos()` documentation from the incomplete 0–956 range to all indices 0–959. |
 
 ### Intentional upstream divergence
 

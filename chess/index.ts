@@ -3748,7 +3748,7 @@ export class Board extends BaseBoard {
   }
 
   /**
-   * Gets the Chess960 starting position index between 0 and 956,
+   * Gets the Chess960 starting position index between 0 and 959,
    * or ``None`` if the current position is not a Chess960 starting
    * position.
    *
