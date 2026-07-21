@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-3829d262c325b61b0004a314347f985008a9eb84
-v1.10.0-80-g3829d262
-2024-06-17 — Factor out Tablebase.add_file()
+a41c3c88022fd97ab0eaf7b032a3158b69628b66
+v1.10.0-81-ga41c3c88
+2024-07-04 — Do not eagerly check syzygy max pieces (fixes #1093)
 ```
 
-This state factors out `Tablebase.add_file()` in the upstream Syzygy module.
-The chess.ts Syzygy module is still empty and every upstream Syzygy test remains
-an explicit TODO, so this change is recorded as pending that module's translation.
+This state defers the upstream Syzygy tablebase maximum-piece check until a
+probe. The chess.ts Syzygy module is still empty and every upstream Syzygy test
+remains an explicit TODO, so this change is pending that module's translation.
 
 ### Synchronization log
 
@@ -28,6 +28,7 @@ an explicit TODO, so this change is recorded as pending that module's translatio
 | `eaa6eb3b` | Corrected the upstream Crazyhouse perft fixture; chess.ts does not mirror that fixture. |
 | `59cadb1f` | Upstream README external-project gallery only; not applicable. |
 | `3829d262` | Upstream Syzygy `Tablebase.add_file()` refactor; pending the unsupported module's translation. |
+| `a41c3c88` | Upstream Syzygy maximum-piece check deferral; pending the unsupported module's translation. |
 
 ## Original baseline provenance
 
