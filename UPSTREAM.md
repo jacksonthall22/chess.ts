@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-474c87bfcccb8e2aa78a4a94414af3b747340f31
-v1.10.0-83-g474c87bf
-2024-07-10 — Add another SAN disambiguation test (niklasf/shakmaty#77)
+ec8ecec5c0277691ec76041e82bf13140f7f719a
+v1.10.0-84-gec8ecec5
+2024-07-11 — chess-playground discontinued
 ```
 
-This state adds a regression assertion for rank-only SAN disambiguation in a
-checkmating capture. The assertion is ported into the already translated
-`BoardTestCase.testSan` method.
+This state removes a discontinued external project from the upstream README.
+It does not change the python-chess API, runtime, or tests, so no TypeScript
+change applies.
 
 ### Synchronization log
 
@@ -31,6 +31,7 @@ checkmating capture. The assertion is ported into the already translated
 | `a41c3c88` | Upstream Syzygy maximum-piece check deferral; pending the unsupported module's translation. |
 | `95803fc6` | Upstream Syzygy alpha-beta search limit; pending the unsupported module's translation. |
 | `474c87bf` | Ported the additional SAN disambiguation regression assertion. |
+| `ec8ecec5` | Upstream README listing removal only; not applicable. |
 
 ## Original baseline provenance
 
