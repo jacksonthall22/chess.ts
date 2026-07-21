@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-aa98f31961275818f829168de696eceac2c2f916
-v1.11.1-54-gaa98f319
-2024-12-20 — Merge the upstream 1.11.1 release branch
+78c765b4dd1741df3a569c3cd96a079d06298823
+v1.11.1-55-g78c765b4
+2024-12-20 — Simplify portable `os.O_BINARY` access
 ```
 
-This state merges the upstream 1.11.1 release metadata. The mirrored
-`__version__` is now `1.11.1`; the independently versioned npm package and the
-historical transpiler-version marker remain unchanged.
+This state simplifies Windows binary-mode compatibility in the unsupported
+Polyglot and Syzygy modules. No TypeScript runtime change applies.
 
 ### Synchronization log
 
@@ -62,6 +61,7 @@ historical transpiler-version marker remain unchanged.
 | `d625be1d` | Upstream UCI `movesleft` info parsing; pending the unsupported engine process layer, with exact test movement tracked as TODOs. |
 | `518d662e` | Accepted lc0's `a1a1` null-move spelling, restored `Board.parseUci()`'s null-move fast path, and characterized parsing plus reversible push/pop behavior. |
 | `aa98f319` | Merged upstream 1.11.1 release metadata and updated only the mirrored python-chess `__version__`; npm package versioning remains independent. |
+| `78c765b4` | Simplified portable `os.O_BINARY` access in the unsupported Polyglot and Syzygy modules; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
