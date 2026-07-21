@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
-import { describe, expect, expectTypeOf, test } from 'vitest'
+import { describe, expect, expectTypeOf, test, vi } from 'vitest'
 
 import * as chess from '../index'
 import * as pgn from '../pgn'
@@ -78,6 +78,95 @@ class PgnTestCase extends TestCase {
     const fileExporter = new pgn.FileExporter(virtualFile)
     game.accept(fileExporter)
     this.assertEqual(virtualFile.read(), `${exported}\n\n`)
+  }
+
+  testSetup(): void {
+    const game = new pgn.Game()
+    this.assertEqual(game.board(), new chess.Board())
+    this.assertNotIn('FEN', game.headers)
+    this.assertNotIn('SetUp', game.headers)
+    this.assertNotIn('Variant', game.headers)
+
+    let fen =
+      'rnbqkbnr/pp1ppp1p/6p1/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4'
+    game.setup(fen)
+    this.assertEqual(game.headers.get('FEN'), fen)
+    this.assertEqual(game.headers.get('SetUp'), '1')
+    this.assertNotIn('Variant', game.headers)
+
+    game.setup(chess.STARTING_FEN)
+    this.assertNotIn('FEN', game.headers)
+    this.assertNotIn('SetUp', game.headers)
+    this.assertNotIn('Variant', game.headers)
+
+    // Setup again, while starting FEN is already set.
+    game.setup(chess.STARTING_FEN)
+    this.assertNotIn('FEN', game.headers)
+    this.assertNotIn('SetUp', game.headers)
+    this.assertNotIn('Variant', game.headers)
+
+    game.setup(new chess.Board(fen))
+    this.assertEqual(game.headers.get('FEN'), fen)
+    this.assertEqual(game.headers.get('SetUp'), '1')
+    this.assertNotIn('Variant', game.headers)
+
+    // Chess960 starting position #283.
+    fen = 'rkbqrnnb/pppppppp/8/8/8/8/PPPPPPPP/RKBQRNNB w KQkq - 0 1'
+    game.setup(fen)
+    this.assertEqual(game.headers.get('FEN'), fen)
+    this.assertEqual(game.headers.get('SetUp'), '1')
+    this.assertEqual(game.headers.get('Variant'), 'Chess960')
+    const board = game.board()
+    this.assertTrue(board.chess960)
+    this.assertEqual(board.fen(), fen)
+  }
+
+  testReadGame(): void {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        '../../python-chess/data/pgn/kasparov-deep-blue-1997.pgn',
+      ),
+      'utf8',
+    )
+    const handle = new pgn.StringIO(source)
+    const firstGame = pgn.readGame(handle)
+    const secondGame = pgn.readGame(handle)
+    const thirdGame = pgn.readGame(handle)
+    const fourthGame = pgn.readGame(handle)
+    const fifthGame = pgn.readGame(handle)
+    const sixthGame = pgn.readGame(handle)
+    this.assertEqual(pgn.readGame(handle), null)
+
+    if (
+      firstGame === null ||
+      secondGame === null ||
+      thirdGame === null ||
+      fourthGame === null ||
+      fifthGame === null ||
+      sixthGame === null
+    ) {
+      throw new Error('Expected the PGN fixture to contain six games')
+    }
+
+    this.assertEqual(
+      firstGame.headers.get('Event'),
+      'IBM Man-Machine, New York USA',
+    )
+    this.assertEqual(firstGame.headers.get('Site'), '01')
+    this.assertEqual(firstGame.headers.get('Result'), '1-0')
+
+    this.assertEqual(
+      secondGame.headers.get('Event'),
+      'IBM Man-Machine, New York USA',
+    )
+    this.assertEqual(secondGame.headers.get('Site'), '02')
+
+    this.assertEqual(thirdGame.headers.get('ECO'), 'A00')
+    this.assertEqual(fourthGame.headers.get('PlyCount'), '111')
+    this.assertEqual(fifthGame.headers.get('Result'), '1/2-1/2')
+    this.assertEqual(sixthGame.headers.get('White'), 'Deep Blue (Computer)')
+    this.assertEqual(sixthGame.headers.get('Result'), '1-0')
   }
 
   testReadGameWithMulticommentMove(): void {
@@ -181,6 +270,142 @@ class PgnTestCase extends TestCase {
     this.assertEqual(node.move, chess.Move.fromUci('d2d4'))
     this.assertFalse(node.comments.length !== 0)
     this.assertEqual(node.startingComments, ['Start of variation'])
+  }
+
+  testAnnotationSymbols(): void {
+    const game = pgn.readGame(
+      new pgn.StringIO('1. b4?! g6 2. Bb2 Nc6? 3. Bxh8!!'),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+
+    let node = game.variation(chess.Move.fromUci('b2b4'))
+    this.assertIn(pgn.NAG_DUBIOUS_MOVE, node.nags)
+    this.assertEqual(node.nags.size, 1)
+
+    node = node.getitem(0)
+    this.assertEqual(node.nags.size, 0)
+
+    node = node.getitem(0)
+    this.assertEqual(node.nags.size, 0)
+
+    node = node.getitem(0)
+    this.assertIn(pgn.NAG_MISTAKE, node.nags)
+    this.assertEqual(node.nags.size, 1)
+
+    node = node.getitem(0)
+    this.assertIn(pgn.NAG_BRILLIANT_MOVE, node.nags)
+    this.assertEqual(node.nags.size, 1)
+  }
+
+  testBlackToMove(): void {
+    const game = new pgn.Game()
+    game.setup('8/8/4k3/8/4P3/4K3/8/8 b - - 0 17')
+    let node: pgn.GameNode = game
+    node = node.addMainVariation(chess.Move.fromUci('e6d6'))
+    node = node.addMainVariation(chess.Move.fromUci('e3d4'))
+    node.addMainVariation(chess.Move.fromUci('d6e6'))
+
+    const expected = `[Event "?"]
+[Site "?"]
+[Date "????.??.??"]
+[Round "?"]
+[White "?"]
+[Black "?"]
+[Result "*"]
+[FEN "8/8/4k3/8/4P3/4K3/8/8 b - - 0 17"]
+[SetUp "1"]
+
+17... Kd6 18. Kd4 Ke6 *`
+
+    this.assertEqual(game.toString(), expected)
+  }
+
+  testErrors(): void {
+    const handle = new pgn.StringIO(`
+            1. e4 Qa1 e5 2. Qxf8
+
+            1. a3`)
+    const logger = vi.spyOn(pgn.LOGGER, 'error').mockImplementation(() => {})
+    let game: pgn.Game | null
+    try {
+      game = pgn.readGame(handle)
+    } finally {
+      logger.mockRestore()
+    }
+    if (game === null) {
+      throw new Error('Expected the PGN to contain the first game')
+    }
+    this.assertEqual(game.errors.length, 1)
+    this.assertEqual(
+      game.end().board().fen(),
+      'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+    )
+
+    game = pgn.readGame(handle)
+    if (game === null) {
+      throw new Error('Expected the PGN to contain the second game')
+    }
+    this.assertEqual(
+      game.end().board().fen(),
+      'rnbqkbnr/pppppppp/8/8/8/P7/1PPPPPPP/RNBQKBNR b KQkq - 0 1',
+    )
+  }
+
+  testSemicolonComment(): void {
+    const game = pgn.readGame(new pgn.StringIO('1. e4 ; e5'))
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    const node = game.next()
+    if (node === null) {
+      throw new Error('Expected the game to contain a move')
+    }
+    this.assertEqual(node.move, chess.Move.fromUci('e2e4'))
+    this.assertTrue(node.isEnd())
+  }
+
+  testNoMovetext(): void {
+    const handle = new pgn.StringIO('[Event "A"]\n\n\n[Event "B"]\n')
+
+    let game = pgn.readGame(handle)
+    if (game === null) {
+      throw new Error('Expected the PGN to contain the first game')
+    }
+    this.assertEqual(game.headers.get('Event'), 'A')
+
+    game = pgn.readGame(handle)
+    if (game === null) {
+      throw new Error('Expected the PGN to contain the second game')
+    }
+    this.assertEqual(game.headers.get('Event'), 'B')
+
+    this.assertEqual(pgn.readGame(handle), null)
+  }
+
+  testSubgame(): void {
+    const game = pgn.readGame(
+      new pgn.StringIO('1. d4 d5 (1... Nf6 2. c4 (2. Nf3 g6 3. g3))'),
+    )
+    if (game === null) {
+      throw new Error('Expected the PGN to contain a game')
+    }
+    const mainline = game.next()
+    if (mainline === null) {
+      throw new Error('Expected the game to contain a move')
+    }
+    const node = mainline.variations[1]
+    const subgame = node.acceptSubgame(new pgn.GameBuilder())
+    this.assertEqual(
+      subgame.headers.get('FEN'),
+      'rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2',
+    )
+    this.assertEqual(subgame.next()?.move, chess.Move.fromUci('c2c4'))
+    this.assertEqual(
+      subgame.variations[1].move,
+      chess.Move.fromUci('g1f3'),
+    )
   }
 
   testPromoteToMain(): void {
@@ -418,6 +643,23 @@ class PgnTestCase extends TestCase {
     this.assertEqual(game.clock(), 0)
   }
 
+  testNodeTurn(): void {
+    let game = new pgn.Game()
+    this.assertEqual(game.turn(), chess.WHITE)
+    let node = game.addVariation(chess.Move.fromUci('a2a3'))
+    this.assertEqual(node.turn(), chess.BLACK)
+    node = node.addVariation(chess.Move.fromUci('a7a6'))
+    this.assertEqual(node.turn(), chess.WHITE)
+
+    game = new pgn.Game()
+    game.setup('4k3/8/8/8/8/8/8/4K3 b - - 7 6')
+    this.assertEqual(game.turn(), chess.BLACK)
+    node = game.addVariation(chess.Move.fromUci('e8e7'))
+    this.assertEqual(node.turn(), chess.WHITE)
+    node = node.addVariation(chess.Move.fromUci('e1e2'))
+    this.assertEqual(node.turn(), chess.BLACK)
+  }
+
   testMainline(): void {
     const moves = ['d2d3', 'g8f6', 'e2e4'].map(chess.Move.fromUci)
 
@@ -461,12 +703,20 @@ class PgnTestCase extends TestCase {
 registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2097,
+    testSetup: 2159,
     testPromoteToMain: 2198,
+    testReadGame: 2210,
     testReadGameWithLeadingWhitespaceBeforeHeader: 2236,
     testReadGameWithMulticommentMove: 2254,
     testCommentAtEol: 2262,
     testGameStartingComment: 2361,
     testGameStartingVariation: 2371,
+    testAnnotationSymbols: 2389,
+    testBlackToMove: 2631,
+    testErrors: 2709,
+    testSemicolonComment: 2797,
+    testNoMovetext: 2809,
+    testSubgame: 2824,
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
     testAddLine: 2723,
@@ -474,6 +724,7 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testAnnotations: 2865,
     testFloatEmt: 2916,
     testFloatClk: 2929,
+    testNodeTurn: 2942,
     testUtf8Bom: 2984,
   },
 })

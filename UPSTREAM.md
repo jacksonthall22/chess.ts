@@ -205,6 +205,10 @@ fifty-move, and irreversible-move tests brings the current inventory to 97 of
 292 methods and 195 explicit TODOs. The fifty-move test exposed and corrected
 a translation defect: claim probes must enumerate legal moves, not merely
 pseudo-legal moves, so a checkmated player cannot claim a draw.
+Translating nine already-supported PGN behaviors—game setup, sequential fixture
+reading, annotation symbols, black-to-move export, parser error recovery,
+semicolon termination, header-only games, subgame projection, and node turns—
+brings the current inventory to 106 of 292 methods and 186 explicit TODOs.
 Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
