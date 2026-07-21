@@ -1,8 +1,23 @@
-# python-chess baseline
+# python-chess synchronization
 
 `chess.ts` is a mechanical TypeScript translation of
 [`python-chess`](https://github.com/niklasf/python-chess). The `python-chess/`
-submodule pins this selected upstream baseline:
+submodule currently pins:
+
+```text
+315052c0105ea1e0d0b4e1cbee70577fd9349f2d
+v1.10.0-71-g315052c0
+2024-02-24 — Fix argument syntax
+```
+
+The preceding first-parent state added the Stockfish 16.1 WDL model. This state
+only corrects its Python `ply=int` annotation to `ply: int`; the mechanically
+translated TypeScript helper already required `ply: number`, so this explicit
+synchronization step has no TypeScript runtime or test delta.
+
+## Original baseline provenance
+
+The original selected upstream baseline is:
 
 ```text
 cd7f5958289dd08156436a1f84b9ea03cb1f75a1
@@ -115,7 +130,7 @@ incomplete runtime metadata.
 
 ## Frozen upstream verification
 
-The selected upstream commit was also run directly under Python 3.14.5:
+The original selected baseline was also run directly under Python 3.14.5:
 
 ```text
 Ran 282 tests

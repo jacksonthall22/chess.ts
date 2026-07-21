@@ -2,7 +2,7 @@ import { bool as utilsBool } from './utils'
 import { WHITE, BLACK, Color } from './index'
 
 // prettier-ignore
-export type WdlModel = "sf" | "sf16" | "sf15.1" | "sf15" | "sf14" | "sf12" | "lichess"
+export type WdlModel = "sf" | "sf16.1" | "sf16" | "sf15.1" | "sf15" | "sf14" | "sf12" | "lichess"
 
 type ScoreTuple = [boolean, boolean, boolean, number, number | null]
 
@@ -270,6 +270,19 @@ export abstract class Score {
   }
 }
 
+export const _sf161Wins = (cp: number, { ply }: { ply: number }): number => {
+  // https://github.com/official-stockfish/Stockfish/blob/sf_16.1/src/uci.cpp#L48
+  const NormalizeToPawnValue = 356
+  // https://github.com/official-stockfish/Stockfish/blob/sf_16.1/src/uci.cpp#L383-L384
+  const m = Math.min(120, Math.max(8, ply / 2 + 1)) / 32
+  const a =
+    ((-1.06249702 * m + 7.42016937) * m + 0.89425629) * m + 348.60356174
+  const b =
+    ((-5.3312219 * m + 39.57831533) * m + -90.84473771) * m + 123.40620748
+  const x = Math.min(4000, Math.max((cp * NormalizeToPawnValue) / 100, -4000))
+  return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
+}
+
 export const _sf16Wins = (cp: number, { ply }: { ply: number }): number => {
   // https://github.com/official-stockfish/Stockfish/blob/sf16/src/uci.h//L38
   const NormalizeToPawnValue = 328
@@ -374,9 +387,12 @@ export class Cp extends Score {
     } else if (model === 'sf15.1') {
       wins = _sf151Wins(this.cp, { ply })
       losses = _sf151Wins(-this.cp, { ply })
-    } else {
+    } else if (model === 'sf16') {
       wins = _sf16Wins(this.cp, { ply })
       losses = _sf16Wins(-this.cp, { ply })
+    } else {
+      wins = _sf161Wins(this.cp, { ply })
+      losses = _sf161Wins(-this.cp, { ply })
     }
     const draws = 1000 - wins - losses
     return new Wdl(wins, draws, losses)
@@ -712,6 +728,7 @@ export class Wdl {
 export default {
   PovScore,
   Score,
+  _sf161Wins,
   _sf16Wins,
   _sf151Wins,
   _sf15Wins,
