@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-91699cd1eb1785e501e68b208b68b9ca9a3c2543
-v1.11.1-62-g91699cd1
-2025-01-11 — Shorten the Gaviota implementation
+3a974697b31e39ea8ad7e115350dc190464d7a76
+v1.11.1-63-g3a974697
+2025-01-11 — Use imports only for Gaviota types
 ```
 
-This state rewrites the unsupported Gaviota module. Upstream later reverted
-this rewrite because of functional regressions; chess.ts has no corresponding
-runtime code, and this intermediate state is retained only for exact history.
+This state narrows Python imports in the unsupported Gaviota module to
+type-only symbols. No TypeScript runtime change applies.
 
 ### Synchronization log
 
@@ -66,6 +65,7 @@ runtime code, and this intermediate state is retained only for exact history.
 | `18d53b92` | Removed an unused Python `Generic` import; TypeScript generic declarations are unaffected. |
 | `bbf2a05e` | Updated upstream Gaviota tablebase data-source records; neither the unsupported module nor its data files are distributed by chess.ts. |
 | `91699cd1` | Recorded the shorter Gaviota rewrite exactly. It remains unsupported in chess.ts and was later reverted upstream after regressions. |
+| `3a974697` | Narrowed imports in the unsupported Gaviota module to type-only symbols; no TypeScript runtime change applies. |
 
 ## Original baseline provenance
 
