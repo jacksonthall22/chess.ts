@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-5826ef5dd1c463654d2479408a7ddf56a91603d6
-v1.10.0-102-g5826ef5d
-2024-09-09 — Merge pull request #1104 from Lukasel/master
+0e7fabc8ae0127a994aaece31e3c69a510cef527
+v1.10.0-103-g0e7fabc8
+2024-09-27 — Test reading PGN with UTF-8 BOM
 ```
 
-This state fixes SVG board offsets when borders are enabled. chess.ts currently
-implements only `svg.Arrow`, so the unsupported board renderer change is
-recorded without a TypeScript runtime change.
+This state adds the upstream UTF-8 BOM PGN fixture and ports its regression
+test. The test reads the exact fixture bytes as ordinary UTF-8, proving that
+the parser ignores the leading BOM and then reads both games from one stream.
 
 ### Synchronization log
 
@@ -41,6 +41,7 @@ recorded without a TypeScript runtime change.
 | `71e7c31f` | Engine protocol assertion diagnostics; unsupported module, so not applicable. |
 | `72992166` | Engine protocol dispatch fix and regression test; runtime remains unsupported and the test is tracked as a TODO. |
 | `5826ef5d` | SVG board-offset fix; pending the unsupported board renderer's translation. |
+| `0e7fabc8` | Added and ported the UTF-8 BOM PGN fixture regression. |
 
 ## Original baseline provenance
 
@@ -103,9 +104,9 @@ count of the remaining work.
 
 The first parity pass translates six additional PGN tests and two Engine tests,
 bringing that checkpoint to 84 passing upstream methods. The EPD opcode update
-adds one more translated regression test, for a current total of 85 passing
-upstream methods. The later unsupported engine-dispatch regression brings the
-explicit TODO count to 199. Eight chess.ts-only characterizations
+adds one translated regression test, and the UTF-8 BOM regression adds another,
+for a current total of 86 of 285 upstream methods. The unsupported
+engine-dispatch regression is among the 199 explicit TODOs. Eight chess.ts-only characterizations
 cover the original three game-tree cases plus polymorphic `BaseBoard`
 construction, Python-compatible float formatting, Unicode-aware PGN wrapping,
 comment sanitization, and attack-query occupancy overrides.
