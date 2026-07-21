@@ -5,15 +5,14 @@
 submodule currently pins:
 
 ```text
-716a0b9459480b852b5169a0f1b0b3dbecd3be31
-v1.10.0-75-g716a0b94
-2024-05-04 — Require that EPD opcodes start with letter (fixes #1080)
+df714e39a559135c51228cca6a7cb5c716756ee3
+v1.10.0-76-gdf714e39
+2024-05-04 — Fixup invalid EPDs in chess960.perft file
 ```
 
-This state rejects malformed EPD operation codes that do not begin with a
-letter. The TypeScript translation uses a Unicode letter property escape to
-preserve Python's `str.isalpha()` behavior for the first code point and ports
-the upstream regression test that rejects a full FEN passed as an EPD.
+This state removes the now-invalid move counters from the upstream Chess960
+perft fixture. chess.ts does not mirror or consume that fixture, so no
+TypeScript runtime or test change applies.
 
 ### Synchronization log
 
@@ -25,6 +24,7 @@ the upstream regression test that rejects a full FEN passed as an EPD.
 | `4c7a9025` | Python `TypeAlias` annotations; TypeScript aliases already explicit. |
 | `6af0ff4c` | Expanded core constants into individually typed declarations and named arrays. |
 | `716a0b94` | Required EPD operation codes to begin with a Unicode letter and ported the regression test. |
+| `df714e39` | Corrected the upstream Chess960 perft fixture; chess.ts does not mirror that fixture. |
 
 ## Original baseline provenance
 
