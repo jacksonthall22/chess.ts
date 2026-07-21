@@ -5,13 +5,13 @@
 submodule currently pins:
 
 ```text
-78c765b4dd1741df3a569c3cd96a079d06298823
-v1.11.1-55-g78c765b4
-2024-12-20 — Simplify portable `os.O_BINARY` access
+18d53b9265c13d6edb6e0ad1bd7e59ab3c8fd25a
+v1.11.1-57-g18d53b92
+2024-12-31 — Remove a redundant Python typing import
 ```
 
-This state simplifies Windows binary-mode compatibility in the unsupported
-Polyglot and Syzygy modules. No TypeScript runtime change applies.
+This state removes an unused Python `Generic` import. TypeScript already has
+its own explicit generic declarations, so no runtime or API change applies.
 
 ### Synchronization log
 
@@ -62,6 +62,7 @@ Polyglot and Syzygy modules. No TypeScript runtime change applies.
 | `518d662e` | Accepted lc0's `a1a1` null-move spelling, restored `Board.parseUci()`'s null-move fast path, and characterized parsing plus reversible push/pop behavior. |
 | `aa98f319` | Merged upstream 1.11.1 release metadata and updated only the mirrored python-chess `__version__`; npm package versioning remains independent. |
 | `78c765b4` | Simplified portable `os.O_BINARY` access in the unsupported Polyglot and Syzygy modules; no TypeScript runtime change applies. |
+| `18d53b92` | Removed an unused Python `Generic` import; TypeScript generic declarations are unaffected. |
 
 ## Original baseline provenance
 
