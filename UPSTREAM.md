@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-e4386c2f1efcb686c1d6222681cc84d1f0b06ded
-v1.11.1-77-ge4386c2f
-2025-10-11 — Remove DefaultEventLoopPolicy
+e974a37e52a59709a0988872a12c1f01244a8c15
+v1.11.1-78-ge974a37e
+2025-10-11 — Disambiguate Stockfish forced-mate test
 ```
 
-This state removes Python's deprecated `DefaultEventLoopPolicy` compatibility
-layer from the unsupported engine process module. No TypeScript runtime change
-applies.
+This state narrows the mate horizon in upstream's external Stockfish regression
+to avoid an ambiguous mating line. The unsupported engine integration test
+remains an explicit translation TODO with its exact source identity tracked.
 
 ### Synchronization log
 
@@ -79,6 +79,7 @@ applies.
 | `6b1cfedd` | Adjusted Python bytearray construction in the unsupported Gaviota module for newer mypy releases; no TypeScript runtime change applies. |
 | `376d6036` | Added Python 3.14 to upstream packaging and CI metadata; no TypeScript runtime or tooling change applies. |
 | `e4386c2f` | Removed Python's deprecated `DefaultEventLoopPolicy` compatibility layer from the unsupported engine process module; no TypeScript runtime change applies. |
+| `e974a37e` | Narrowed the external Stockfish forced-mate test horizon to avoid an ambiguous mating line; the unsupported integration test remains an explicit TODO. |
 
 ## Original baseline provenance
 
