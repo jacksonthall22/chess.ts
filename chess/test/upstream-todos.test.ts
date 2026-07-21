@@ -65,7 +65,6 @@ describe('PgnTestCase — translation pending', () => {
   test.todo('test_tricky_skip_game (python-chess test.py:2490)',)
   test.todo('test_read_headers (python-chess test.py:2523)',)
   test.todo('test_parse_time_control (python-chess test.py:2540)',)
-  test.todo('test_visit_board (python-chess test.py:2587)',)
   test.todo('test_result_termination_marker (python-chess test.py:2654)',)
   test.todo('test_missing_setup_tag (python-chess test.py:2659)',)
   test.todo('test_chessbase_empty_line (python-chess test.py:2685)',)
@@ -81,7 +80,6 @@ describe('PgnTestCase — translation pending', () => {
   test.todo('test_my_game_node (python-chess test.py:2838)',)
   test.todo('test_recursion (python-chess test.py:2855)',)
   test.todo('test_eval (python-chess test.py:2910)',)
-  test.todo('test_skip_inner_variation (python-chess test.py:2958)',)
 })
 
 describe('EngineTestCase — translation pending', () => {
@@ -235,5 +233,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Upstream pin: python-chess 9c24454dcea4f8a30259d811a2f10b26e911deb4
 // Total upstream tests: 292
-// Translated tests: 106
-// Pending tests: 186
+// Translated tests: 108
+// Pending tests: 184
