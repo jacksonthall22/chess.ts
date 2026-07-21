@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-8412bd56a282f7fe7071a8b1788b6b791d5e7b0e
-v1.11.1-79-g8412bd56
-2025-10-11 — Update coroutine-function inspection
+624d3a730c180e749ea04a473a828b9c31ff52a4
+v1.11.1-80-g624d3a73
+2025-10-11 — Preserve results from all CI matrix jobs
 ```
 
-This state updates coroutine-function introspection in the unsupported Python
-engine process layer for Python 3.15 compatibility. No TypeScript runtime change
-applies.
+This state disables fail-fast behavior in upstream's operating-system and
+Python-version CI matrices. The chess.ts workflow has no matrix, so no
+corresponding workflow change applies.
 
 ### Synchronization log
 
@@ -81,6 +81,7 @@ applies.
 | `e4386c2f` | Removed Python's deprecated `DefaultEventLoopPolicy` compatibility layer from the unsupported engine process module; no TypeScript runtime change applies. |
 | `e974a37e` | Narrowed the external Stockfish forced-mate test horizon to avoid an ambiguous mating line; the unsupported integration test remains an explicit TODO. |
 | `8412bd56` | Updated coroutine-function introspection in the unsupported Python engine process layer for Python 3.15 compatibility; no TypeScript runtime change applies. |
+| `624d3a73` | Disabled fail-fast behavior in upstream's CI matrices so all job results remain visible; the chess.ts workflow has no matrix. |
 
 ## Original baseline provenance
 
