@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-7553d4115f69368e2d7bf07a90773cea128d7d11
-v1.11.0-46-g7553d411
-2024-10-13 — Make chess.pgn.GameNode pass pyright subtyping check
+f7736478cbe6e99bb77a7719bfafa79e9a40eef0
+v1.11.0-47-gf7736478
+2024-10-13 — Initialize board_stack even on skip_game path
 ```
 
-This state makes `GameNode.parent` and `GameNode.move` getter-only, with
-narrowed accessors on `Game` and `ChildNode`. This matches upstream's runtime
-contract and prevents consumers from corrupting ancestry or move identity.
+This state gives the PGN reader's board stack an explicit empty initial value
+before header processing. Skip paths still return before movetext parsing, but
+the variable now has one well-defined value on every control-flow path.
 
 ### Synchronization log
 
@@ -55,6 +55,7 @@ contract and prevents consumers from corrupting ancestry or move identity.
 | `e2041699` | Aligned the core en-passant capture-square expression; Python-only definite assignment and unsupported engine/Syzygy typing changes are not applicable. |
 | `c42749de` | Upstream engine protocol `options` abstraction; pending the unsupported engine protocol's translation. |
 | `7553d411` | Made `GameNode.parent` and `GameNode.move` getter-only, with narrowed immutable accessors on roots and child nodes. This prevents consumers from corrupting ancestry or move identity and is an upstream-compatible breaking change. |
+| `f7736478` | Initialized the PGN reader board stack before the skip-game branch, matching upstream control-flow typing. |
 
 ## Original baseline provenance
 
