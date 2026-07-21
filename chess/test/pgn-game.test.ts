@@ -454,6 +454,15 @@ registerTestCase('PgnTestCase', PgnTestCase, {
 })
 
 describe('GameNode parity characterizations not covered upstream', () => {
+  test('next returns null when a node has no mainline child', () => {
+    const game = new pgn.Game()
+    expect(game.next()).toBeNull()
+
+    const child = game.addVariation(chess.Move.fromUci('e2e4'))
+    expect(game.next()).toBe(child)
+    expect(child.next()).toBeNull()
+  })
+
   test('comment normalization preserves aliases and visitor boundary shapes', () => {
     class CommentBoundaryVisitor extends pgn.BaseVisitor<
       Array<string | string[]>
