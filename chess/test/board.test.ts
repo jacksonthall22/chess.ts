@@ -697,6 +697,147 @@ class BoardTestCase extends TestCase {
     this.assertEqual(board.pseudoLegalMoves.count(), 8 + 4 + 3 + 2 + 1 + 6 + 9)
   }
 
+  testEquality(): void {
+    this.assertEqual(new chess.Board(), new chess.Board())
+    this.assertFalse(!new chess.Board().equals(new chess.Board()))
+
+    const a = new chess.Board()
+    a.pushSan('d4')
+    const b = new chess.Board()
+    b.pushSan('d3')
+    this.assertNotEqual(a, b)
+    this.assertFalse(a.equals(b))
+  }
+
+  testNullMoves(): void {
+    this.assertEqual(chess.Move.null().toString(), '0000')
+    this.assertEqual(chess.Move.null().uci(), '0000')
+    this.assertFalse(chess.Move.null().bool())
+
+    const fen =
+      'rnbqkbnr/ppp1pppp/8/2Pp4/8/8/PP1PPPPP/RNBQKBNR w KQkq d6 0 2'
+    const board = new chess.Board(fen)
+
+    this.assertEqual(chess.Move.fromUci('0000'), board.pushSan('--'))
+    this.assertEqual(
+      board.fen(),
+      'rnbqkbnr/ppp1pppp/8/2Pp4/8/8/PP1PPPPP/RNBQKBNR b KQkq - 1 2',
+    )
+
+    this.assertEqual(chess.Move.null(), board.pop())
+    this.assertEqual(board.fen(), fen)
+  }
+
+  testThreefoldRepetition(): void {
+    const board = new chess.Board()
+
+    // Go back and forth with the knights to reach the starting position
+    // for a second time.
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Nf3')
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Nf6')
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Ng1')
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Ng8')
+
+    // Once more.
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Nf3')
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Nf6')
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Ng1')
+
+    // Now black can go back to the starting position (thus reaching it a
+    // third time).
+    this.assertTrue(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+    board.pushSan('Ng8')
+
+    // They indeed do it. Also, white can now claim.
+    this.assertTrue(board.canClaimThreefoldRepetition())
+    this.assertTrue(board.isRepetition())
+
+    // But not after a different move.
+    board.pushSan('e4')
+    this.assertFalse(board.canClaimThreefoldRepetition())
+    this.assertFalse(board.isRepetition())
+
+    // Undo moves and check if everything works backwards.
+    board.pop() // e4
+    this.assertTrue(board.canClaimThreefoldRepetition())
+    board.pop() // Ng8
+    this.assertTrue(board.canClaimThreefoldRepetition())
+    while (board.moveStack.length !== 0) {
+      board.pop()
+      this.assertFalse(board.canClaimThreefoldRepetition())
+    }
+  }
+
+  testFiftyMoves(): void {
+    // Test positions from Jan Timman vs. Christopher Lutz (1995).
+    let board = new chess.Board()
+    this.assertFalse(board.isFiftyMoves())
+    this.assertFalse(board.canClaimFiftyMoves())
+    board = new chess.Board('8/5R2/8/r2KB3/6k1/8/8/8 w - - 19 79')
+    this.assertFalse(board.isFiftyMoves())
+    this.assertFalse(board.canClaimFiftyMoves())
+    board = new chess.Board('8/8/6r1/4B3/8/4K2k/5R2/8 b - - 68 103')
+    this.assertFalse(board.isFiftyMoves())
+    this.assertFalse(board.canClaimFiftyMoves())
+    board = new chess.Board('6R1/7k/8/8/1r3B2/5K2/8/8 w - - 99 119')
+    this.assertFalse(board.isFiftyMoves())
+    this.assertTrue(board.canClaimFiftyMoves())
+    board = new chess.Board('8/7k/8/6R1/1r3B2/5K2/8/8 b - - 100 119')
+    this.assertTrue(board.isFiftyMoves())
+    this.assertTrue(board.canClaimFiftyMoves())
+    board = new chess.Board('8/7k/8/1r3KR1/5B2/8/8/8 w - - 105 122')
+    this.assertTrue(board.isFiftyMoves())
+    this.assertTrue(board.canClaimFiftyMoves())
+
+    // Once checkmated, it is too late to claim.
+    board = new chess.Board('k7/8/NKB5/8/8/8/8/8 b - - 105 176')
+    this.assertFalse(board.isFiftyMoves())
+    this.assertFalse(board.canClaimFiftyMoves())
+
+    // A stalemate is a draw, but you can not and do not need to claim it by
+    // the fifty-move rule.
+    board = new chess.Board('k7/3N4/1K6/1B6/8/8/8/8 b - - 99 1')
+    this.assertTrue(board.isStalemate())
+    this.assertTrue(board.isGameOver())
+    this.assertFalse(board.isFiftyMoves())
+    this.assertFalse(board.canClaimFiftyMoves())
+    this.assertFalse(board.canClaimDraw())
+  }
+
+  testIsIrreversible(): void {
+    const board = new chess.Board('r3k2r/8/8/8/8/8/8/R3K2R w Qkq - 0 1')
+    this.assertTrue(board.isIrreversible(board.parseSan('Ra2')))
+    this.assertTrue(board.isIrreversible(board.parseSan('O-O-O')))
+    this.assertTrue(board.isIrreversible(board.parseSan('Kd1')))
+    this.assertTrue(board.isIrreversible(board.parseSan('Rxa8')))
+    this.assertTrue(board.isIrreversible(board.parseSan('Rxh8')))
+    this.assertFalse(board.isIrreversible(board.parseSan('Rf1')))
+    this.assertFalse(board.isIrreversible(chess.Move.null()))
+
+    board.setCastlingFen('kq')
+    this.assertFalse(board.isIrreversible(board.parseSan('Ra2')))
+    this.assertFalse(board.isIrreversible(board.parseSan('Kd1')))
+    this.assertTrue(board.isIrreversible(board.parseSan('Rxa8')))
+    this.assertTrue(board.isIrreversible(board.parseSan('Rxh8')))
+    this.assertFalse(board.isIrreversible(board.parseSan('Rf1')))
+    this.assertFalse(board.isIrreversible(chess.Move.null()))
+  }
+
   testStatus(): void {
     let board = new chess.Board()
     this.assertEqual(board.status(), chess.STATUS_VALID)
@@ -851,6 +992,11 @@ registerTestCase('BoardTestCase', BoardTestCase, {
     testMoveStackUsage: 796,
     testIsLegalMove: 810,
     testMoveCount: 833,
+    testEquality: 971,
+    testNullMoves: 1160,
+    testThreefoldRepetition: 1229,
+    testFiftyMoves: 1344,
+    testIsIrreversible: 1693,
     testStatus: 982,
     testClear: 1216,
     testPromotedComparison: 1379,

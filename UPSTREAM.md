@@ -200,6 +200,11 @@ Translating the complete board-status test brings the current inventory to 91
 of 291 methods and 200 explicit TODOs.
 Translating the leading-whitespace PGN regression brings the current inventory
 to 92 of 292 methods and 200 explicit TODOs.
+Translating board equality, null-move restoration, threefold-repetition,
+fifty-move, and irreversible-move tests brings the current inventory to 97 of
+292 methods and 195 explicit TODOs. The fifty-move test exposed and corrected
+a translation defect: claim probes must enumerate legal moves, not merely
+pseudo-legal moves, so a checkmated player cannot claim a draw.
 Forty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
