@@ -1581,23 +1581,6 @@ export abstract class BaseVisitor<ResultT> {
   }
 
   /**
-   * When the visitor is used by a parser, this is called to parse a move
-   * in standard algebraic notation.
-   *
-   * You can override the default implementation to work around specific
-   * quirks of your input format.
-   *
-   * .. deprecated:: 1.1
-   *     This method is very limited, because it is only called on moves
-   *     that the parser recognizes in the first place. Instead of adding
-   *     workarounds here, please report common quirks so that
-   *     they can be handled for everyone.
-   */
-  parseSan(board: Board, san: string): Move {
-    return board.parseSan(san)
-  }
-
-  /**
    * Called for each move.
    *
    * *board* is the board state before the move. The board state must be
@@ -2462,7 +2445,7 @@ export function readGame<ResultT>(
         // Parse SAN tokens.
         if (visitor.beginParseSan(boardStack!.at(-1)!, token) !== SKIP) {
           try {
-            const move = visitor.parseSan(boardStack!.at(-1)!, token)
+            const move = boardStack!.at(-1)!.parseSan(token)
             visitor.visitMove(boardStack!.at(-1), move)
             boardStack!.at(-1)!.push(move)
           } catch (error) {

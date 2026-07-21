@@ -5,14 +5,14 @@
 submodule currently pins:
 
 ```text
-7f123cb5dd858978de4a32b7d2c8f8ea71a3552c
-v1.11.0-40-g7f123cb5
-2024-10-09 — Remove chess.svg.board(..., flipped), use orientation (#659)
+f2b0452389c4272948b253ac6266eb89ac85c179
+v1.11.0-41-gf2b04523
+2024-10-09 — Remove deprecated chess.pgn.BaseVisitor.parse_san() (#659)
 ```
 
-This state removes the deprecated `flipped` option from the upstream SVG board
-renderer. The board renderer remains unsupported in chess.ts, so no TypeScript
-runtime API applies yet.
+This state deliberately removes the deprecated `BaseVisitor.parseSan()` API.
+The PGN reader now parses recognized SAN tokens directly through the current
+board after calling `beginParseSan()`; no compatibility alias remains.
 
 ### Synchronization log
 
@@ -49,6 +49,7 @@ runtime API applies yet.
 | `d4b31904` | Replaced singular PGN comment storage with ordered arrays and ported multiple-comment parsing, traversal, annotations, and export. |
 | `ab0e066d` | UCI option parsing fix remains pending with the unsupported engine process layer; tracked its two new tests as TODOs. Upstream Fairy-Stockfish setup and tox changes are not applicable. |
 | `7f123cb5` | Removed deprecated `flipped` from the unsupported SVG board renderer; no TypeScript runtime change applies. |
+| `f2b04523` | Removed deprecated `BaseVisitor.parseSan()` and routed PGN parsing directly through `Board.parseSan()`. |
 
 ## Original baseline provenance
 
