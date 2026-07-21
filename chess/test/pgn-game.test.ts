@@ -77,7 +77,7 @@ class PgnTestCase extends TestCase {
     const virtualFile = new pgn.StringIO()
     const fileExporter = new pgn.FileExporter(virtualFile)
     game.accept(fileExporter)
-    this.assertEqual(virtualFile.read(), `${exported}\n\n`)
+    this.assertEqual(virtualFile.getValue(), `${exported}\n\n`)
   }
 
   testGameWithoutTagRoster(): void {
@@ -947,6 +947,126 @@ Kd2 Nxc5 4. Qxc5 Bg4 5. Ba3 Qxf2+ 6. Kc3 Qxe3+ 7. Kb2 Qxe8 8. Re1 Be6 9. Rh1 a5
     this.assertEqual(game.getitem(2), b)
   }
 
+  testSkipGame(): void {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        '../../python-chess/data/pgn/kasparov-deep-blue-1997.pgn',
+      ),
+      'utf8',
+    )
+    const handle = new pgn.StringIO(source)
+    const offsets: number[] = []
+    while (true) {
+      const offset = handle.tell()
+      if (pgn.skipGame(handle)) {
+        offsets.push(offset)
+      } else {
+        break
+      }
+    }
+    this.assertEqual(offsets.length, 6)
+
+    handle.seek(offsets[0])
+    const firstGame = pgn.readGame(handle)
+    if (firstGame === null) {
+      throw new Error('Expected the PGN to contain the first game')
+    }
+    this.assertEqual(
+      firstGame.headers.get('Event'),
+      'IBM Man-Machine, New York USA',
+    )
+    this.assertEqual(firstGame.headers.get('Site'), '01')
+
+    handle.seek(offsets[5])
+    const sixthGame = pgn.readGame(handle)
+    if (sixthGame === null) {
+      throw new Error('Expected the PGN to contain the sixth game')
+    }
+    this.assertEqual(
+      sixthGame.headers.get('Event'),
+      'IBM Man-Machine, New York USA',
+    )
+    this.assertEqual(sixthGame.headers.get('Site'), '06')
+  }
+
+  testTrickySkipGame(): void {
+    const source = `
+1. a3 ; { ; }
+
+1. b3 { ;
+% {
+1... g6 ; {
+
+1. c3 { }
+% {
+1... f6 ; { } {{{
+
+1. d3`
+    const handle = new pgn.StringIO(source)
+    const offsets: number[] = []
+    while (true) {
+      const offset = handle.tell()
+      if (pgn.skipGame(handle)) {
+        offsets.push(offset)
+      } else {
+        break
+      }
+    }
+
+    this.assertEqual(offsets.length, 3)
+
+    handle.seek(offsets[0])
+    this.assertEqual(
+      pgn.readGame(handle)?.next()?.move,
+      chess.Move.fromUci('a2a3'),
+    )
+    handle.seek(offsets[1])
+    this.assertEqual(
+      pgn.readGame(handle)?.next()?.move,
+      chess.Move.fromUci('b2b3'),
+    )
+    handle.seek(offsets[2])
+    this.assertEqual(
+      pgn.readGame(handle)?.next()?.move,
+      chess.Move.fromUci('d2d3'),
+    )
+    this.assertEqual(pgn.readGame(handle), null)
+  }
+
+  testReadHeaders(): void {
+    const source = readFileSync(
+      resolve(
+        __dirname,
+        '../../python-chess/data/pgn/kasparov-deep-blue-1997.pgn',
+      ),
+      'utf8',
+    )
+    const handle = new pgn.StringIO(source)
+    const offsets: number[] = []
+
+    while (true) {
+      const offset = handle.tell()
+      const headers = pgn.readHeaders(handle)
+      if (headers === null) {
+        break
+      } else if ((headers.get('Result') || '*') === '1/2-1/2') {
+        offsets.push(offset)
+      }
+    }
+
+    handle.seek(offsets[0])
+    const firstDrawnGame = pgn.readGame(handle)
+    if (firstDrawnGame === null) {
+      throw new Error('Expected the PGN to contain a drawn game')
+    }
+    this.assertEqual(firstDrawnGame.headers.get('Site'), '03')
+    this.assertEqual(
+      firstDrawnGame.getitem(0).move,
+      chess.Move.fromUci('d2d3'),
+    )
+  }
+
   testAddLine(): void {
     const game = new pgn.Game()
     game.addVariation(chess.Move.fromUci('e2e4'))
@@ -1077,7 +1197,11 @@ Kd2 Nxc5 4. Qxc5 Bg4 5. Ba3 Qxf2+ 6. Kc3 Qxe3+ 7. Kb2 Qxe8 8. Re1 Be6 9. Rh1 a5
     const game = new pgn.Game()
     for (let cp = 199; cp < 220; cp += 1) {
       game.setEval(new PovScore(new Cp(cp), chess.WHITE))
-      this.assertEqual(game.eval()?.white().score(), cp)
+      const score = game.eval()?.white()
+      if (!(score instanceof Cp)) {
+        throw new Error('Expected a centipawn evaluation')
+      }
+      this.assertEqual(score.cp, cp)
     }
   }
 
@@ -1235,6 +1359,9 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testAnnotationSymbols: 2389,
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
+    testSkipGame: 2469,
+    testTrickySkipGame: 2490,
+    testReadHeaders: 2523,
     testParseTimeControl: 2540,
     testVisitBoard: 2587,
     testBlackToMove: 2631,
@@ -1265,6 +1392,29 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testSkipInnerVariation: 2958,
     testUtf8Bom: 2984,
   },
+})
+
+describe('StringIO parity characterizations not covered upstream', () => {
+  test('uses Unicode character offsets and cursor-based overwrite semantics', () => {
+    const stream = new pgn.StringIO('a♞c\n')
+
+    expect(stream.read(2)).toBe('a♞')
+    expect(stream.tell()).toBe(2)
+
+    stream.seek(1)
+    expect(stream.readline()).toBe('♞c\n')
+    expect(stream.tell()).toBe(4)
+
+    stream.seek(2)
+    expect(stream.write('X')).toBe(1)
+    expect(stream.getValue()).toBe('a♞X\n')
+
+    stream.seek(6)
+    expect(stream.read()).toBe('')
+    expect(stream.tell()).toBe(6)
+    expect(stream.write('Z')).toBe(1)
+    expect(stream.getValue()).toBe('a♞X\n\0\0Z')
+  })
 })
 
 describe('GameNode parity characterizations not covered upstream', () => {
