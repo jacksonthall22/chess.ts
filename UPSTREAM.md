@@ -5,14 +5,13 @@
 submodule currently pins:
 
 ```text
-ef13fdbfdb03a10e520a834b32e8a6cac988323a
-v1.11.0-49-gef13fdbf
-2024-10-13 — Run pyright in CI
+100b1c8b21846c0a9db2f237621368e02294da5f
+v1.11.0-50-g100b1c8b
+2024-10-13 — Fixup pyright usage in CI
 ```
 
-This state adds Pyright to upstream's Python CI. chess.ts already runs strict
-TypeScript compilation for both library and test sources, so no workflow or
-runtime change applies.
+This state corrects upstream's Pyright command-line invocation. It is a
+Python-only workflow adjustment with no TypeScript source or CI equivalent.
 
 ### Synchronization log
 
@@ -58,6 +57,7 @@ runtime change applies.
 | `f7736478` | Initialized the PGN reader board stack before the skip-game branch, matching upstream control-flow typing. |
 | `0c8fed28` | Made PGN builders generic and preserved concrete `Game`/`Headers` subclasses through constructors, static helpers, and results. |
 | `ef13fdbf` | Upstream Pyright CI integration; strict TypeScript library/test compilation already covers the corresponding surface. |
+| `100b1c8b` | Upstream Pyright command-line workflow fix only; not applicable. |
 
 ## Original baseline provenance
 
@@ -170,7 +170,7 @@ fixed:
 - polymorphic `BaseBoard` construction that did not preserve the dynamic class
   and explicit-empty constructor argument.
 
-This does not imply that all of chess.ts is proven equivalent: the 199 TODOs
+This does not imply that all of chess.ts is proven equivalent: the 201 TODOs
 keep unported tests and unimplemented subpackages visible. It does mean that
 every currently translated upstream test passes without an expected-failure
 waiver.
