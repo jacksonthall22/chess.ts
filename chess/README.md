@@ -8,6 +8,10 @@ All of the features you would expect with `import chess` or `import chess.pgn` a
 Other `python-chess` subpackages have minimal functionality to support the main features of the library.
 Please report any issues on GitHub!
 
+See the repository's
+[structured game identity documentation](https://github.com/jacksonthall22/chess.ts/blob/main/GAME_MODEL.md)
+for the `GameNode.nodeId` contract and synchronization boundary.
+
 ## Examples
 
 ### Pushing moves on a `Board`

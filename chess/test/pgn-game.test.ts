@@ -1417,6 +1417,218 @@ describe('StringIO parity characterizations not covered upstream', () => {
   })
 })
 
+describe('Stable GameNode identity and construction', () => {
+  const rootId = pgn.parseGameNodeId(
+    '00000000-0000-0000-0000-000000000001',
+  )
+  const childId = pgn.parseGameNodeId(
+    '00000000-0000-0000-0000-000000000002',
+  )
+
+  test('generates stable opaque identities independent of move equality', () => {
+    const game = new pgn.Game()
+    const move = chess.Move.fromUci('e2e4')
+    const first = game.addVariation(move)
+    const second = game.addVariation(move.copy())
+
+    expect(game.nodeId).toBe(game.nodeId)
+    expect(first.nodeId).toBe(first.nodeId)
+    expect(new Set([game.nodeId, first.nodeId, second.nodeId]).size).toBe(3)
+    expect(first.move.equals(second.move)).toBe(true)
+    expect(game.variations).toEqual([first, second])
+  })
+
+  test('parses supplied identities at the constructor boundary', () => {
+    const game = new pgn.Game(null, { nodeId: rootId })
+    const child = game.addVariation(
+      chess.Move.fromUci('e2e4'),
+      {},
+      { nodeId: childId },
+    )
+
+    expect(game.nodeId).toBe(rootId)
+    expect(child.nodeId).toBe(childId)
+    expect(() =>
+      new pgn.Game(null, {
+        nodeId: 'not-a-node-id' as pgn.GameNodeId,
+      }),
+    ).toThrow(TypeError)
+  })
+
+  test('exposes getter-only, non-enumerable identity', () => {
+    const game = new pgn.Game(null, { nodeId: rootId })
+
+    if (false) {
+      // @ts-expect-error Game-node identity is immutable.
+      game.nodeId = childId
+    }
+
+    expect(() => {
+      ;(game as unknown as { nodeId: pgn.GameNodeId }).nodeId = childId
+    }).toThrow(TypeError)
+    expect(Object.keys(game)).not.toContain('nodeId')
+    expect(game.nodeId).toBe(rootId)
+  })
+
+  test('preserves identity through ordering, metadata, and removal', () => {
+    const game = new pgn.Game()
+    const first = game.addVariation(
+      chess.Move.fromUci('e2e4'),
+      { comment: 'first', nags: [pgn.NAG_GOOD_MOVE] },
+      { nodeId: childId },
+    )
+    const second = game.addVariation(chess.Move.fromUci('d2d4'))
+
+    game.promote(second)
+    game.demote(second)
+    first.comments.push('second')
+    first.nags.add(pgn.NAG_NOVELTY)
+    game.removeVariation(first)
+
+    expect(first.nodeId).toBe(childId)
+    expect(first.parent).toBe(game)
+    expect(game.variations).toEqual([second])
+  })
+
+  test('keeps direct ChildNode construction attached by default', () => {
+    const game = new pgn.Game()
+    const child = new pgn.ChildNode(game, chess.Move.fromUci('e2e4'))
+
+    expect(game.variations).toEqual([child])
+  })
+
+  test('accepts supplied identity during direct construction', () => {
+    const game = new pgn.Game()
+    const child = new pgn.ChildNode(
+      game,
+      chess.Move.fromUci('e2e4'),
+      {},
+      { nodeId: childId },
+    )
+
+    expect(child.parent).toBe(game)
+    expect(child.nodeId).toBe(childId)
+    expect(game.variations).toEqual([child])
+  })
+
+  test('does not attach a partially initialized child', () => {
+    function* invalidNags(): Generator<number> {
+      throw new Error('invalid annotations')
+    }
+
+    const directParent = new pgn.Game()
+    expect(
+      () =>
+        new pgn.ChildNode(directParent, chess.Move.fromUci('e2e4'), {
+          nags: invalidNags(),
+        }),
+    ).toThrowError('invalid annotations')
+    expect(directParent.variations).toEqual([])
+
+    const methodParent = new pgn.Game()
+    expect(() =>
+      methodParent.addVariation(chess.Move.fromUci('e2e4'), {
+        nags: invalidNags(),
+      }),
+    ).toThrowError('invalid annotations')
+    expect(methodParent.variations).toEqual([])
+  })
+
+  test('lets root subclasses customize child construction recursively', () => {
+    class CustomChild extends pgn.ChildNode {}
+
+    class CustomGame extends pgn.Game {
+      protected childNodeConstructor(): typeof pgn.ChildNode {
+        return CustomChild
+      }
+    }
+
+    const game = new CustomGame()
+    const child = game.addVariation(
+      chess.Move.fromUci('e2e4'),
+      {},
+      { nodeId: childId },
+    )
+    const grandchildId = pgn.parseGameNodeId(
+      '00000000-0000-0000-0000-000000000003',
+    )
+    const grandchild = child.addVariation(
+      chess.Move.fromUci('e7e5'),
+      {},
+      { nodeId: grandchildId },
+    )
+
+    expect(child).toBeInstanceOf(CustomChild)
+    expect(child.nodeId).toBe(childId)
+    expect(grandchild).toBeInstanceOf(CustomChild)
+    expect(grandchild.nodeId).toBe(grandchildId)
+    expect(game.variations).toEqual([child])
+    expect(child.variations).toEqual([grandchild])
+  })
+
+  test('rejects invalid constructor attachment results', () => {
+    class WrongParentChild extends pgn.ChildNode {
+      constructor(
+        _parent: pgn.GameNode,
+        move: chess.Move,
+        annotations: pgn.GameNodeAnnotationOptions,
+        construction: pgn.GameNodeConstructionOptions,
+      ) {
+        super(new pgn.Game(), move, annotations, construction)
+      }
+    }
+
+    class TwiceAttachedChild extends pgn.ChildNode {
+      constructor(
+        parent: pgn.GameNode,
+        move: chess.Move,
+        annotations: pgn.GameNodeAnnotationOptions,
+        construction: pgn.GameNodeConstructionOptions,
+      ) {
+        super(parent, move, annotations, construction)
+        parent.variations.push(this)
+      }
+    }
+
+    class WrongParentGame extends pgn.Game {
+      protected childNodeConstructor(): typeof pgn.ChildNode {
+        return WrongParentChild
+      }
+    }
+
+    class TwiceAttachedGame extends pgn.Game {
+      protected childNodeConstructor(): typeof pgn.ChildNode {
+        return TwiceAttachedChild
+      }
+    }
+
+    expect(() =>
+      new WrongParentGame().addVariation(chess.Move.fromUci('e2e4')),
+    ).toThrowError('Child-node constructor returned a node for another parent')
+    expect(() =>
+      new TwiceAttachedGame().addVariation(chess.Move.fromUci('e2e4')),
+    ).toThrowError('Child-node constructor must attach exactly once')
+  })
+
+  test('keeps PGN semantic while intentionally starting a new identity lineage', () => {
+    const game = new pgn.Game(null, { nodeId: rootId })
+    const originalChild = game.addVariation(
+      chess.Move.fromUci('e2e4'),
+      {},
+      { nodeId: childId },
+    )
+    const exported = game.toString()
+    const parsed = pgn.readGame(new pgn.StringIO(exported))
+    if (parsed === null || parsed.next() === null) {
+      throw new Error('Expected the exported PGN to contain a move')
+    }
+
+    expect(parsed.toString()).toBe(exported)
+    expect(parsed.nodeId).not.toBe(game.nodeId)
+    expect(parsed.next()!.nodeId).not.toBe(originalChild.nodeId)
+  })
+})
+
 describe('GameNode parity characterizations not covered upstream', () => {
   test('readGame rejects conflicting visitor creation strategies at runtime', () => {
     expect(() =>

@@ -10,6 +10,47 @@ import * as utils from './utils'
 
 const codePointLength = (value: string): number => Array.from(value).length
 
+declare const gameNodeIdBrand: unique symbol
+
+/** Opaque identity for one node within a structured game lineage. */
+export type GameNodeId = string & {
+  readonly [gameNodeIdBrand]: true
+}
+
+const GAME_NODE_ID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+
+/** Parses a canonical UUID-shaped game-node identity without normalization. */
+export const parseGameNodeId = (value: unknown): GameNodeId => {
+  if (typeof value !== 'string' || !GAME_NODE_ID_REGEX.test(value)) {
+    throw new TypeError('GameNodeId must be a canonical lowercase UUID')
+  }
+  return value as GameNodeId
+}
+
+/** Creates a collision-resistant opaque game-node identity. */
+export const createGameNodeId = (): GameNodeId => {
+  if (
+    typeof globalThis.crypto === 'undefined' ||
+    typeof globalThis.crypto.randomUUID !== 'function'
+  ) {
+    throw new Error('Secure UUID generation is unavailable in this runtime')
+  }
+  return parseGameNodeId(globalThis.crypto.randomUUID())
+}
+
+export interface GameNodeConstructionOptions {
+  nodeId?: GameNodeId
+}
+
+export type ChildNodeConstructionOptions = GameNodeConstructionOptions
+
+export interface GameNodeAnnotationOptions {
+  comment?: string | string[]
+  startingComment?: string | string[]
+  nags?: Iterable<number>
+}
+
 /** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
 const formatFixed = (value: number, fractionDigits: number): string => {
   if (!Number.isFinite(value)) {
@@ -388,6 +429,16 @@ export class _AcceptFrame {
 }
 
 export abstract class GameNode {
+  #nodeId: GameNodeId | null
+
+  /** Stable opaque identity within a structured game lineage. */
+  get nodeId(): GameNodeId {
+    if (this.#nodeId === null) {
+      this.#nodeId = createGameNodeId()
+    }
+    return this.#nodeId
+  }
+
   /** The parent node or `null` if this is the root node of the game. */
   abstract get parent(): GameNode | null
 
@@ -409,7 +460,11 @@ export abstract class GameNode {
   startingComments: string[]
   nags: Set<number>
 
-  constructor({ comment = '' }: { comment?: string | string[] } = {}) {
+  constructor(
+    { comment = '' }: { comment?: string | string[] } = {},
+    { nodeId }: GameNodeConstructionOptions = {},
+  ) {
+    this.#nodeId = nodeId === undefined ? null : parseGameNodeId(nodeId)
     this.variations = []
     this.comments = _standardizeComments(comment)
 
@@ -633,20 +688,35 @@ export abstract class GameNode {
   /**
    * Creates a child node with the given attributes.
    */
+  protected childNodeConstructor(): typeof ChildNode {
+    return ChildNode
+  }
+
   addVariation(
     move: Move,
     {
       comment = '',
       startingComment = '',
       nags = [],
-    }: {
-      comment?: string | string[]
-      startingComment?: string | string[]
-      nags?: Iterable<number>
-    } = {},
+    }: GameNodeAnnotationOptions = {},
+    construction: GameNodeConstructionOptions = {},
   ): ChildNode {
-    // Instantiate ChildNode only in this method.
-    return new ChildNode(this, move, { comment, startingComment, nags })
+    const Child = this.game().childNodeConstructor()
+    const node = new Child(
+      this,
+      move,
+      { comment, startingComment, nags },
+      construction,
+    )
+    if (node.parent !== this) {
+      throw new Error(
+        'Child-node constructor returned a node for another parent',
+      )
+    }
+    if (this.variations.filter(variation => variation === node).length !== 1) {
+      throw new Error('Child-node constructor must attach exactly once')
+    }
+    return node
   }
 
   /**
@@ -659,8 +729,9 @@ export abstract class GameNode {
       comment = '',
       nags = [],
     }: { comment?: string; nags?: Iterable<number> } = {},
+    construction: GameNodeConstructionOptions = {},
   ): ChildNode {
-    const node = this.addVariation(move, { comment, nags })
+    const node = this.addVariation(move, { comment, nags }, construction)
     this.variations.unshift(this.variations.pop() as ChildNode)
     return node
   }
@@ -1033,22 +1104,20 @@ export class ChildNode extends GameNode {
       comment = '',
       startingComment = '',
       nags = [],
-    }: {
-      comment?: string | string[]
-      startingComment?: string | string[]
-      nags?: Iterable<number>
-    } = {},
+    }: GameNodeAnnotationOptions = {},
+    { nodeId }: ChildNodeConstructionOptions = {},
   ) {
-    super({ comment })
+    super({ comment }, { nodeId })
     this._parent = parent
     this._move = move
-    this.parent.variations.push(this)
 
     this.nags = new Set<number>()
     for (const nag of nags) {
       this.nags.add(nag)
     }
     this.startingComments = _standardizeComments(startingComment)
+
+    this.parent.variations.push(this)
   }
 
   board(): Board {
@@ -1226,8 +1295,9 @@ export class Game extends GameNode {
 
   constructor(
     headers: Map<string, string> | Iterable<[string, string]> | null = null,
+    construction: GameNodeConstructionOptions = {},
   ) {
-    super()
+    super({}, construction)
     this.headers = new Headers(headers)
     this.errors = []
   }
@@ -2749,6 +2819,8 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
 }
 
 export default {
+  parseGameNodeId,
+  createGameNodeId,
   LOGGER,
   NAG_NULL,
   NAG_GOOD_MOVE,

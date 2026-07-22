@@ -100,12 +100,23 @@ unsupported in chess.ts, so no TypeScript runtime or test change applies.
 
 ### Intentional upstream divergence
 
+#### Rank/file correction
+
 In `1ce4d3f8`, upstream's new `parse_rank()` and `rank_name()` implementations
 refer to `FILE_NAMES`, despite their rank-oriented docstrings and the adjacent
 `RANK_NAMES` declaration. `chess.ts` intentionally uses `RANK_NAMES` in both
 places. Exhaustive round-trip tests protect that intended API and distinguish
 this two-line correction from accidental translation drift. No upstream issue
 or pull request is part of this synchronization stack.
+
+#### Structured node identity
+
+Unlike python-chess, every TypeScript `GameNode` exposes a stable opaque
+`nodeId`. This is an additive chess.ts platform extension: it lets structured
+persistence and synchronization address a logical node without using its
+mutable variation path. It does not change chess semantics, collapse
+same-move siblings, or encode private metadata into PGN. The complete contract
+and construction seam are documented in [GAME_MODEL.md](GAME_MODEL.md).
 
 ## Promoted-piece compatibility boundary
 
@@ -238,7 +249,7 @@ Replacing the destructive stream helper with cursor-backed `StringIO`
 semantics translates game skipping, tricky skipping, and header-only scanning,
 bringing the current inventory to 132 of 292 methods and 160 explicit TODOs.
 The only remaining PGN TODO depends on the unsupported variant module.
-Forty-four chess.ts-only
+Fifty-four chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -248,6 +259,12 @@ The latest characterization protects `Wdl` and `PovWdl` value equality while
 proving that their deprecated tuple-era surface is gone.
 Getter-only node identity is protected by both compile-time assignment
 failures and runtime mutation checks.
+Ten of those characterizations define stable structured identity: generated
+and supplied IDs, duplicate-move independence, immutability and
+non-enumerability, survival across ordinary tree edits, compatible direct
+construction with supplied identity, atomic annotation failure, recursive
+lineage-root subclass construction, invalid constructor results, and PGN's
+intentional creation of a new identity lineage.
 Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while

@@ -120,6 +120,9 @@ over to the corresponding files in [`chess/`](chess/):
 The exact upstream commit represented by the pinned source and test snapshot is
 recorded in [UPSTREAM.md](UPSTREAM.md).
 
+The structured game model's stable node-identity and future synchronization
+boundaries are documented in [GAME_MODEL.md](GAME_MODEL.md).
+
 PRs welcome!
 
 ### Transpilation helper
