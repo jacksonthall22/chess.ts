@@ -3,6 +3,46 @@ import { Board, Color, Move, Square, WHITE } from './index'
 import { PovScore, Cp, Score, Mate } from './engine'
 import { Arrow } from './svg'
 import { findVariant } from './variant'
+import {
+  createGameNodeId,
+  parseGameNodeId,
+  type GameNodeId,
+} from './game-node-id'
+import {
+  PGN_HEADER_NAME_REGEX,
+  parsePgnHeaderName,
+  parsePgnHeaderValue,
+} from './game-document-values'
+export {
+  parseGameMoveUci,
+  parsePgnHeaderName,
+  parsePgnHeaderValue,
+} from './game-document-values'
+import {
+  MemoryGameDocument,
+  type GameDocument,
+  type GameDocumentChangeListener,
+  type GameDocumentTransactionCallback,
+  type GameDocumentTransactionOptions,
+} from './game-document'
+
+export {
+  MemoryGameDocument,
+  type GameDocument,
+  type GameDocumentAddNodeInput,
+  type GameDocumentAddNodeOptions,
+  type GameDocumentChangeCategory,
+  type GameDocumentChangeEvent,
+  type GameDocumentChangeListener,
+  type GameDocumentTransactionCallback,
+  type GameDocumentTransactionOptions,
+  type MemoryGameDocumentOptions,
+} from './game-document'
+export {
+  createGameNodeId,
+  parseGameNodeId,
+  type GameNodeId,
+} from './game-node-id'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
@@ -10,45 +50,137 @@ import * as utils from './utils'
 
 const codePointLength = (value: string): number => Array.from(value).length
 
-declare const gameNodeIdBrand: unique symbol
-
-/** Opaque identity for one node within a structured game lineage. */
-export type GameNodeId = string & {
-  readonly [gameNodeIdBrand]: true
-}
-
-const GAME_NODE_ID_REGEX =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
-
-/** Parses a canonical UUID-shaped game-node identity without normalization. */
-export const parseGameNodeId = (value: unknown): GameNodeId => {
-  if (typeof value !== 'string' || !GAME_NODE_ID_REGEX.test(value)) {
-    throw new TypeError('GameNodeId must be a canonical lowercase UUID')
-  }
-  return value as GameNodeId
-}
-
-/** Creates a collision-resistant opaque game-node identity. */
-export const createGameNodeId = (): GameNodeId => {
-  if (
-    typeof globalThis.crypto === 'undefined' ||
-    typeof globalThis.crypto.randomUUID !== 'function'
-  ) {
-    throw new Error('Secure UUID generation is unavailable in this runtime')
-  }
-  return parseGameNodeId(globalThis.crypto.randomUUID())
-}
-
 export interface GameNodeConstructionOptions {
   nodeId?: GameNodeId
+}
+
+export interface GameConstructionOptions extends GameNodeConstructionOptions {
+  /** Supplies the sole canonical backing for an existing structured game. */
+  document?: GameDocument
 }
 
 export type ChildNodeConstructionOptions = GameNodeConstructionOptions
 
 export interface GameNodeAnnotationOptions {
-  comment?: string | string[]
-  startingComment?: string | string[]
+  comment?: string | readonly string[]
+  startingComment?: string | readonly string[]
   nags?: Iterable<number>
+}
+
+interface PreparedGameNodeAnnotations {
+  readonly comments: readonly string[]
+  readonly startingComments: readonly string[]
+  readonly nags: readonly number[]
+}
+
+interface PendingChildNodeConstruction {
+  readonly parent: GameNode
+  readonly move: Move
+  readonly annotations: PreparedGameNodeAnnotations
+  readonly construction: ChildNodeConstructionOptions
+  readonly materializeExisting: boolean
+  handle?: ChildNode
+}
+
+const pendingChildNodeConstructions = new WeakMap<
+  Game,
+  PendingChildNodeConstruction[]
+>()
+const pendingChildNodeHandles = new WeakMap<
+  GameNode,
+  PendingChildNodeConstruction
+>()
+
+const withPendingChildNodeConstruction = <T>(
+  game: Game,
+  pending: PendingChildNodeConstruction,
+  callback: () => T,
+): T => {
+  const stack = pendingChildNodeConstructions.get(game) ?? []
+  if (stack.length === 0) {
+    pendingChildNodeConstructions.set(game, stack)
+  }
+  stack.push(pending)
+  try {
+    return callback()
+  } finally {
+    if (pending.handle) {
+      pendingChildNodeHandles.delete(pending.handle)
+    }
+    if (stack.pop() !== pending) {
+      throw new Error('Child-node construction stack became inconsistent')
+    }
+    if (stack.length === 0) {
+      pendingChildNodeConstructions.delete(game)
+    }
+  }
+}
+
+const pendingChildNodeConstruction = (
+  game: Game,
+  parent: GameNode,
+): PendingChildNodeConstruction | undefined => {
+  const stack = pendingChildNodeConstructions.get(game)
+  const pending = stack?.at(-1)
+  if (pending && pending.parent !== parent) {
+    throw new Error('Child-node constructor changed the requested parent')
+  }
+  return pending
+}
+
+const pendingChildNodeHandle = (
+  node: GameNode,
+): PendingChildNodeConstruction | undefined =>
+  pendingChildNodeHandles.get(node)
+
+const assertPublishedGameNode = (node: GameNode): void => {
+  if (pendingChildNodeHandle(node)) {
+    throw new Error(
+      'A child node cannot mutate document state before its constructor returns',
+    )
+  }
+}
+
+class ReadonlySetSnapshot<T> implements ReadonlySet<T> {
+  readonly #values: Set<T>
+
+  constructor(values: Iterable<T>) {
+    this.#values = new Set(values)
+    Object.freeze(this)
+  }
+
+  get size(): number {
+    return this.#values.size
+  }
+
+  has(value: T): boolean {
+    return this.#values.has(value)
+  }
+
+  forEach(
+    callbackfn: (value: T, value2: T, set: ReadonlySet<T>) => void,
+    thisArg?: unknown,
+  ): void {
+    for (const value of this.#values) {
+      callbackfn.call(thisArg, value, value, this)
+    }
+  }
+
+  entries(): SetIterator<[T, T]> {
+    return this.#values.entries()
+  }
+
+  keys(): SetIterator<T> {
+    return this.#values.keys()
+  }
+
+  values(): SetIterator<T> {
+    return this.#values.values()
+  }
+
+  [Symbol.iterator](): SetIterator<T> {
+    return this.values()
+  }
 }
 
 /** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
@@ -249,7 +381,7 @@ export const NAG_NOVELTY = 146
 export const TAG_REGEX =
   /^\[([A-Za-z0-9][A-Za-z0-9_+#=:-]*)\s+\"([^\r]*)\"\]\s*$/
 
-export const TAG_NAME_REGEX = /^[A-Za-z0-9][A-Za-z0-9_+#=:-]*$/ // NOTE: `\Z` -> `$`
+export const TAG_NAME_REGEX = PGN_HEADER_NAME_REGEX // NOTE: `\Z` -> `$`
 
 export const MOVETEXT_REGEX = new RegExp(
   '(' +
@@ -328,12 +460,32 @@ export const _condenseAffix = (
 }
 
 export const _standardizeComments = (
-  comment: string | string[],
+  comment: string | readonly string[],
 ): string[] => {
   if (comment.length === 0) {
     return []
   }
-  return typeof comment === 'string' ? [comment] : comment
+  return typeof comment === 'string' ? [comment] : [...comment]
+}
+
+const prepareGameNodeAnnotations = ({
+  comment = '',
+  startingComment = '',
+  nags = [],
+}: GameNodeAnnotationOptions): PreparedGameNodeAnnotations => {
+  const comments = _standardizeComments(comment)
+  const startingComments = _standardizeComments(startingComment)
+  const storedNags = [...nags]
+  if (
+    comments.some(value => typeof value !== 'string') ||
+    startingComments.some(value => typeof value !== 'string')
+  ) {
+    throw new TypeError('Game node comments must contain only strings')
+  }
+  if (storedNags.some(value => !Number.isSafeInteger(value))) {
+    throw new TypeError('Game node NAGs must be safe integers')
+  }
+  return { comments, startingComments, nags: storedNags }
 }
 
 export const TAG_ROSTER = [
@@ -429,14 +581,16 @@ export class _AcceptFrame {
 }
 
 export abstract class GameNode {
-  #nodeId: GameNodeId | null
+  readonly #document: GameDocument
+  readonly #nodeId: GameNodeId
 
   /** Stable opaque identity within a structured game lineage. */
   get nodeId(): GameNodeId {
-    if (this.#nodeId === null) {
-      this.#nodeId = createGameNodeId()
-    }
     return this.#nodeId
+  }
+
+  protected get gameDocument(): GameDocument {
+    return this.#document
   }
 
   /** The parent node or `null` if this is the root node of the game. */
@@ -448,30 +602,148 @@ export abstract class GameNode {
    */
   abstract get move(): Move | null
 
-  /** A list of child nodes. */
-  variations: ChildNode[]
+  /** An immutable snapshot of the ordered child-node handles. */
+  get variations(): readonly ChildNode[] {
+    if (pendingChildNodeHandle(this)) {
+      return Object.freeze([])
+    }
+    return Object.freeze(
+      this.#document
+        .getChildIds(this.nodeId)
+        .map(nodeId => this.game().nodeById(nodeId) as ChildNode),
+    )
+  }
 
   /**
    * A comment that goes behind the move leading to this node. Comments
    * that occur before any moves are assigned to the root node.
    */
-  comments: string[]
+  get comments(): readonly string[] {
+    const pending = pendingChildNodeHandle(this)
+    if (pending) {
+      return Object.freeze([...pending.annotations.comments])
+    }
+    return this.#document.getComments(this.nodeId)
+  }
 
-  startingComments: string[]
-  nags: Set<number>
+  set comments(comments: readonly string[]) {
+    this.setComments(comments)
+  }
 
-  constructor(
-    { comment = '' }: { comment?: string | string[] } = {},
-    { nodeId }: GameNodeConstructionOptions = {},
-  ) {
-    this.#nodeId = nodeId === undefined ? null : parseGameNodeId(nodeId)
-    this.variations = []
-    this.comments = _standardizeComments(comment)
+  get startingComments(): readonly string[] {
+    const pending = pendingChildNodeHandle(this)
+    if (pending) {
+      return Object.freeze([...pending.annotations.startingComments])
+    }
+    return this.#document.getStartingComments(this.nodeId)
+  }
 
-    // Deprecated: These should be properties of ChildNode, but need to
-    // remain here for backwards compatibility.
-    this.startingComments = []
-    this.nags = new Set<number>()
+  set startingComments(comments: readonly string[]) {
+    this.setStartingComments(comments)
+  }
+
+  get nags(): ReadonlySet<number> {
+    const pending = pendingChildNodeHandle(this)
+    if (pending) {
+      return new ReadonlySetSnapshot(pending.annotations.nags)
+    }
+    return new ReadonlySetSnapshot(this.#document.getNags(this.nodeId))
+  }
+
+  set nags(nags: Iterable<number>) {
+    this.setNags(nags)
+  }
+
+  protected constructor(document: GameDocument, nodeId: GameNodeId) {
+    this.#document = document
+    this.#nodeId = parseGameNodeId(nodeId)
+  }
+
+  setComments(comments: string | readonly string[]): void {
+    assertPublishedGameNode(this)
+    this.#document.setComments(this.nodeId, _standardizeComments(comments))
+  }
+
+  appendComments(comments: string | readonly string[]): void {
+    assertPublishedGameNode(this)
+    const additions = _standardizeComments(comments)
+    this.game().transact(() => {
+      let index = this.comments.length
+      for (const comment of additions) {
+        this.#document.insertComment(this.nodeId, index, comment)
+        index += 1
+      }
+    })
+  }
+
+  insertComment(index: number, comment: string): void {
+    assertPublishedGameNode(this)
+    this.#document.insertComment(this.nodeId, index, comment)
+  }
+
+  editComment(index: number, comment: string): void {
+    assertPublishedGameNode(this)
+    this.#document.editComment(this.nodeId, index, comment)
+  }
+
+  removeComment(index: number): string {
+    assertPublishedGameNode(this)
+    return this.#document.removeComment(this.nodeId, index)
+  }
+
+  setStartingComments(comments: string | readonly string[]): void {
+    assertPublishedGameNode(this)
+    this.#document.setStartingComments(
+      this.nodeId,
+      _standardizeComments(comments),
+    )
+  }
+
+  appendStartingComments(comments: string | readonly string[]): void {
+    assertPublishedGameNode(this)
+    const additions = _standardizeComments(comments)
+    this.game().transact(() => {
+      let index = this.startingComments.length
+      for (const comment of additions) {
+        this.#document.insertStartingComment(this.nodeId, index, comment)
+        index += 1
+      }
+    })
+  }
+
+  insertStartingComment(index: number, comment: string): void {
+    assertPublishedGameNode(this)
+    this.#document.insertStartingComment(this.nodeId, index, comment)
+  }
+
+  editStartingComment(index: number, comment: string): void {
+    assertPublishedGameNode(this)
+    this.#document.editStartingComment(this.nodeId, index, comment)
+  }
+
+  removeStartingComment(index: number): string {
+    assertPublishedGameNode(this)
+    return this.#document.removeStartingComment(this.nodeId, index)
+  }
+
+  setNags(nags: Iterable<number>): void {
+    assertPublishedGameNode(this)
+    this.#document.setNags(this.nodeId, nags)
+  }
+
+  addNag(nag: number): void {
+    assertPublishedGameNode(this)
+    this.#document.addNag(this.nodeId, nag)
+  }
+
+  removeNag(nag: number): boolean {
+    assertPublishedGameNode(this)
+    return this.#document.removeNag(this.nodeId, nag)
+  }
+
+  clearNags(): void {
+    assertPublishedGameNode(this)
+    this.#document.clearNags(this.nodeId)
   }
 
   /**
@@ -508,11 +780,7 @@ export abstract class GameNode {
   }
 
   root(): GameNode {
-    let node: GameNode = this
-    while (node.parent) {
-      node = node.parent
-    }
-    return node
+    return this.game()
   }
 
   /**
@@ -520,13 +788,7 @@ export abstract class GameNode {
    *
    * Complexity is `O(n)`.
    */
-  game(): Game {
-    const root = this.root()
-    if (!(root instanceof Game)) {
-      throw new Error('AssertionError: GameNode not rooted in Game')
-    }
-    return root
-  }
+  abstract game(): Game
 
   /**
    * Follows the main variation to the end and returns the last node.
@@ -648,8 +910,7 @@ export abstract class GameNode {
   /** Promotes the given *move* to the main variation. */
   promoteToMain(move: number | Move | GameNode): void {
     const variation = this.getitem(move)
-    utils.remove(this.variations, variation)
-    this.variations.unshift(variation)
+    this.gameDocument.moveChild(this.nodeId, variation.nodeId, 0)
   }
 
   /** Moves a variation one up in the list of variations. */
@@ -657,10 +918,7 @@ export abstract class GameNode {
     const variation = this.getitem(move)
     const i = this.variations.indexOf(variation)
     if (i > 0) {
-      ;[this.variations[i - 1], this.variations[i]] = [
-        this.variations[i],
-        this.variations[i - 1],
-      ]
+      this.gameDocument.moveChild(this.nodeId, variation.nodeId, i - 1)
     }
   }
 
@@ -671,10 +929,7 @@ export abstract class GameNode {
     const variation = this.getitem(move)
     const i = this.variations.indexOf(variation)
     if (i < this.variations.length - 1) {
-      ;[this.variations[i + 1], this.variations[i]] = [
-        this.variations[i],
-        this.variations[i + 1],
-      ]
+      this.gameDocument.moveChild(this.nodeId, variation.nodeId, i + 1)
     }
   }
 
@@ -682,11 +937,11 @@ export abstract class GameNode {
    * Removes a variation.
    */
   removeVariation(move: number | Move | GameNode): void {
-    utils.remove(this.variations, this.variation(move))
+    this.gameDocument.removeChild(this.nodeId, this.variation(move).nodeId)
   }
 
   /**
-   * Creates a child node with the given attributes.
+   * Returns the constructor used recursively for every child in this lineage.
    */
   protected childNodeConstructor(): typeof ChildNode {
     return ChildNode
@@ -701,22 +956,57 @@ export abstract class GameNode {
     }: GameNodeAnnotationOptions = {},
     construction: GameNodeConstructionOptions = {},
   ): ChildNode {
-    const Child = this.game().childNodeConstructor()
-    const node = new Child(
-      this,
+    assertPublishedGameNode(this)
+    const game = this.game()
+    const annotations = prepareGameNodeAnnotations({
+      comment,
+      startingComment,
+      nags,
+    })
+    const pending: PendingChildNodeConstruction = {
+      parent: this,
       move,
-      { comment, startingComment, nags },
+      annotations,
       construction,
-    )
-    if (node.parent !== this) {
-      throw new Error(
-        'Child-node constructor returned a node for another parent',
-      )
+      materializeExisting: false,
     }
-    if (this.variations.filter(variation => variation === node).length !== 1) {
-      throw new Error('Child-node constructor must attach exactly once')
-    }
-    return node
+
+    return game.transact(() => {
+      const Child = game.childNodeConstructor()
+      return withPendingChildNodeConstruction(game, pending, () => {
+        try {
+          const node = new Child(
+            this,
+            move,
+            {
+              comment: annotations.comments,
+              startingComment: annotations.startingComments,
+              nags: annotations.nags,
+            },
+            construction,
+          )
+          if (pending.handle !== node) {
+            throw new Error(
+              'Child-node constructor must return its constructed handle',
+            )
+          }
+          game.document.addNode({
+            nodeId: node.nodeId,
+            parentId: this.nodeId,
+            moveUci: node.move.uci(),
+            comments: pending.annotations.comments,
+            startingComments: pending.annotations.startingComments,
+            nags: pending.annotations.nags,
+          })
+          return node
+        } catch (error) {
+          if (pending.handle) {
+            game.unregisterNodeHandle(pending.handle)
+          }
+          throw error
+        }
+      })
+    })
   }
 
   /**
@@ -731,9 +1021,11 @@ export abstract class GameNode {
     }: { comment?: string; nags?: Iterable<number> } = {},
     construction: GameNodeConstructionOptions = {},
   ): ChildNode {
-    const node = this.addVariation(move, { comment, nags }, construction)
-    this.variations.unshift(this.variations.pop() as ChildNode)
-    return node
+    return this.game().transact(() => {
+      const node = this.addVariation(move, { comment, nags }, construction)
+      this.gameDocument.moveChild(this.nodeId, node.nodeId, 0)
+      return node
+    })
   }
 
   /**
@@ -776,23 +1068,20 @@ export abstract class GameNode {
       nags?: Iterable<number>
     } = {},
   ): GameNode {
-    let node: GameNode = this
+    return this.game().transact(() => {
+      let node: GameNode = this
 
-    // Add line.
-    for (const move of moves) {
-      node = node.addVariation(move, { startingComment })
-      startingComment = ''
-    }
+      // Add line.
+      for (const move of moves) {
+        node = node.addVariation(move, { startingComment })
+        startingComment = ''
+      }
 
-    // Merge comment and NAGs.
-    const comments = _standardizeComments(comment)
-    node.comments.push(...comments)
-
-    for (const nag of nags) {
-      node.nags.add(nag)
-    }
-
-    return node
+      // Merge comment and NAGs.
+      node.appendComments(comment)
+      node.setNags([...node.nags, ...nags])
+      return node
+    })
   }
 
   /**
@@ -892,15 +1181,14 @@ export abstract class GameNode {
       ;(arrow.tail === arrow.head ? csl : cal).push(arrow.pgn())
     }
 
-    for (let index = 0; index < this.comments.length; index++) {
-      this.comments[index] = utils.sub(
+    const comments = [...this.comments]
+    const replacements = comments.map(comment =>
+      utils.sub(
         ARROWS_REGEX,
         _condenseAffix(''),
-        this.comments[index],
-      )
-    }
-
-    this.comments = this.comments.filter(comment => comment !== '')
+        comment,
+      ),
+    )
 
     let prefix = ''
     if (csl.length !== 0) {
@@ -910,9 +1198,19 @@ export abstract class GameNode {
       prefix += `[%cal ${cal.join(',')}]`
     }
 
-    if (prefix.length !== 0) {
-      this.comments.unshift(prefix)
-    }
+    this.game().transact(() => {
+      for (let index = replacements.length - 1; index >= 0; index--) {
+        const replacement = replacements[index]
+        if (replacement === '') {
+          this.removeComment(index)
+        } else if (replacement !== comments[index]) {
+          this.editComment(index, replacement)
+        }
+      }
+      if (prefix.length !== 0) {
+        this.insertComment(0, prefix)
+      }
+    })
   }
 
   /**
@@ -996,23 +1294,26 @@ export abstract class GameNode {
   }
 
   _replaceOrAddAnnotation(text: string, regex: RegExp): void {
-    let found = 0
-    for (let index = 0; index < this.comments.length; index++) {
-      ;[this.comments[index], found] = utils.subn(
+    const comments = this.comments
+    for (let index = 0; index < comments.length; index++) {
+      const [replacement, found] = utils.subn(
         regex,
         _condenseAffix(text),
-        this.comments[index],
+        comments[index],
         1,
       )
       if (found !== 0) {
-        break
+        if (replacement === '') {
+          this.removeComment(index)
+        } else if (replacement !== comments[index]) {
+          this.editComment(index, replacement)
+        }
+        return
       }
     }
 
-    this.comments = this.comments.filter(comment => comment !== '')
-
-    if (found === 0 && text.length !== 0) {
-      this.comments.push(text)
+    if (text.length !== 0) {
+      this.insertComment(comments.length, text)
     }
   }
 
@@ -1070,32 +1371,26 @@ export abstract class GameNode {
  * Extends :class:`~pgn.GameNode`.
  */
 export class ChildNode extends GameNode {
-  private readonly _parent: GameNode
-  private readonly _move: Move
+  readonly #game: Game
+  readonly #move: Move
 
   /** The parent node. */
   get parent(): GameNode {
-    return this._parent
+    const pending = pendingChildNodeHandle(this)
+    if (pending) {
+      return pending.parent
+    }
+    const parentId = this.gameDocument.getParentId(this.nodeId)
+    if (parentId === null) {
+      throw new Error('Child node cannot have a null parent')
+    }
+    return this.#game.nodeById(parentId)
   }
 
   /** The move leading to this node. */
   get move(): Move {
-    return this._move
+    return this.#move
   }
-
-  /**
-   * A comment for the start of a variation. Only nodes that
-   * actually start a variation (:func:`~pgn.GameNode.startsVariation()`
-   * checks this) can have a starting comment. The root node can not have
-   * a starting comment.
-   */
-  startingComments: string[]
-
-  /**
-   * A set of NAGs as integers. NAGs always go behind a move, so the root
-   * node of the game will never have NAGs.
-   */
-  nags: Set<number>
 
   constructor(
     parent: GameNode,
@@ -1105,19 +1400,65 @@ export class ChildNode extends GameNode {
       startingComment = '',
       nags = [],
     }: GameNodeAnnotationOptions = {},
-    { nodeId }: ChildNodeConstructionOptions = {},
+    construction: ChildNodeConstructionOptions = {},
   ) {
-    super({ comment }, { nodeId })
-    this._parent = parent
-    this._move = move
+    const game = parent.game()
+    const pending = pendingChildNodeConstruction(game, parent)
+    const document = game.document
+    const effectiveMove = pending?.move ?? move
+    const effectiveConstruction = pending?.construction ?? construction
+    const nodeId =
+      effectiveConstruction.nodeId === undefined
+        ? createGameNodeId()
+        : parseGameNodeId(effectiveConstruction.nodeId)
+    const moveUci = effectiveMove.uci()
+    const storedMove = Object.freeze(Move.fromUci(moveUci))
+    const comments = pending
+      ? [...pending.annotations.comments]
+      : _standardizeComments(comment)
+    const startingComments = pending
+      ? [...pending.annotations.startingComments]
+      : _standardizeComments(startingComment)
+    const storedNags = pending ? [...pending.annotations.nags] : [...nags]
 
-    this.nags = new Set<number>()
-    for (const nag of nags) {
-      this.nags.add(nag)
+    super(document, nodeId)
+    this.#game = game
+    this.#move = storedMove
+    game.registerNodeHandle(this)
+    if (pending) {
+      pending.handle = this
+      pendingChildNodeHandles.set(this, pending)
     }
-    this.startingComments = _standardizeComments(startingComment)
 
-    this.parent.variations.push(this)
+    if (pending?.materializeExisting) {
+      if (!document.hasNode(nodeId)) {
+        throw new Error(`Cannot materialize unknown game node ID: ${nodeId}`)
+      }
+      if (document.getParentId(nodeId) !== parent.nodeId) {
+        throw new Error('Materialized child belongs to another parent')
+      }
+      if (document.getMoveUci(nodeId) !== moveUci) {
+        throw new Error('Materialized child move does not match its document')
+      }
+    } else if (!pending) {
+      try {
+        document.addNode({
+          nodeId,
+          parentId: parent.nodeId,
+          moveUci,
+          comments,
+          startingComments,
+          nags: storedNags,
+        })
+      } catch (error) {
+        game.unregisterNodeHandle(this)
+        throw error
+      }
+    }
+  }
+
+  game(): Game {
+    return this.#game
   }
 
   board(): Board {
@@ -1186,7 +1527,7 @@ export class ChildNode extends GameNode {
     visitor: BaseVisitor<ResultT>,
   ): void {
     if (this.startingComments.length !== 0) {
-      visitor.visitComment(this.startingComments)
+      visitor.visitComment([...this.startingComments])
     }
 
     visitor.visitMove(parentBoard, this.move)
@@ -1200,7 +1541,7 @@ export class ChildNode extends GameNode {
     }
 
     if (this.comments.length !== 0) {
-      visitor.visitComment(this.comments)
+      visitor.visitComment([...this.comments])
     }
   }
 
@@ -1285,7 +1626,9 @@ export class Game extends GameNode {
    *      >>> game.headers
    *      Headers(Event='?', Site='?', Date='????.??.??', Round='?', White='?', Black='?', Result='*')
    */
-  headers: Headers
+  declare readonly document: GameDocument
+  declare readonly headers: Headers
+  readonly #nodeHandles = new Map<GameNodeId, GameNode>()
 
   /**
    * A list of errors (such as illegal or ambiguous moves) encountered while
@@ -1295,11 +1638,73 @@ export class Game extends GameNode {
 
   constructor(
     headers: Map<string, string> | Iterable<[string, string]> | null = null,
-    construction: GameNodeConstructionOptions = {},
+    construction: GameConstructionOptions = {},
   ) {
-    super({}, construction)
-    this.headers = new Headers(headers)
+    let document: GameDocument
+    if (construction.document !== undefined) {
+      if (
+        construction.document === null ||
+        (typeof construction.document !== 'object' &&
+          typeof construction.document !== 'function')
+      ) {
+        throw new TypeError('Game document must be an object')
+      }
+      if (headers !== null) {
+        throw new Error(
+          'Existing game documents cannot also receive initial headers',
+        )
+      }
+      document = construction.document
+      const documentRootId = parseGameNodeId(document.rootId)
+      if (
+        construction.nodeId !== undefined &&
+        parseGameNodeId(construction.nodeId) !== documentRootId
+      ) {
+        throw new Error('Game nodeId does not match the document rootId')
+      }
+      if (!document.hasNode(documentRootId)) {
+        throw new Error('Game document does not contain its root node')
+      }
+      if (
+        document.getParentId(documentRootId) !== null ||
+        document.getMoveUci(documentRootId) !== null
+      ) {
+        throw new Error('Game document root must not have a parent or move')
+      }
+      // Parse all existing headers before binding the public handle.
+      new Headers(document.getHeaderEntries() as Iterable<[string, string]>)
+    } else {
+      const parsedHeaders = new Headers(headers)
+      const rootId =
+        construction.nodeId === undefined
+          ? createGameNodeId()
+          : parseGameNodeId(construction.nodeId)
+      document = new MemoryGameDocument(rootId, {
+        headers: parsedHeaders.items(),
+      })
+    }
+
+    super(document, document.rootId)
+    const boundHeaders = new Headers(null, {
+      kwargs: new Map<string, string>(),
+      [boundHeaderBacking]: document,
+    })
+    Object.defineProperties(this, {
+      document: {
+        configurable: false,
+        enumerable: true,
+        value: document,
+        writable: false,
+      },
+      headers: {
+        configurable: false,
+        enumerable: true,
+        value: boundHeaders,
+        writable: false,
+      },
+    })
     this.errors = []
+    this.#nodeHandles.set(this.nodeId, this)
   }
 
   get parent(): null {
@@ -1308,6 +1713,119 @@ export class Game extends GameNode {
 
   get move(): null {
     return null
+  }
+
+  game(): Game {
+    return this
+  }
+
+  transact<Callback extends () => unknown>(
+    callback: GameDocumentTransactionCallback<Callback>,
+    options: GameDocumentTransactionOptions = {},
+  ): ReturnType<Callback> {
+    return this.document.transact(callback, options)
+  }
+
+  subscribe(listener: GameDocumentChangeListener): () => void {
+    return this.document.subscribe(listener)
+  }
+
+  /** Returns the one stable handle for `nodeId` in this game facade. */
+  nodeById(nodeId: GameNodeId): GameNode {
+    nodeId = parseGameNodeId(nodeId)
+    const existing = this.#nodeHandles.get(nodeId)
+    if (existing) {
+      return existing
+    }
+    if (!this.document.hasNode(nodeId)) {
+      throw new Error(`Unknown game node ID: ${nodeId}`)
+    }
+
+    const unresolved: GameNodeId[] = []
+    const seen = new Set<GameNodeId>()
+    let currentId = nodeId
+    while (!this.#nodeHandles.has(currentId)) {
+      if (seen.has(currentId)) {
+        throw new Error('Game document contains a parent cycle')
+      }
+      seen.add(currentId)
+      unresolved.push(currentId)
+      const parentId = this.document.getParentId(currentId)
+      if (parentId === null) {
+        throw new Error('Game document contains a second root node')
+      }
+      currentId = parseGameNodeId(parentId)
+    }
+
+    let parent = this.#nodeHandles.get(currentId) as GameNode
+    while (unresolved.length !== 0) {
+      const childId = unresolved.pop() as GameNodeId
+      const moveUci = this.document.getMoveUci(childId)
+      if (moveUci === null) {
+        throw new Error('A non-root game node must have a move')
+      }
+      const Child = this.childNodeConstructor()
+      const move = Move.fromUci(moveUci)
+      const annotations = prepareGameNodeAnnotations({
+        comment: this.document.getComments(childId),
+        startingComment: this.document.getStartingComments(childId),
+        nags: this.document.getNags(childId),
+      })
+      const construction = { nodeId: childId }
+      const pending: PendingChildNodeConstruction = {
+        parent,
+        move,
+        annotations,
+        construction,
+        materializeExisting: true,
+      }
+      parent = withPendingChildNodeConstruction(this, pending, () => {
+        try {
+          const node = new Child(
+            parent,
+            move,
+            {
+              comment: annotations.comments,
+              startingComment: annotations.startingComments,
+              nags: annotations.nags,
+            },
+            construction,
+          )
+          if (pending.handle !== node) {
+            throw new Error(
+              'Child-node constructor must return its constructed handle',
+            )
+          }
+          return node
+        } catch (error) {
+          if (pending.handle) {
+            this.unregisterNodeHandle(pending.handle)
+          }
+          throw error
+        }
+      })
+    }
+
+    return parent
+  }
+
+  /** @internal Registers a newly constructed or materialized node handle. */
+  registerNodeHandle(node: GameNode): void {
+    if (node.game() !== this) {
+      throw new Error('Cannot register a node handle from another game')
+    }
+    const existing = this.#nodeHandles.get(node.nodeId)
+    if (existing && existing !== node) {
+      throw new Error(`Duplicate handle for game node ID: ${node.nodeId}`)
+    }
+    this.#nodeHandles.set(node.nodeId, node)
+  }
+
+  /** @internal Removes a failed construction reservation. */
+  unregisterNodeHandle(node: GameNode): void {
+    if (this.#nodeHandles.get(node.nodeId) === node) {
+      this.#nodeHandles.delete(node.nodeId)
+    }
   }
 
   board(): Board {
@@ -1335,28 +1853,32 @@ export class Game extends GameNode {
       fen = setup.fen()
     }
 
-    if (fen === (setup.constructor as typeof Board).startingFen) {
-      this.headers.pop('FEN') // ', null)' not necessary
-      this.headers.pop('SetUp') // ', null)' not necessary
-    } else {
-      this.headers.set('FEN', fen)
-      this.headers.set('SetUp', '1')
-    }
+    this.transact(() => {
+      if (fen === (setup.constructor as typeof Board).startingFen) {
+        this.headers.pop('FEN') // ', null)' not necessary
+        this.headers.pop('SetUp') // ', null)' not necessary
+      } else {
+        this.headers.set('FEN', fen)
+        this.headers.set('SetUp', '1')
+      }
 
-    if (
-      (setup.constructor as typeof Board).aliases[0] === 'Standard' &&
-      setup.chess960
-    ) {
-      this.headers.set('Variant', 'Chess960')
-    } else if ((setup.constructor as typeof Board).aliases[0] !== 'Standard') {
-      this.headers.set(
-        'Variant',
-        (setup.constructor as typeof Board).aliases[0],
-      )
-      this.headers.set('FEN', fen)
-    } else {
-      this.headers.pop('Variant') // ', null)' not necessary
-    }
+      if (
+        (setup.constructor as typeof Board).aliases[0] === 'Standard' &&
+        setup.chess960
+      ) {
+        this.headers.set('Variant', 'Chess960')
+      } else if (
+        (setup.constructor as typeof Board).aliases[0] !== 'Standard'
+      ) {
+        this.headers.set(
+          'Variant',
+          (setup.constructor as typeof Board).aliases[0],
+        )
+        this.headers.set('FEN', fen)
+      } else {
+        this.headers.pop('Variant') // ', null)' not necessary
+      }
+    })
   }
 
   /**
@@ -1373,7 +1895,7 @@ export class Game extends GameNode {
         visitor.visitBoard(board)
 
         if (this.comments.length !== 0) {
-          visitor.visitComment(this.comments)
+          visitor.visitComment([...this.comments])
         }
 
         if (this.variations.length !== 0) {
@@ -1406,15 +1928,17 @@ export class Game extends GameNode {
   ): InstanceType<T> {
     // Setup the initial position.
     const game = new this() as InstanceType<T>
-    game.setup(board.root())
-    let node: GameNode = game
+    game.transact(() => {
+      game.setup(board.root())
+      let node: GameNode = game
 
-    // Replay all moves.
-    for (const move of board.moveStack) {
-      node = node.addVariation(move)
-    }
+      // Replay all moves.
+      for (const move of board.moveStack) {
+        node = node.addVariation(move)
+      }
 
-    game.headers.set('Result', board.result())
+      game.headers.set('Result', board.result())
+    })
     return game
   }
 
@@ -1436,18 +1960,60 @@ export class Game extends GameNode {
   }
 }
 
+interface HeaderBacking {
+  getHeader(name: string): string | undefined
+  setHeader(name: string, value: string): void
+  deleteHeader(name: string): boolean
+  getHeaderEntries(): readonly (readonly [string, string])[]
+}
+
+class StandaloneHeaderBacking implements HeaderBacking {
+  readonly #headers = new Map<string, string>()
+
+  getHeader(name: string): string | undefined {
+    return this.#headers.get(name)
+  }
+
+  setHeader(name: string, value: string): void {
+    this.#headers.set(name, value)
+  }
+
+  deleteHeader(name: string): boolean {
+    return this.#headers.delete(name)
+  }
+
+  getHeaderEntries(): readonly (readonly [string, string])[] {
+    return Object.freeze(
+      [...this.#headers].map(([name, value]) =>
+        Object.freeze([name, value] as const),
+      ),
+    )
+  }
+}
+
+const boundHeaderBacking = Symbol('boundHeaderBacking')
+
+interface HeadersConstructionOptions {
+  kwargs: Map<string, string>
+  readonly [boundHeaderBacking]?: HeaderBacking
+}
+
 export class Headers {
-  _tagRoster: Map<string, string>
-  _others: Map<string, string>
+  readonly #backing: HeaderBacking
 
   constructor(
     data: Map<string, string> | Iterable<[string, string]> | null = null,
-    { kwargs }: { kwargs: Map<string, string> } = {
+    options: HeadersConstructionOptions = {
       kwargs: new Map<string, string>(),
     },
   ) {
-    this._tagRoster = new Map<string, string>()
-    this._others = new Map<string, string>()
+    this.#backing = options[boundHeaderBacking] ?? new StandaloneHeaderBacking()
+    if (options[boundHeaderBacking]) {
+      if (data !== null || options.kwargs.size !== 0) {
+        throw new Error('Bound Headers cannot also initialize header state')
+      }
+      return
+    }
 
     if (data === null) {
       data = new Map<string, string>([
@@ -1465,7 +2031,7 @@ export class Headers {
       this.set(key, value)
     }
 
-    for (const [key, value] of kwargs) {
+    for (const [key, value] of options.kwargs) {
       this.set(key, value)
     }
   }
@@ -1514,47 +2080,51 @@ export class Headers {
 
   // __setitem__()
   set(key: string, value: string): void {
-    if (TAG_ROSTER.includes(key)) {
-      this._tagRoster.set(key, value)
-    } else if (key.match(TAG_NAME_REGEX) === null) {
+    try {
+      parsePgnHeaderName(key)
+    } catch {
       throw new Error(`ValueError: invalid pgn header tag: ${key}`)
-    } else if (value.includes('\n') || value.includes('\r')) {
-      throw new Error(`line break in pgn header ${key}: ${value}`)
-    } else {
-      this._others.set(key, value)
     }
+    try {
+      parsePgnHeaderValue(value)
+    } catch {
+      throw new Error(`line break in pgn header ${key}: ${value}`)
+    }
+    this.#backing.setHeader(key, value)
   }
 
   // __getitem__()
   get(key: string): string | undefined {
-    return TAG_ROSTER.includes(key)
-      ? this._tagRoster.get(key)
-      : this._others.get(key)
+    return typeof key !== 'string' || key.match(TAG_NAME_REGEX) === null
+      ? undefined
+      : this.#backing.getHeader(key)
   }
 
   // __delitem__()
   delitem(key: string): boolean {
-    if (TAG_ROSTER.includes(key)) {
-      return this._tagRoster.delete(key)
-    } else {
-      return this._others.delete(key)
-    }
+    return typeof key !== 'string' || key.match(TAG_NAME_REGEX) === null
+      ? false
+      : this.#backing.deleteHeader(key)
   }
 
   // __iter__()
   *iter(): IterableIterator<string> {
     for (const key of TAG_ROSTER) {
-      if (this._tagRoster.has(key)) {
+      if (this.get(key) !== undefined) {
         yield key
       }
     }
 
-    yield* this._others.keys()
+    for (const [key] of this.#backing.getHeaderEntries()) {
+      if (!TAG_ROSTER.includes(key)) {
+        yield key
+      }
+    }
   }
 
   // __len__()
   length(): number {
-    return this._tagRoster.size + this._others.size
+    return this.#backing.getHeaderEntries().length
   }
 
   copy(): this {
@@ -1598,12 +2168,17 @@ export class Headers {
 
   *items(): IterableIterator<[string, string]> {
     for (const key of TAG_ROSTER) {
-      if (this._tagRoster.has(key)) {
-        yield [key, this._tagRoster.get(key) as string]
+      const value = this.get(key)
+      if (value !== undefined) {
+        yield [key, value]
       }
     }
 
-    yield* this._others
+    for (const [key, value] of this.#backing.getHeaderEntries()) {
+      if (!TAG_ROSTER.includes(key)) {
+        yield [key, value]
+      }
+    }
   }
 
   [Symbol.iterator](): IterableIterator<string> {
@@ -1854,7 +2429,7 @@ export class GameBuilder<GameT extends Game = Game> extends BaseVisitor<GameT> {
   }
 
   visitNag(nag: number): void {
-    this.variationStack.at(-1)?.nags.add(nag)
+    this.variationStack.at(-1)?.addNag(nag)
   }
 
   beginVariation(): void {
@@ -1888,10 +2463,9 @@ export class GameBuilder<GameT extends Game = Game> extends BaseVisitor<GameT> {
       // Add as a comment for the current node if in the middle of
       // a variation. Add as a comment for the game if the comment
       // starts before any move.
-      this.variationStack.at(-1)!.comments.push(...comments)
-      this.variationStack.at(-1)!.comments = this.variationStack
-        .at(-1)!
-        .comments.filter(comment => comment !== '')
+      const node = this.variationStack.at(-1)!
+      node.appendComments(comments)
+      node.comments = node.comments.filter(comment => comment !== '')
     } else {
       // Otherwise, it is a starting comment.
       this.startingComments.push(...comments)
@@ -2821,6 +3395,7 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
 export default {
   parseGameNodeId,
   createGameNodeId,
+  MemoryGameDocument,
   LOGGER,
   NAG_NULL,
   NAG_GOOD_MOVE,

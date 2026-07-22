@@ -118,6 +118,14 @@ mutable variation path. It does not change chess semantics, collapse
 same-move siblings, or encode private metadata into PGN. The complete contract
 and construction seam are documented in [GAME_MODEL.md](GAME_MODEL.md).
 
+`Game`, `GameNode`, and `Headers` are also handles over one `GameDocument`.
+Unlike python-chess lists and sets, their collection getters return immutable
+snapshots and writes use explicit commands. This intentional pre-1.0
+divergence removes aliases and mutation paths that a Yjs backing could not
+observe without maintaining a second game tree. The backing, transaction,
+tombstone, and adapter contracts are documented in
+[GAME_DOCUMENT.md](GAME_DOCUMENT.md).
+
 ## Promoted-piece compatibility boundary
 
 `promoted` remains the canonical raw bitboard. Parsing, explicit
@@ -249,7 +257,7 @@ Replacing the destructive stream helper with cursor-backed `StringIO`
 semantics translates game skipping, tricky skipping, and header-only scanning,
 bringing the current inventory to 132 of 292 methods and 160 explicit TODOs.
 The only remaining PGN TODO depends on the unsupported variant module.
-Fifty-four chess.ts-only
+Ninety chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -265,6 +273,15 @@ non-enumerability, survival across ordinary tree edits, compatible direct
 construction with supplied identity, atomic annotation failure, recursive
 lineage-root subclass construction, invalid constructor results, and PGN's
 intentional creation of a new identity lineage.
+Thirty-six more exercise the canonical document and facade: runtime boundary
+parsing, copied inputs, immutable snapshots, insertion-ordered headers,
+granular annotation operations, deterministic transactions, non-rollback
+semantics, duplicate same-move nodes, terminal subtree tombstones, stable live
+handles, external changes, custom-node materialization, and iterative
+4,000-ply ancestry. They also cover staged and atomic custom-subclass
+construction, granular embedded-annotation edits, synchronous-only
+transactions, ordered reentrant delivery, changing subscriptions, and isolated
+observer failures.
 Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while
@@ -365,20 +382,21 @@ general python-chess model—not a parity fix in this library.
 
 ## Multiple PGN comments
 
-The `d4b31904` synchronization is an intentional, upstream-compatible breaking
-change: `GameNode.comment` and `ChildNode.startingComment` are replaced by the
-sole mutable representations `comments: string[]` and
-`startingComments: string[]`. There are no singular compatibility aliases,
-because maintaining two writable representations would allow them to diverge.
+The `d4b31904` synchronization was an upstream-compatible breaking change:
+`GameNode.comment` and `ChildNode.startingComment` were replaced by ordered
+`comments` and `startingComments` collections. There are no singular
+compatibility aliases, because two writable representations could diverge.
 
 The singular constructor option names remain compatible with upstream and
-accept either one string or an array. Empty inputs normalize to a fresh empty
-array; a non-empty input array remains aliased exactly as it does upstream.
+accept either one string or an array. Inputs are copied into the canonical
+document rather than retained as aliases. Collection getters return frozen
+snapshots; replacement setters and granular comment commands are the supported
+write paths.
 The PGN parser still sends one string per parsed comment to visitors, while
-tree traversal sends the node's actual array once. TypeScript visitor methods
-therefore honestly accept `string | string[]` at that boundary. Export emits
-each stored entry as its own `{ ... }` comment, preserves entry whitespace,
-and removes braces from comment content.
+tree traversal sends one isolated array snapshot. TypeScript visitor methods
+therefore accept `string | string[]` at that boundary without exposing mutable
+document storage. Export emits each stored entry as its own `{ ... }` comment,
+preserves entry whitespace, and removes braces from comment content.
 
 ## Deprecated API removals
 

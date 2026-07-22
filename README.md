@@ -122,6 +122,8 @@ recorded in [UPSTREAM.md](UPSTREAM.md).
 
 The structured game model's stable node-identity and future synchronization
 boundaries are documented in [GAME_MODEL.md](GAME_MODEL.md).
+The sole-backing contract, mutation surface, tombstone policy, and Yjs adapter
+requirements are documented in [GAME_DOCUMENT.md](GAME_DOCUMENT.md).
 
 PRs welcome!
 

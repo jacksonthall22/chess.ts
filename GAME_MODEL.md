@@ -29,30 +29,28 @@ move, without changing the general-purpose game model.
 - An ID is a canonical lowercase UUID-shaped string branded as `GameNodeId`.
 - Call `parseGameNodeId()` at an untyped boundary before supplying a persisted
   ID to a constructor.
-- If no ID is supplied, the getter creates one with the runtime's secure
-  `crypto.randomUUID()` implementation and then returns that same value for the
-  node's lifetime. The library fails explicitly if secure UUID generation is
-  unavailable; it does not fall back to a weaker identity source.
+- If no ID is supplied, construction creates one with the runtime's secure
+  `crypto.randomUUID()` implementation. The library fails explicitly if secure
+  UUID generation is unavailable; it does not fall back to a weaker source.
 - IDs are independent of UCI moves, FENs, child indexes, and variation paths.
   All of those can change or can be shared by distinct nodes.
 
-`parseGameNodeId()` proves syntax, not uniqueness. A structured materializer or
-storage backend must reject duplicate IDs within one game lineage. The library
-does not yet maintain a second global ID registry: `variations` remains a
-public mutable array for `python-chess` compatibility, so a registry could be
-silently bypassed and drift from the actual tree. Future storage work must
-first centralize mutation before it can honestly enforce tree-wide indexes or
-uniqueness through one canonical path.
+`parseGameNodeId()` proves syntax, not uniqueness. `GameDocument` rejects a
+duplicate ID within the retained game lineage, including IDs belonging to
+removed tombstones. The `Game` handle cache guarantees one live object per ID
+within one facade without duplicating mutable game state.
 
 ## Construction paths
 
 The public constructor behavior remains compatible with the translated model:
-directly constructing a `ChildNode` attaches it to `parent.variations`.
+directly constructing a `ChildNode` adds and attaches it through the parent's
+canonical document.
 `GameNode.addVariation()` asks the lineage root's protected
 `childNodeConstructor()` policy for the child class, constructs it through the
-same attaching path, and validates that it attached exactly once to the
-requested parent. Root ownership ensures that the same child type applies
-recursively at every ply.
+same public constructor shape, and commits the document record only after the
+entire subclass constructor returns successfully. Root ownership ensures that
+the same child type applies recursively at every ply without exposing a
+detached-node API.
 
 ```text
 direct `new ChildNode(parent, move)`
@@ -60,20 +58,30 @@ direct `new ChildNode(parent, move)`
 
 `parent.addVariation(move)`
         ├─ `parent.game().childNodeConstructor()`
-        ├─ construct through the compatibility path
-        └─ validate parent and exactly-one attachment
+        ├─ reserve identity while the complete subclass constructs
+        ├─ discard the handle if construction throws
+        └─ atomically add the canonical document record after success
 ```
 
 Root subclasses can override the protected constructor policy to preserve a
 specialized node type recursively. Existing subclasses that override
 `addVariation()` remain source-compatible, but that legacy extension point
 cannot preserve a new third-argument node ID unless the override explicitly
-forwards it; identity-aware implementations should prefer the root policy.
+forwards it, and a legacy override that directly constructs a child owns its
+post-`super()` failure behavior. Identity-aware implementations should prefer
+the root policy, whose construction context preserves the requested identity
+and annotations even when a child constructor only forwards the traditional
+parent and move arguments.
+After `super()`, a root-policy child constructor may inspect its staged parent,
+move, annotations, and board. The child is not published into the parent order
+until the constructor returns, and attempts to mutate document state through
+the staged handle fail explicitly. This preserves useful subclass
+initialization without exposing a publicly detached node lifecycle.
 Annotation inputs are consumed before attachment, so an invalid or throwing
 iterable cannot leave a partially initialized child in the tree. Materializing
-a handle for an already-existing storage record is deliberately not expressed
-as a publicly detached `ChildNode`; the later storage layer owns that distinct
-internal state.
+a handle for an already-existing document record is deliberately not expressed
+as a publicly detached `ChildNode`; the document-backed model owns that
+distinct internal state.
 
 ## Serialization boundary
 
@@ -95,12 +103,10 @@ collaborative representation must persist them as first-class structured data.
 It must also keep the public `Game`/`GameNode` objects as the sole live chess
 model, rather than maintaining a Yjs tree plus a rebuilt shadow `Game` tree.
 
-## What this seam does not solve
+## Canonical backing
 
-Stable identity is a prerequisite, not a CRDT implementation. The current
-public arrays, sets, maps, and annotation fields can still be mutated directly.
-The next architectural step is to route structural and metadata mutation
-through one observable, transaction-aware storage contract while preserving
-the familiar in-memory API. Only after that contract exists should a Yjs
-adapter implement it. This ordering makes it possible to test convergence and
-live-object stability without introducing two authoritative game trees.
+The stable identity seam now sits on one transaction-aware `GameDocument`.
+Public nodes are stable handles, mutable collections are no longer exposed,
+and the in-memory implementation is the executable contract for a future Yjs
+backing. See [GAME_DOCUMENT.md](GAME_DOCUMENT.md) for the structure, deliberate
+python-chess divergences, delete-wins policy, and adapter requirements.

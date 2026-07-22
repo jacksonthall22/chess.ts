@@ -29,13 +29,13 @@ class PgnTestCase extends TestCase {
     const e4D5 = e4.addVariation(e4.board().parseSan('d5'))
 
     const e4H5 = e4.addVariation(e4.board().parseSan('h5'))
-    e4H5.nags.add(pgn.NAG_MISTAKE)
+    e4H5.addNag(pgn.NAG_MISTAKE)
     e4H5.startingComments = ['This']
     e4H5.comments = ['is nonsense']
 
     const e4E5 = e4.addVariation(e4.board().parseSan('e5'))
     const e4E5Qf3 = e4E5.addVariation(e4E5.board().parseSan('Qf3'))
-    e4E5Qf3.nags.add(pgn.NAG_MISTAKE)
+    e4E5Qf3.addNag(pgn.NAG_MISTAKE)
 
     const e4C5 = e4.addVariation(e4.board().parseSan('c5'))
     e4C5.comments = ['Sicilian']
@@ -1481,8 +1481,8 @@ describe('Stable GameNode identity and construction', () => {
 
     game.promote(second)
     game.demote(second)
-    first.comments.push('second')
-    first.nags.add(pgn.NAG_NOVELTY)
+    first.appendComments('second')
+    first.addNag(pgn.NAG_NOVELTY)
     game.removeVariation(first)
 
     expect(first.nodeId).toBe(childId)
@@ -1497,7 +1497,7 @@ describe('Stable GameNode identity and construction', () => {
     expect(game.variations).toEqual([child])
   })
 
-  test('accepts supplied identity during direct construction', () => {
+  test('routes direct construction through the canonical document', () => {
     const game = new pgn.Game()
     const child = new pgn.ChildNode(
       game,
@@ -1508,6 +1508,7 @@ describe('Stable GameNode identity and construction', () => {
 
     expect(child.parent).toBe(game)
     expect(child.nodeId).toBe(childId)
+    expect(game.document.hasNode(childId)).toBe(true)
     expect(game.variations).toEqual([child])
   })
 
@@ -1566,48 +1567,21 @@ describe('Stable GameNode identity and construction', () => {
     expect(child.variations).toEqual([grandchild])
   })
 
-  test('rejects invalid constructor attachment results', () => {
-    class WrongParentChild extends pgn.ChildNode {
-      constructor(
-        _parent: pgn.GameNode,
-        move: chess.Move,
-        annotations: pgn.GameNodeAnnotationOptions,
-        construction: pgn.GameNodeConstructionOptions,
-      ) {
-        super(new pgn.Game(), move, annotations, construction)
-      }
-    }
-
-    class TwiceAttachedChild extends pgn.ChildNode {
-      constructor(
-        parent: pgn.GameNode,
-        move: chess.Move,
-        annotations: pgn.GameNodeAnnotationOptions,
-        construction: pgn.GameNodeConstructionOptions,
-      ) {
-        super(parent, move, annotations, construction)
-        parent.variations.push(this)
-      }
-    }
-
-    class WrongParentGame extends pgn.Game {
-      protected childNodeConstructor(): typeof pgn.ChildNode {
-        return WrongParentChild
-      }
-    }
-
-    class TwiceAttachedGame extends pgn.Game {
-      protected childNodeConstructor(): typeof pgn.ChildNode {
-        return TwiceAttachedChild
-      }
-    }
+  test('rejects duplicate supplied node identities', () => {
+    const game = new pgn.Game()
+    game.addVariation(
+      chess.Move.fromUci('e2e4'),
+      {},
+      { nodeId: childId },
+    )
 
     expect(() =>
-      new WrongParentGame().addVariation(chess.Move.fromUci('e2e4')),
-    ).toThrowError('Child-node constructor returned a node for another parent')
-    expect(() =>
-      new TwiceAttachedGame().addVariation(chess.Move.fromUci('e2e4')),
-    ).toThrowError('Child-node constructor must attach exactly once')
+      game.addVariation(
+        chess.Move.fromUci('d2d4'),
+        {},
+        { nodeId: childId },
+      ),
+    ).toThrowError(`Duplicate handle for game node ID: ${childId}`)
   })
 
   test('keeps PGN semantic while intentionally starting a new identity lineage', () => {
@@ -1663,7 +1637,15 @@ describe('GameNode parity characterizations not covered upstream', () => {
       ;(child as unknown as { move: chess.Move | null }).move = null
     }).toThrow(TypeError)
     expect(child.parent).toBe(game)
-    expect(child.move).toBe(move)
+    expect(child.move).not.toBe(move)
+    expect(child.move.equals(move)).toBe(true)
+    expect(Object.isFrozen(child.move)).toBe(true)
+    move.fromSquare = chess.D2
+    move.toSquare = chess.D4
+    expect(child.move.uci()).toBe('e2e4')
+    expect(() => {
+      ;(child.move as { fromSquare: chess.Square }).fromSquare = chess.D2
+    }).toThrow(TypeError)
   })
 
   test('builders preserve concrete Game and Headers subclasses', () => {
@@ -1732,7 +1714,7 @@ describe('GameNode parity characterizations not covered upstream', () => {
     expect(child.next()).toBeNull()
   })
 
-  test('comment normalization preserves aliases and visitor boundary shapes', () => {
+  test('comment normalization removes aliases and preserves visitor shapes', () => {
     class CommentBoundaryVisitor extends pgn.BaseVisitor<
       Array<string | string[]>
     > {
@@ -1752,7 +1734,10 @@ describe('GameNode parity characterizations not covered upstream', () => {
     expect(pgn._standardizeComments(empty)).not.toBe(empty)
 
     const suppliedComments = ['tree comment']
-    expect(pgn._standardizeComments(suppliedComments)).toBe(suppliedComments)
+    expect(pgn._standardizeComments(suppliedComments)).toEqual(suppliedComments)
+    expect(pgn._standardizeComments(suppliedComments)).not.toBe(
+      suppliedComments,
+    )
 
     const parsedComments = pgn.readGame(
       new pgn.StringIO('1. e4 {parser comment}'),
@@ -1768,14 +1753,20 @@ describe('GameNode parity characterizations not covered upstream', () => {
       comment: suppliedComments,
       startingComment: suppliedStartingComments,
     })
-    expect(node.comments).toBe(suppliedComments)
-    expect(node.startingComments).toBe(suppliedStartingComments)
+    expect(node.comments).toEqual(suppliedComments)
+    expect(node.comments).not.toBe(suppliedComments)
+    expect(node.startingComments).toEqual(suppliedStartingComments)
+    expect(node.startingComments).not.toBe(suppliedStartingComments)
+    suppliedComments.push('caller mutation')
+    suppliedStartingComments.push('caller mutation')
+    expect(node.comments).toEqual(['tree comment'])
+    expect(node.startingComments).toEqual(['starting tree comment'])
 
     node.startingComments = []
 
     const traversedComments = game.accept(new CommentBoundaryVisitor())
     expect(traversedComments).toEqual([['tree comment']])
-    expect(traversedComments[0]).toBe(node.comments)
+    expect(traversedComments[0]).not.toBe(node.comments)
   })
 
   test('StringExporter output round-trips the mainline and sidelines', () => {

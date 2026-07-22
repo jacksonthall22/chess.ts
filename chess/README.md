@@ -11,6 +11,10 @@ Please report any issues on GitHub!
 See the repository's
 [structured game identity documentation](https://github.com/jacksonthall22/chess.ts/blob/main/GAME_MODEL.md)
 for the `GameNode.nodeId` contract and synchronization boundary.
+The
+[canonical game-document contract](https://github.com/jacksonthall22/chess.ts/blob/main/GAME_DOCUMENT.md)
+explains the readonly collection and transaction APIs used by synchronized
+games.
 
 ## Examples
 
