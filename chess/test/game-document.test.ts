@@ -663,6 +663,86 @@ describe('MemoryGameDocument transactions and notifications', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 
+  test('does not revise or notify when an outer transaction restores its starting state', () => {
+    const document = new MemoryGameDocument(nodeId(1), {
+      comments: ['original comment'],
+      startingComments: ['original starting comment'],
+      nags: [1],
+      headers: [['Event', 'Original']],
+    })
+    const firstId = nodeId(2)
+    const secondId = nodeId(3)
+    const thirdId = nodeId(4)
+    addNode(document, firstId)
+    addNode(document, secondId, document.rootId, 'd2d4')
+    addNode(document, thirdId, document.rootId, 'c2c4')
+    const initialRevision = document.revision
+    const listener = vi.fn()
+    document.subscribe(listener)
+
+    document.transact(() => {
+      document.setComments(document.rootId, ['temporary comment'])
+      document.setComments(document.rootId, ['original comment'])
+      document.setStartingComments(document.rootId, [
+        'temporary starting comment',
+      ])
+      document.setStartingComments(document.rootId, [
+        'original starting comment',
+      ])
+      document.addNag(document.rootId, 2)
+      document.removeNag(document.rootId, 2)
+      document.setHeader('Event', 'Temporary')
+      document.setHeader('Event', 'Original')
+      document.moveChild(document.rootId, firstId, 2)
+      document.moveChild(document.rootId, firstId, 0)
+    })
+
+    expect(document.revision).toBe(initialRevision)
+    expect(listener).not.toHaveBeenCalled()
+    expect(document.getComments(document.rootId)).toEqual(['original comment'])
+    expect(document.getStartingComments(document.rootId)).toEqual([
+      'original starting comment',
+    ])
+    expect(document.getNags(document.rootId)).toEqual([1])
+    expect(document.getHeaderEntries()).toEqual([['Event', 'Original']])
+    expect(document.getChildIds(document.rootId)).toEqual([
+      firstId,
+      secondId,
+      thirdId,
+    ])
+  })
+
+  test('reports only the parent when a reorder changes no node facts', () => {
+    const document = new MemoryGameDocument(nodeId(1))
+    const firstId = nodeId(2)
+    const secondId = nodeId(3)
+    const thirdId = nodeId(4)
+    addNode(document, firstId)
+    addNode(document, secondId, document.rootId, 'd2d4')
+    addNode(document, thirdId, document.rootId, 'c2c4')
+    const initialRevision = document.revision
+    const events: GameDocumentChangeEvent[] = []
+    document.subscribe(event => events.push(event))
+
+    document.moveChild(document.rootId, firstId, 2)
+
+    expect(document.revision).toBe(initialRevision + 1)
+    expect(events).toEqual([
+      {
+        revision: initialRevision + 1,
+        origin: undefined,
+        categories: ['structure'],
+        changedNodeIds: [document.rootId],
+        changedHeaderNames: [],
+      },
+    ])
+    expect(document.getChildIds(document.rootId)).toEqual([
+      secondId,
+      thirdId,
+      firstId,
+    ])
+  })
+
   test('commits and notifies changes when a transaction callback throws', () => {
     const document = new MemoryGameDocument(nodeId(1))
     const origin = Symbol('origin')

@@ -26,6 +26,11 @@ export interface GameDocumentChangeEvent {
   readonly revision: number
   readonly origin: unknown
   readonly categories: readonly GameDocumentChangeCategory[]
+  /**
+   * Parents whose visible ordered children changed, plus nodes whose own
+   * existence, parent, incoming move, or removal status changed. Annotation
+   * changes also include their owning node.
+   */
   readonly changedNodeIds: readonly GameNodeId[]
   readonly changedHeaderNames: readonly string[]
 }
@@ -97,6 +102,9 @@ export interface GameDocument {
    * rollback boundary: mutations remain applied if the callback throws. The
    * callback must finish synchronously. Returning a promise or thenable is a
    * `TypeError` at runtime as well as a type error for normally typed callers.
+   * Publication compares the final observable state with the start of the
+   * outer transaction, so a transaction that restores every touched value
+   * emits no event or revision.
    *
    * Listener failures are reported only after every listener and every queued
    * reentrant event has been delivered. One failure is rethrown unchanged;
@@ -180,7 +188,27 @@ interface MemoryNodeRecord {
   nags: number[]
 }
 
-interface PendingChanges {
+interface MemoryNodeStructureSnapshot {
+  readonly parentId: GameNodeId | null
+  readonly moveUci: string | null
+  readonly removed: boolean
+}
+
+interface PendingBeforeValues {
+  /** `null` means the node did not exist when first touched. */
+  readonly nodeStructures: Map<
+    GameNodeId,
+    MemoryNodeStructureSnapshot | null
+  >
+  readonly childIds: Map<GameNodeId, readonly GameNodeId[]>
+  readonly comments: Map<GameNodeId, readonly string[]>
+  readonly startingComments: Map<GameNodeId, readonly string[]>
+  readonly nags: Map<GameNodeId, readonly number[]>
+  /** `null` means headers were not touched by this transaction. */
+  headers: readonly (readonly [string, string])[] | null
+}
+
+interface DerivedChanges {
   readonly categories: Set<GameDocumentChangeCategory>
   readonly nodeIds: Set<GameNodeId>
   readonly headerNames: Set<string>
@@ -298,7 +326,7 @@ export class MemoryGameDocument implements GameDocument {
   #listeners = new Set<GameDocumentChangeListener>()
   #transactionDepth = 0
   #transactionOrigin: unknown
-  #pendingChanges: PendingChanges | null = null
+  #pendingBeforeValues: PendingBeforeValues | null = null
   #eventQueue: GameDocumentChangeEvent[] = []
   #isDispatchingEvents = false
 
@@ -350,10 +378,16 @@ export class MemoryGameDocument implements GameDocument {
     const isOuterTransaction = this.#transactionDepth === 0
     if (isOuterTransaction) {
       this.#transactionOrigin = origin
-      this.#pendingChanges = {
-        categories: new Set<GameDocumentChangeCategory>(),
-        nodeIds: new Set<GameNodeId>(),
-        headerNames: new Set<string>(),
+      this.#pendingBeforeValues = {
+        nodeStructures: new Map<
+          GameNodeId,
+          MemoryNodeStructureSnapshot | null
+        >(),
+        childIds: new Map<GameNodeId, readonly GameNodeId[]>(),
+        comments: new Map<GameNodeId, readonly string[]>(),
+        startingComments: new Map<GameNodeId, readonly string[]>(),
+        nags: new Map<GameNodeId, readonly number[]>(),
+        headers: null,
       }
     }
 
@@ -443,6 +477,17 @@ export class MemoryGameDocument implements GameDocument {
     const nags = copyNags(input.nags)
 
     this.transact(() => {
+      this.#touchNodeStructure(nodeId)
+      this.#touchChildIds(parent)
+      if (comments.length !== 0) {
+        this.#touchComments(nodeId, [])
+      }
+      if (startingComments.length !== 0) {
+        this.#touchStartingComments(nodeId, [])
+      }
+      if (nags.length !== 0) {
+        this.#touchNags(nodeId, [])
+      }
       this.#nodes.set(nodeId, {
         nodeId,
         parentId,
@@ -453,19 +498,7 @@ export class MemoryGameDocument implements GameDocument {
         startingComments,
         nags,
       })
-      this.#recordNodeChange('structure', nodeId)
-      if (comments.length !== 0) {
-        this.#recordNodeChange('comments', nodeId)
-      }
-      if (startingComments.length !== 0) {
-        this.#recordNodeChange('starting-comments', nodeId)
-      }
-      if (nags.length !== 0) {
-        this.#recordNodeChange('nags', nodeId)
-      }
-
       parent.childIds.splice(insertionIndex, 0, nodeId)
-      this.#recordNodeChange('structure', parentId)
     })
   }
 
@@ -481,8 +514,8 @@ export class MemoryGameDocument implements GameDocument {
     }
 
     this.transact(() => {
+      this.#touchChildIds(parent)
       parent.childIds.splice(index, 1)
-      this.#recordNodeChange('structure', parentId)
       this.#tombstoneSubtree(node)
     })
     return true
@@ -511,10 +544,9 @@ export class MemoryGameDocument implements GameDocument {
     }
 
     this.transact(() => {
+      this.#touchChildIds(parent)
       parent.childIds.splice(currentIndex, 1)
       parent.childIds.splice(index, 0, nodeId)
-      this.#recordNodeChange('structure', parentId)
-      this.#recordNodeChange('structure', nodeId)
     })
   }
 
@@ -529,8 +561,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchComments(nodeId, node.comments)
       node.comments = copy
-      this.#recordNodeChange('comments', nodeId)
     })
   }
 
@@ -539,8 +571,8 @@ export class MemoryGameDocument implements GameDocument {
     const [copy] = copyStrings([comment], 'Comments')
     assertInsertionIndex(index, node.comments.length)
     this.transact(() => {
+      this.#touchComments(nodeId, node.comments)
       node.comments.splice(index, 0, copy)
-      this.#recordNodeChange('comments', nodeId)
     })
   }
 
@@ -552,8 +584,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchComments(nodeId, node.comments)
       node.comments[index] = copy
-      this.#recordNodeChange('comments', nodeId)
     })
   }
 
@@ -562,8 +594,8 @@ export class MemoryGameDocument implements GameDocument {
     assertExistingIndex(index, node.comments.length)
     let removed = ''
     this.transact(() => {
+      this.#touchComments(nodeId, node.comments)
       ;[removed] = node.comments.splice(index, 1)
-      this.#recordNodeChange('comments', nodeId)
     })
     return removed
   }
@@ -582,8 +614,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchStartingComments(nodeId, node.startingComments)
       node.startingComments = copy
-      this.#recordNodeChange('starting-comments', nodeId)
     })
   }
 
@@ -596,8 +628,8 @@ export class MemoryGameDocument implements GameDocument {
     const [copy] = copyStrings([comment], 'Starting comments')
     assertInsertionIndex(index, node.startingComments.length)
     this.transact(() => {
+      this.#touchStartingComments(nodeId, node.startingComments)
       node.startingComments.splice(index, 0, copy)
-      this.#recordNodeChange('starting-comments', nodeId)
     })
   }
 
@@ -613,8 +645,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchStartingComments(nodeId, node.startingComments)
       node.startingComments[index] = copy
-      this.#recordNodeChange('starting-comments', nodeId)
     })
   }
 
@@ -623,8 +655,8 @@ export class MemoryGameDocument implements GameDocument {
     assertExistingIndex(index, node.startingComments.length)
     let removed = ''
     this.transact(() => {
+      this.#touchStartingComments(nodeId, node.startingComments)
       ;[removed] = node.startingComments.splice(index, 1)
-      this.#recordNodeChange('starting-comments', nodeId)
     })
     return removed
   }
@@ -640,8 +672,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchNags(nodeId, node.nags)
       node.nags = copy
-      this.#recordNodeChange('nags', nodeId)
     })
   }
 
@@ -652,9 +684,9 @@ export class MemoryGameDocument implements GameDocument {
       return false
     }
     this.transact(() => {
+      this.#touchNags(nodeId, node.nags)
       node.nags.push(parsedNag)
       node.nags.sort((left, right) => left - right)
-      this.#recordNodeChange('nags', nodeId)
     })
     return true
   }
@@ -667,8 +699,8 @@ export class MemoryGameDocument implements GameDocument {
       return false
     }
     this.transact(() => {
+      this.#touchNags(nodeId, node.nags)
       node.nags.splice(index, 1)
-      this.#recordNodeChange('nags', nodeId)
     })
     return true
   }
@@ -679,8 +711,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchNags(nodeId, node.nags)
       node.nags = []
-      this.#recordNodeChange('nags', nodeId)
     })
   }
 
@@ -696,8 +728,8 @@ export class MemoryGameDocument implements GameDocument {
       return
     }
     this.transact(() => {
+      this.#touchHeaders()
       this.#headers.set(name, value)
-      this.#recordHeaderChange(name)
     })
   }
 
@@ -707,8 +739,8 @@ export class MemoryGameDocument implements GameDocument {
       return false
     }
     this.transact(() => {
+      this.#touchHeaders()
       this.#headers.delete(name)
-      this.#recordHeaderChange(name)
     })
     return true
   }
@@ -750,8 +782,8 @@ export class MemoryGameDocument implements GameDocument {
     while (stack.length !== 0) {
       const node = stack.pop() as MemoryNodeRecord
       if (!node.removed) {
+        this.#touchNodeStructure(node.nodeId)
         node.removed = true
-        this.#recordNodeChange('structure', node.nodeId)
       }
       for (const childId of node.childIds) {
         stack.push(this.#requireNode(childId))
@@ -759,49 +791,190 @@ export class MemoryGameDocument implements GameDocument {
     }
   }
 
-  #recordNodeChange(
-    category: Exclude<GameDocumentChangeCategory, 'headers'>,
+  #touchNodeStructure(nodeId: GameNodeId): void {
+    const pending = this.#requirePendingBeforeValues()
+    if (pending.nodeStructures.has(nodeId)) {
+      return
+    }
+    const node = this.#nodes.get(nodeId)
+    pending.nodeStructures.set(
+      nodeId,
+      node
+        ? {
+            parentId: node.parentId,
+            moveUci: node.moveUci,
+            removed: node.removed,
+          }
+        : null,
+    )
+  }
+
+  #touchChildIds(node: MemoryNodeRecord): void {
+    const pending = this.#requirePendingBeforeValues()
+    if (!pending.childIds.has(node.nodeId)) {
+      pending.childIds.set(node.nodeId, [...node.childIds])
+    }
+  }
+
+  #touchComments(nodeId: GameNodeId, comments: readonly string[]): void {
+    const pending = this.#requirePendingBeforeValues()
+    if (!pending.comments.has(nodeId)) {
+      pending.comments.set(nodeId, [...comments])
+    }
+  }
+
+  #touchStartingComments(
     nodeId: GameNodeId,
+    comments: readonly string[],
   ): void {
-    const pending = this.#requirePendingChanges()
-    pending.categories.add(category)
-    pending.nodeIds.add(nodeId)
+    const pending = this.#requirePendingBeforeValues()
+    if (!pending.startingComments.has(nodeId)) {
+      pending.startingComments.set(nodeId, [...comments])
+    }
   }
 
-  #recordHeaderChange(name: string): void {
-    const pending = this.#requirePendingChanges()
-    pending.categories.add('headers')
-    pending.headerNames.add(name)
+  #touchNags(nodeId: GameNodeId, nags: readonly number[]): void {
+    const pending = this.#requirePendingBeforeValues()
+    if (!pending.nags.has(nodeId)) {
+      pending.nags.set(nodeId, [...nags])
+    }
   }
 
-  #requirePendingChanges(): PendingChanges {
-    if (!this.#pendingChanges || this.#transactionDepth === 0) {
+  #touchHeaders(): void {
+    const pending = this.#requirePendingBeforeValues()
+    if (pending.headers === null) {
+      pending.headers = [...this.#headers.entries()]
+    }
+  }
+
+  #requirePendingBeforeValues(): PendingBeforeValues {
+    if (!this.#pendingBeforeValues || this.#transactionDepth === 0) {
       throw new Error('Game document mutation escaped its transaction')
     }
-    return this.#pendingChanges
+    return this.#pendingBeforeValues
+  }
+
+  #deriveChanges(pending: PendingBeforeValues): DerivedChanges {
+    const changes: DerivedChanges = {
+      categories: new Set<GameDocumentChangeCategory>(),
+      nodeIds: new Set<GameNodeId>(),
+      headerNames: new Set<string>(),
+    }
+
+    for (const [nodeId, before] of pending.nodeStructures) {
+      const node = this.#nodes.get(nodeId)
+      const changed =
+        before === null
+          ? node !== undefined
+          : node === undefined ||
+            node.parentId !== before.parentId ||
+            node.moveUci !== before.moveUci ||
+            node.removed !== before.removed
+      if (changed) {
+        changes.categories.add('structure')
+        changes.nodeIds.add(nodeId)
+      }
+    }
+
+    for (const [nodeId, before] of pending.childIds) {
+      const node = this.#nodes.get(nodeId)
+      if (!node || !equalArrays(before, node.childIds)) {
+        changes.categories.add('structure')
+        changes.nodeIds.add(nodeId)
+      }
+    }
+
+    for (const [nodeId, before] of pending.comments) {
+      const node = this.#nodes.get(nodeId)
+      if (!node || !equalArrays(before, node.comments)) {
+        changes.categories.add('comments')
+        changes.nodeIds.add(nodeId)
+      }
+    }
+
+    for (const [nodeId, before] of pending.startingComments) {
+      const node = this.#nodes.get(nodeId)
+      if (!node || !equalArrays(before, node.startingComments)) {
+        changes.categories.add('starting-comments')
+        changes.nodeIds.add(nodeId)
+      }
+    }
+
+    for (const [nodeId, before] of pending.nags) {
+      const node = this.#nodes.get(nodeId)
+      if (!node || !equalArrays(before, node.nags)) {
+        changes.categories.add('nags')
+        changes.nodeIds.add(nodeId)
+      }
+    }
+
+    if (pending.headers !== null) {
+      const beforeValues = new Map(pending.headers)
+      const afterEntries = [...this.#headers.entries()]
+      const afterValues = new Map(afterEntries)
+      const names = new Set([...beforeValues.keys(), ...afterValues.keys()])
+      for (const name of names) {
+        if (
+          beforeValues.has(name) !== afterValues.has(name) ||
+          beforeValues.get(name) !== afterValues.get(name)
+        ) {
+          changes.headerNames.add(name)
+        }
+      }
+
+      const beforeOrder = pending.headers.map(([name]) => name)
+      const afterOrder = afterEntries.map(([name]) => name)
+      if (!equalArrays(beforeOrder, afterOrder)) {
+        changes.categories.add('headers')
+        // If values and membership are unchanged, identify the headers whose
+        // canonical insertion positions moved.
+        if (changes.headerNames.size === 0) {
+          const beforeIndexes = new Map(
+            beforeOrder.map((name, index) => [name, index] as const),
+          )
+          const afterIndexes = new Map(
+            afterOrder.map((name, index) => [name, index] as const),
+          )
+          for (const name of names) {
+            if (beforeIndexes.get(name) !== afterIndexes.get(name)) {
+              changes.headerNames.add(name)
+            }
+          }
+        }
+      }
+      if (changes.headerNames.size !== 0) {
+        changes.categories.add('headers')
+      }
+    }
+
+    return changes
   }
 
   #flushChanges(): readonly unknown[] {
-    const pending = this.#pendingChanges
+    const pending = this.#pendingBeforeValues
     const origin = this.#transactionOrigin
-    this.#pendingChanges = null
+    this.#pendingBeforeValues = null
     this.#transactionOrigin = undefined
 
-    if (!pending || pending.categories.size === 0) {
+    if (!pending) {
+      return []
+    }
+    const changes = this.#deriveChanges(pending)
+    if (changes.categories.size === 0) {
       return []
     }
 
     this.#revision += 1
     const categories = Object.freeze(
       CHANGE_CATEGORY_ORDER.filter((category) =>
-        pending.categories.has(category),
+        changes.categories.has(category),
       ),
     )
     const changedNodeIds = Object.freeze(
-      [...pending.nodeIds].sort(compareStrings),
+      [...changes.nodeIds].sort(compareStrings),
     )
     const changedHeaderNames = Object.freeze(
-      [...pending.headerNames].sort(compareStrings),
+      [...changes.headerNames].sort(compareStrings),
     )
     const event: GameDocumentChangeEvent = Object.freeze({
       revision: this.#revision,
