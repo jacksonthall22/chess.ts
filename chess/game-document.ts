@@ -318,8 +318,7 @@ const assertExistingIndex = (index: number, length: number): void => {
  * an executable contract for a future synchronized document adapter.
  */
 export class MemoryGameDocument implements GameDocument {
-  readonly rootId: GameNodeId
-
+  readonly #rootId: GameNodeId
   #revision = 0
   #nodes = new Map<GameNodeId, MemoryNodeRecord>()
   #headers = new Map<string, string>()
@@ -350,7 +349,7 @@ export class MemoryGameDocument implements GameDocument {
       this.#headers.set(name, value)
     }
 
-    this.rootId = rootId
+    this.#rootId = rootId
     this.#nodes.set(rootId, {
       nodeId: rootId,
       parentId: null,
@@ -361,6 +360,10 @@ export class MemoryGameDocument implements GameDocument {
       startingComments,
       nags,
     })
+  }
+
+  get rootId(): GameNodeId {
+    return this.#rootId
   }
 
   get revision(): number {

@@ -39,6 +39,24 @@ const addNode = (
 }
 
 describe('MemoryGameDocument ownership and snapshots', () => {
+  test('exposes getter-only root identity at type and runtime boundaries', () => {
+    const rootId = nodeId(1)
+    const replacementId = nodeId(2)
+    const document = new MemoryGameDocument(rootId)
+
+    if (false) {
+      // @ts-expect-error Game-document root identity is immutable.
+      document.rootId = replacementId
+    }
+
+    expect(() => {
+      ;(document as unknown as { rootId: GameNodeId }).rootId = replacementId
+    }).toThrow(TypeError)
+    expect(document.rootId).toBe(rootId)
+    expect(document.hasNode(rootId)).toBe(true)
+    expect(document.hasNode(replacementId)).toBe(false)
+  })
+
   test('copies every caller-owned input and returns frozen snapshots', () => {
     const rootId = nodeId(1)
     const rootComments = ['root comment']

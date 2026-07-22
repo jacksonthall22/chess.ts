@@ -257,7 +257,7 @@ Replacing the destructive stream helper with cursor-backed `StringIO`
 semantics translates game skipping, tricky skipping, and header-only scanning,
 bringing the current inventory to 132 of 292 methods and 160 explicit TODOs.
 The only remaining PGN TODO depends on the unsupported variant module.
-Ninety-two chess.ts-only
+Ninety-three chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -282,7 +282,8 @@ handles, external changes, custom-node materialization, and iterative
 construction, granular embedded-annotation edits, synchronous-only
 transactions, ordered reentrant delivery, changing subscriptions, and isolated
 observer failures. Final-state event regressions also suppress net-zero outer
-transactions and identify only a reordered variation's parent.
+transactions and identify only a reordered variation's parent. Document root
+identity is getter-only at both the TypeScript and runtime boundaries.
 Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while
