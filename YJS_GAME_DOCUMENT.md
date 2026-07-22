@@ -285,3 +285,33 @@ still owns authentication, workspace membership, authorization, rate and size
 limits, durable retry of dependency-blocked updates, persistence, and presence.
 Awareness data such as cursors and presenter focus is ephemeral and does not
 belong in this durable game document.
+
+## Executable collaboration lab
+
+[`examples/collaboration-lab`](examples/collaboration-lab/README.md) exercises
+the public transport boundary as a real browser consumer. It serves one
+interactive frontend to two isolated clients and runs a localhost relay with a
+third `YjsGameDocument` replica:
+
+```text
+browser alice ──┐
+                ├── controlled byte relay ── validated server replica
+browser bob ────┘
+```
+
+The clients construct ordinary `Game` handles over their documents and never
+access a raw `Y.Doc`. The relay likewise uses only full updates, state vectors,
+differential updates, subscriptions, and validated `applyUpdate()` calls.
+This makes the example an acceptance test of the supported consumer contract,
+not a privileged test hook.
+
+The same program supports manual split-screen exploration and deterministic
+Playwright scenarios. Its partition barrier makes edits causally concurrent
+without relying on wall-clock click timing. Its controls can choose server
+acceptance order, reverse dependent updates, redeliver an accepted update, and
+disconnect a locally editable client. Convergence checks compare the visible
+semantic game and state vectors across both browsers and the server replica.
+
+The relay is intentionally localhost-only and in-memory. It is not the future
+production provider and does not claim authentication, authorization, durable
+acknowledgements, persistence, or presence behavior.

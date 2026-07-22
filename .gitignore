@@ -3,3 +3,7 @@ __pycache__/
 .vscode/
 chess/dist/
 chess/node_modules/
+examples/**/dist/
+examples/**/.playwright-cli/
+examples/**/node_modules/
+examples/**/output/

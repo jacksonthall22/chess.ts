@@ -38,3 +38,39 @@ jobs:
 
       - name: Test package
         run: npm test
+
+  collaboration-lab:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: examples/collaboration-lab/pnpm-lock.yaml
+
+      - name: Install library dependencies
+        run: pnpm --dir chess install --lockfile=false
+
+      - name: Install collaboration lab dependencies
+        run: pnpm --dir examples/collaboration-lab install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm --dir examples/collaboration-lab exec playwright install --with-deps chromium
+
+      - name: Check collaboration lab
+        run: pnpm --dir examples/collaboration-lab check
+
+      - name: Test collaboration lab
+        run: pnpm --dir examples/collaboration-lab test:e2e

@@ -1,0 +1,414 @@
+:root {
+  color: #ece9df;
+  background: #111311;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background:
+    radial-gradient(circle at top left, rgb(73 96 72 / 22%), transparent 34rem),
+    #111311;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button,
+input,
+textarea {
+  border: 1px solid #4d544a;
+  border-radius: 0.45rem;
+}
+
+button {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.75rem;
+  color: #f3f0e7;
+  background: #293027;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled),
+button:focus-visible {
+  border-color: #b8d599;
+  background: #374132;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+button.danger {
+  color: #ffd7cc;
+  background: #4d2922;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 0.55rem 0.65rem;
+  color: #f4f0e8;
+  background: #181b18;
+}
+
+label {
+  display: grid;
+  gap: 0.3rem;
+  color: #c6c9bf;
+  font-size: 0.82rem;
+}
+
+code {
+  color: #d8eabf;
+}
+
+h1,
+h2,
+p,
+dl {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0.55rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  font-weight: 500;
+  line-height: 0.96;
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  margin-bottom: 0.8rem;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 1.55rem;
+  font-weight: 500;
+}
+
+#app {
+  width: min(1440px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.45fr);
+  gap: 2rem;
+  align-items: end;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin-bottom: 0.35rem;
+  color: #a8c986;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.intro,
+.hint,
+.network-panel p,
+.relay-summary {
+  color: #adb2a9;
+}
+
+.identity {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.identity div {
+  padding: 0.8rem;
+  border: 1px solid #363b34;
+  border-radius: 0.55rem;
+  background: rgb(25 29 25 / 80%);
+}
+
+.identity dt {
+  margin-bottom: 0.25rem;
+  color: #8f968b;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.identity dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-testid="connection-status"][data-state="synced"] {
+  color: #b8dc95;
+}
+
+[data-testid="connection-status"][data-state="error"] {
+  color: #ffad99;
+}
+
+.error {
+  padding: 0.8rem 1rem;
+  border: 1px solid #8e4539;
+  border-radius: 0.55rem;
+  color: #ffd9cf;
+  background: #3e211c;
+}
+
+.network-panel,
+.board-panel,
+.tree-panel,
+.annotation-panel,
+.log-panel {
+  border: 1px solid #363b34;
+  border-radius: 0.7rem;
+  background: rgb(24 27 24 / 88%);
+  box-shadow: 0 1.2rem 3rem rgb(0 0 0 / 16%);
+}
+
+.network-panel {
+  display: grid;
+  grid-template-columns: minmax(17rem, 1fr) minmax(12rem, 0.4fr) minmax(24rem, 1fr);
+  gap: 1rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.network-panel h2,
+.network-panel p {
+  margin-bottom: 0;
+}
+
+.network-panel .checkbox,
+.network-panel .relay-summary {
+  grid-column: 1 / -1;
+}
+
+.checkbox {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.checkbox input {
+  width: auto;
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(22rem, 0.9fr) minmax(22rem, 1.1fr) minmax(18rem, 0.7fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.board-panel,
+.tree-panel,
+.annotation-panel,
+.log-panel {
+  padding: 1rem;
+}
+
+.panel-heading {
+  display: flex;
+  gap: 0.8rem;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.button-row.compact button {
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 1;
+  margin-bottom: 1rem;
+  border: 1px solid #777b72;
+  border-radius: 0.35rem;
+}
+
+.square {
+  display: grid;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  color: #111311;
+  font-size: clamp(1.6rem, 5vw, 3.5rem);
+  line-height: 1;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 24%);
+}
+
+.square.light {
+  background: #d6d0ba;
+}
+
+.square.dark {
+  background: #758b67;
+}
+
+.square:hover,
+.square:focus-visible,
+.square.selected {
+  background: #d7b858 !important;
+  outline: 3px solid #fff1a8;
+  outline-offset: -3px;
+}
+
+.inline-form,
+.header-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: end;
+  margin-top: 0.8rem;
+}
+
+.inline-form label,
+.header-form label {
+  grid-column: 1 / -1;
+}
+
+.header-form {
+  grid-template-columns: 1fr;
+}
+
+.hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.78rem;
+}
+
+.tree {
+  max-height: 38rem;
+  overflow: auto;
+}
+
+.tree ol {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  list-style: none;
+  border-left: 1px solid #3e453b;
+}
+
+.tree > ol {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.tree li {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.tree-node {
+  width: 100%;
+  min-height: 2rem;
+  padding: 0.35rem 0.55rem;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: #20251f;
+}
+
+.tree-node.selected {
+  border-color: #c8dfaa;
+  background: #3b4934;
+}
+
+.annotation-panel {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.annotation-panel h2,
+.log-panel h2 {
+  margin-bottom: 0.25rem;
+}
+
+.log-panel {
+  grid-column: span 1;
+}
+
+.log {
+  display: grid;
+  gap: 0.25rem;
+  max-height: 18rem;
+  margin: 0;
+  padding: 0 0 0 1.8rem;
+  overflow: auto;
+  color: #b9beb5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 1100px) {
+  .workspace {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .annotation-panel {
+    grid-column: 1 / -1;
+  }
+
+  .network-panel {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  #app {
+    width: min(100% - 1rem, 48rem);
+    padding-top: 1rem;
+  }
+
+  .hero,
+  .network-panel,
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .network-panel .checkbox,
+  .network-panel .relay-summary,
+  .annotation-panel,
+  .log-panel {
+    grid-column: auto;
+  }
+
+  .header-form label,
+  .header-form button {
+    grid-row: auto;
+    grid-column: auto;
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "name": "@chess.ts/collaboration-lab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.1",
+  "scripts": {
+    "build:library": "pnpm --dir ../../chess run build",
+    "check": "tsc --noEmit && vite build",
+    "demo": "concurrently --kill-others --names relay,ui --prefix-colors magenta,cyan \"pnpm relay\" \"pnpm dev\"",
+    "dev": "vite --host 127.0.0.1 --port 4173",
+    "precheck": "pnpm build:library",
+    "predemo": "pnpm build:library",
+    "pretest:e2e": "pnpm build:library",
+    "relay": "tsx server/relay.ts",
+    "setup": "pnpm --dir ../../chess install --lockfile=false && pnpm build:library && pnpm install --frozen-lockfile",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@jacksonthall22/chess.ts": "link:../../chess"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.59.1",
+    "@types/node": "24.10.1",
+    "@types/ws": "8.18.1",
+    "concurrently": "9.2.1",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "vite": "6.0.3",
+    "ws": "8.18.3"
+  }
+}
