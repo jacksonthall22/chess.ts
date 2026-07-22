@@ -11,6 +11,9 @@ importers:
       '@jacksonthall22/chess.ts':
         specifier: link:../../chess
         version: link:../../chess
+      chessboard:
+        specifier: git+https://github.com/hyprchs/chessboard.git#bda8d34dcdcf5cc017f6a93a1e77b218d08ae564
+        version: git+https://git@github.com:hyprchs/chessboard.git#bda8d34dcdcf5cc017f6a93a1e77b218d08ae564
     devDependencies:
       '@playwright/test':
         specifier: 1.59.1
@@ -496,6 +499,10 @@ packages:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
     engines: {node: '>=10'}
 
+  chessboard@git+https://git@github.com:hyprchs/chessboard.git#bda8d34dcdcf5cc017f6a93a1e77b218d08ae564:
+    resolution: {commit: bda8d34dcdcf5cc017f6a93a1e77b218d08ae564, repo: git@github.com:hyprchs/chessboard.git, type: git}
+    version: 0.0.2
+
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
@@ -957,6 +964,8 @@ snapshots:
     dependencies:
       ansi-styles: 4.3.0
       supports-color: 7.2.0
+
+  chessboard@git+https://git@github.com:hyprchs/chessboard.git#bda8d34dcdcf5cc017f6a93a1e77b218d08ae564: {}
 
   cliui@8.0.1:
     dependencies:

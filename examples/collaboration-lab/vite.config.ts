@@ -1,6 +1,14 @@
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
+
 import { defineConfig } from 'vite'
 
+const chessboardEntry = createRequire(import.meta.url).resolve('chessboard')
+const chessboardRoot = resolve(dirname(chessboardEntry), '..')
+
 export default defineConfig({
+  // The shared board publishes its piece sets alongside its TypeScript source.
+  publicDir: resolve(chessboardRoot, 'piece-sets'),
   // The local package is linked outside this example's node_modules tree.
   // Transform its CommonJS build explicitly while still resolving real pnpm
   // dependency paths (not the synthetic path through the package symlink).
@@ -14,6 +22,8 @@ export default defineConfig({
       '@jacksonthall22/chess.ts',
       '@jacksonthall22/chess.ts/pgn',
       '@jacksonthall22/chess.ts/pgn/yjs',
+      '@jacksonthall22/chess.ts/svg',
+      'chessboard',
     ],
   },
   server: {

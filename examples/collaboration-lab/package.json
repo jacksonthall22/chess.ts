@@ -17,7 +17,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@jacksonthall22/chess.ts": "link:../../chess"
+    "@jacksonthall22/chess.ts": "link:../../chess",
+    "chessboard": "git+https://github.com/hyprchs/chessboard.git#bda8d34dcdcf5cc017f6a93a1e77b218d08ae564"
   },
   "devDependencies": {
     "@playwright/test": "1.59.1",

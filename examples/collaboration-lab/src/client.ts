@@ -1,10 +1,20 @@
 import {
   parseSquare,
   squareName,
+  type Board,
   type Square,
 } from '@jacksonthall22/chess.ts'
 import * as pgn from '@jacksonthall22/chess.ts/pgn'
 import { YjsGameDocument } from '@jacksonthall22/chess.ts/pgn/yjs'
+import { Arrow } from '@jacksonthall22/chess.ts/svg'
+import {
+  create as createChessboard,
+  type Api as ChessboardApi,
+  type BoardDrawing,
+  type Dests,
+  type Key,
+  type PromotionRole,
+} from 'chessboard'
 
 import { gameFingerprint, readGameState, type SemanticGameState } from './game-state'
 import {
@@ -54,7 +64,6 @@ let game: pgn.Game | null = null
 let socket: WebSocket | null = null
 let connection: ConnectionState = 'disconnected'
 let selectedNodeId: string | null = null
-let selectedSquare: Square | null = null
 let partitionedActors: readonly string[] = []
 let relayState: RelayRoomState | null = null
 let lastError = ''
@@ -116,7 +125,10 @@ app.innerHTML = `
           <p class="eyebrow">Selected position</p>
           <h2 id="board-heading">Board</h2>
         </div>
-        <button id="back" type="button">Back</button>
+        <div class="button-row compact">
+          <button id="flip" type="button">Flip board</button>
+          <button id="back" type="button">Back</button>
+        </div>
       </div>
       <div id="board" class="board" data-testid="board"></div>
       <form id="move-form" class="inline-form">
@@ -124,7 +136,7 @@ app.innerHTML = `
         <input id="uci" name="uci" autocomplete="off" placeholder="e2e4" />
         <button type="submit">Add move</button>
       </form>
-      <p class="hint">You can also click a source square and destination square.</p>
+      <p class="hint">Drag or click pieces to make moves. Right-drag or Shift-drag to add synchronized arrows and highlights.</p>
     </section>
 
     <section class="tree-panel" aria-labelledby="tree-heading">
@@ -237,7 +249,6 @@ const currentNode = (): pgn.GameNode => {
   const selected = game.nodeById(selectedNodeId as pgn.GameNodeId)
   if (document.isRemoved(selected.nodeId)) {
     selectedNodeId = game.nodeId
-    selectedSquare = null
     return game
   }
   return selected
@@ -430,9 +441,81 @@ const addMove = (rawUci: string): void => {
   }
   const child = node.addVariation(move)
   selectedNodeId = child.nodeId
-  selectedSquare = null
   requireElement<HTMLInputElement>('#uci').value = ''
 }
+
+const PROMOTION_SUFFIX: Record<PromotionRole, string> = {
+  queen: 'q',
+  rook: 'r',
+  bishop: 'b',
+  knight: 'n',
+}
+
+const toChessboardKey = (square: Square): Key => squareName(square) as Key
+
+const legalDestinations = (board: Board): Dests => {
+  const destinations: Dests = new Map()
+  for (const move of board.legalMoves) {
+    const origin = toChessboardKey(move.fromSquare)
+    const destination = toChessboardKey(move.toSquare)
+    const existing = destinations.get(origin)
+    if (existing && !existing.includes(destination)) {
+      existing.push(destination)
+    } else if (!existing) {
+      destinations.set(origin, [destination])
+    }
+  }
+  return destinations
+}
+
+const boardDrawings = (node: pgn.GameNode): BoardDrawing[] =>
+  node.arrows().map(arrow => {
+    const from = toChessboardKey(arrow.tail)
+    const to = toChessboardKey(arrow.head)
+    return from === to
+      ? { kind: 'highlight', square: from, brush: arrow.color }
+      : { kind: 'arrow', from, to, brush: arrow.color }
+  })
+
+const gameArrows = (drawings: BoardDrawing[]): Arrow[] =>
+  drawings.map(drawing => {
+    const from = drawing.kind === 'arrow' ? drawing.from : drawing.square
+    const to = drawing.kind === 'arrow' ? drawing.to : drawing.square
+    return new Arrow(parseSquare(from), parseSquare(to), {
+      color: drawing.brush ?? 'green',
+    })
+  })
+
+const lastMove = (node: pgn.GameNode): Key[] | false =>
+  node.move
+    ? [
+        toChessboardKey(node.move.fromSquare),
+        toChessboardKey(node.move.toSquare),
+      ]
+    : false
+
+const chessboard: ChessboardApi = createChessboard(requireElement('#board'), {
+  coordinates: true,
+  pieceSet: 'p4wn',
+  assetsBaseUrl: '',
+  movable: {
+    color: 'both',
+    dests: new Map(),
+    showDests: true,
+  },
+  drawable: {
+    enabled: true,
+    onDrawingsChange(drawings) {
+      runAction(() => currentNode().setArrows(gameArrows(drawings)))
+    },
+  },
+  events: {
+    move(origin, destination, promotion) {
+      const suffix = promotion ? PROMOTION_SUFFIX[promotion] : ''
+      runAction(() => addMove(`${origin}${destination}${suffix}`))
+    },
+  },
+})
 
 const renderStatus = (): void => {
   requireElement('[data-testid="room-id"]').textContent = roomId
@@ -460,38 +543,31 @@ const renderStatus = (): void => {
 }
 
 const renderBoard = (): void => {
-  const container = requireElement('#board')
-  container.replaceChildren()
   if (!game || !document || selectedNodeId === null) {
+    chessboard.set({
+      fen: '8/8/8/8/8/8/8/8 w - - 0 1',
+      lastMove: false,
+      check: false,
+      movable: { color: 'both', dests: new Map() },
+      drawable: { drawings: [] },
+    })
     return
   }
-  const board = currentNode().board()
-  for (let rank = 7; rank >= 0; rank -= 1) {
-    for (let file = 0; file < 8; file += 1) {
-      const square = (rank * 8 + file) as Square
-      const squareElement = window.document.createElement('button')
-      squareElement.type = 'button'
-      squareElement.className = `square ${(rank + file) % 2 === 0 ? 'dark' : 'light'}`
-      squareElement.dataset.square = squareName(square)
-      squareElement.setAttribute('aria-label', squareName(square))
-      if (selectedSquare === square) {
-        squareElement.classList.add('selected')
-      }
-      squareElement.textContent = board.pieceAt(square)?.unicodeSymbol() ?? ''
-      squareElement.addEventListener('click', () => {
-        runAction(() => {
-          if (selectedSquare === null) {
-            selectedSquare = parseSquare(squareName(square))
-          } else {
-            const from = squareName(selectedSquare)
-            selectedSquare = null
-            addMove(`${from}${squareName(square)}`)
-          }
-        })
-      })
-      container.append(squareElement)
-    }
-  }
+  const node = currentNode()
+  const board = node.board()
+  const turnColor = board.turn ? 'white' : 'black'
+  chessboard.set({
+    fen: board.fen(),
+    lastMove: lastMove(node),
+    turnColor,
+    check: board.isCheck() ? turnColor : false,
+    movable: {
+      color: turnColor,
+      dests: legalDestinations(board),
+      showDests: true,
+    },
+    drawable: { drawings: boardDrawings(node) },
+  })
 }
 
 const nodeLabel = (node: pgn.GameNode): string => {
@@ -519,7 +595,6 @@ const renderTreeNode = (node: pgn.GameNode): HTMLLIElement => {
   button.title = node.nodeId
   button.addEventListener('click', () => {
     selectedNodeId = node.nodeId
-    selectedSquare = null
     render()
   })
   item.append(button)
@@ -649,12 +724,14 @@ requireElement<HTMLFormElement>('#move-form').addEventListener('submit', event =
   event.preventDefault()
   runAction(() => addMove(requireElement<HTMLInputElement>('#uci').value))
 })
+requireElement<HTMLButtonElement>('#flip').addEventListener('click', () => {
+  chessboard.toggleOrientation()
+})
 requireElement<HTMLButtonElement>('#back').addEventListener('click', () => {
   runAction(() => {
     const parent = currentNode().parent
     if (parent) {
       selectedNodeId = parent.nodeId
-      selectedSquare = null
     }
   })
 })
@@ -671,7 +748,6 @@ requireElement<HTMLButtonElement>('#delete').addEventListener('click', () => {
       const parent = node.parent
       parent.removeVariation(node)
       selectedNodeId = parent.nodeId
-      selectedSquare = null
     }
   })
 })

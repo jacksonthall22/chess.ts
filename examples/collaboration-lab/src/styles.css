@@ -26,14 +26,14 @@ textarea {
   font: inherit;
 }
 
-button,
+button:not(.cb-square):not(.cb-promotion-square),
 input,
 textarea {
   border: 1px solid #4d544a;
   border-radius: 0.45rem;
 }
 
-button {
+button:not(.cb-square):not(.cb-promotion-square) {
   min-height: 2.35rem;
   padding: 0.45rem 0.75rem;
   color: #f3f0e7;
@@ -41,13 +41,13 @@ button {
   cursor: pointer;
 }
 
-button:hover:not(:disabled),
-button:focus-visible {
+button:not(.cb-square):not(.cb-promotion-square):hover:not(:disabled),
+button:not(.cb-square):not(.cb-promotion-square):focus-visible {
   border-color: #b8d599;
   background: #374132;
 }
 
-button:disabled {
+button:not(.cb-square):not(.cb-promotion-square):disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
@@ -244,44 +244,12 @@ h2 {
 }
 
 .board {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
   overflow: hidden;
   width: 100%;
   aspect-ratio: 1;
   margin-bottom: 1rem;
   border: 1px solid #777b72;
   border-radius: 0.35rem;
-}
-
-.square {
-  display: grid;
-  min-width: 0;
-  min-height: 0;
-  padding: 0;
-  place-items: center;
-  border: 0;
-  border-radius: 0;
-  color: #111311;
-  font-size: clamp(1.6rem, 5vw, 3.5rem);
-  line-height: 1;
-  text-shadow: 0 1px 0 rgb(255 255 255 / 24%);
-}
-
-.square.light {
-  background: #d6d0ba;
-}
-
-.square.dark {
-  background: #758b67;
-}
-
-.square:hover,
-.square:focus-visible,
-.square.selected {
-  background: #d7b858 !important;
-  outline: 3px solid #fff1a8;
-  outline-offset: -3px;
 }
 
 .inline-form,

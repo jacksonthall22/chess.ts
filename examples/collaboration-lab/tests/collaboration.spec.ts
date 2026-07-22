@@ -108,6 +108,31 @@ const addMove = async (page: Page, uci: string): Promise<void> => {
   await expect(page.getByTestId('error')).toBeHidden()
 }
 
+const boardSquare = (page: Page, square: string) =>
+  page.locator(`.cb-square[data-key="${square}"]`)
+
+const drawArrow = async (
+  page: Page,
+  origin: string,
+  destination: string,
+): Promise<void> => {
+  const originBox = await boardSquare(page, origin).boundingBox()
+  const destinationBox = await boardSquare(page, destination).boundingBox()
+  if (!originBox || !destinationBox) {
+    throw new Error('Expected visible chessboard squares')
+  }
+  await page.mouse.move(
+    originBox.x + originBox.width / 2,
+    originBox.y + originBox.height / 2,
+  )
+  await page.mouse.down({ button: 'right' })
+  await page.mouse.move(
+    destinationBox.x + destinationBox.width / 2,
+    destinationBox.y + destinationBox.height / 2,
+  )
+  await page.mouse.up({ button: 'right' })
+}
+
 const visibleRootChildren = async (
   page: Page,
 ): Promise<SemanticGameState['root']['children']> => {
@@ -158,6 +183,43 @@ const waitForConvergence = async (
 }
 
 test.describe('collaboration lab', () => {
+  test('the shared chessboard uses chess.ts legality and synchronizes drawings', async ({
+    browser,
+    request,
+  }) => {
+    const room = roomName('chessboard')
+    const clients = await openPair(browser, room)
+    const [alice, bob] = clients
+    try {
+      const pieceAsset = await request.get('/p4wn/wP.svg')
+      expect(pieceAsset.ok()).toBe(true)
+      await expect(alice.page.locator('.cb-piece')).toHaveCount(32)
+
+      await boardSquare(alice.page, 'e2').click()
+      await expect(boardSquare(alice.page, 'e4')).toHaveAttribute(
+        'data-moveable',
+        'true',
+      )
+      await boardSquare(alice.page, 'e4').click()
+      await waitForConvergence(request, room, clients)
+
+      expect((await visibleRootChildren(bob.page))[0]?.moveUci).toBe('e2e4')
+      await bob.page.locator('[data-move-uci="e2e4"]').click()
+      await expect(
+        boardSquare(bob.page, 'e4').locator('img[alt="white pawn"]'),
+      ).toHaveCount(1)
+
+      await drawArrow(alice.page, 'd2', 'd4')
+      await waitForConvergence(request, room, clients)
+      expect((await visibleRootChildren(bob.page))[0]?.comments).toContain(
+        '[%cal Gd2d4]',
+      )
+      await expect(bob.page.locator('.cb-shapes line')).toHaveCount(1)
+    } finally {
+      await closeClients(clients)
+    }
+  })
+
   test('causally concurrent different moves converge in either server order', async ({
     browser,
     request,

@@ -15,6 +15,19 @@ BrowserContext bob ────┘
 Neither the clients nor the relay access a raw `Y.Doc`. The relay is a third
 validated replica, not a second chess model.
 
+The interactive surface uses the shared
+[`hyprchs/chessboard`](https://github.com/hyprchs/chessboard) component. The
+component owns board rendering and gestures but no chess rules:
+
+```text
+chess.ts Board ── FEN + legal destinations ──► chessboard
+chess.ts Game ◄── parsed move/drawing intent ── chessboard
+```
+
+`chess.ts` remains the only source of move generation, legality, position
+state, and PGN drawing annotations. The board never mutates a second game
+model.
+
 ## Run the interactive demo
 
 From this directory:
@@ -67,6 +80,7 @@ The suite launches the same frontend and relay used by the demo, creates two
 separate Playwright `BrowserContext`s, and covers:
 
 - different concurrent moves in both server acceptance orders;
+- moves and synchronized drawings through the shared chessboard component;
 - distinct concurrent same-move siblings;
 - deletion versus an offline descendant;
 - concurrent comment insertion and main-variation selection;
