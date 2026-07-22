@@ -1,10 +1,20 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  // Treat the linked chess.ts package like its published node_modules form so
-  // Vite applies its normal CommonJS dependency transformation.
-  resolve: {
-    preserveSymlinks: true,
+  // The local package is linked outside this example's node_modules tree.
+  // Transform its CommonJS build explicitly while still resolving real pnpm
+  // dependency paths (not the synthetic path through the package symlink).
+  build: {
+    commonjsOptions: {
+      include: [/node_modules/, /\/chess\/dist\//],
+    },
+  },
+  optimizeDeps: {
+    include: [
+      '@jacksonthall22/chess.ts',
+      '@jacksonthall22/chess.ts/pgn',
+      '@jacksonthall22/chess.ts/pgn/yjs',
+    ],
   },
   server: {
     host: '127.0.0.1',
