@@ -257,7 +257,7 @@ Replacing the destructive stream helper with cursor-backed `StringIO`
 semantics translates game skipping, tricky skipping, and header-only scanning,
 bringing the current inventory to 132 of 292 methods and 160 explicit TODOs.
 The only remaining PGN TODO depends on the unsupported variant module.
-Ninety chess.ts-only
+Ninety-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -273,7 +273,7 @@ non-enumerability, survival across ordinary tree edits, compatible direct
 construction with supplied identity, atomic annotation failure, recursive
 lineage-root subclass construction, invalid constructor results, and PGN's
 intentional creation of a new identity lineage.
-Thirty-six more exercise the canonical document and facade: runtime boundary
+Thirty-eight more exercise the canonical document and facade: runtime boundary
 parsing, copied inputs, immutable snapshots, insertion-ordered headers,
 granular annotation operations, deterministic transactions, non-rollback
 semantics, duplicate same-move nodes, terminal subtree tombstones, stable live
@@ -281,7 +281,8 @@ handles, external changes, custom-node materialization, and iterative
 4,000-ply ancestry. They also cover staged and atomic custom-subclass
 construction, granular embedded-annotation edits, synchronous-only
 transactions, ordered reentrant delivery, changing subscriptions, and isolated
-observer failures.
+observer failures. Final-state event regressions also suppress net-zero outer
+transactions and identify only a reordered variation's parent.
 Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while
