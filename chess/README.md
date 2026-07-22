@@ -15,6 +15,10 @@ The
 [canonical game-document contract](https://github.com/jacksonthall22/chess.ts/blob/main/GAME_DOCUMENT.md)
 explains the readonly collection and transaction APIs used by synchronized
 games.
+The optional `@jacksonthall22/chess.ts/pgn/yjs` entry point implements that
+contract directly with Yjs; its
+[schema and update boundary](https://github.com/jacksonthall22/chess.ts/blob/main/YJS_GAME_DOCUMENT.md)
+are documented separately.
 
 ## Examples
 

@@ -255,14 +255,16 @@ in insertion order, matching python-chess.
 `Game.errors` remains parser-local diagnostic state. It is not chess content,
 must not synchronize, and intentionally lives outside `GameDocument`.
 
-## Requirements for the Yjs implementation
+## Yjs implementation contract
 
-The next adapter should map this contract directly onto Yjs shared types:
+The Yjs adapter maps this contract directly onto Yjs shared types:
 
 - ordered child IDs and comments use CRDT sequences;
-- headers and node records use keyed shared maps;
+- headers use an ordered sequence of record maps, while node records use a
+  keyed shared map;
 - NAG membership and tombstones use keyed set/map semantics;
-- `origin` is forwarded to Yjs transactions and actor-scoped undo;
+- `origin` is forwarded to Yjs transactions and remains available for a later
+  actor-scoped undo layer;
 - a complete candidate remote update is parsed and structurally checked before
   it becomes observable through handles (including one root, acyclic and
   consistent parent/child relationships, unique live child membership, and
@@ -272,10 +274,16 @@ The next adapter should map this contract directly onto Yjs shared types:
 - existing `Game`, `Headers`, and materialized `ChildNode` handles survive
   remote updates by identity.
 
-Convergence tests must include deletion concurrent with an unseen descendant,
+Convergence tests include deletion concurrent with an unseen descendant,
 concurrent moves of one variation, replacement concurrent with granular list
-edits, invalid remote updates, and actor-scoped undo.
+edits, invalid remote updates, and adversarial retained-history updates. Raw
+whole-document Yjs undo is deliberately excluded because it can erase node
+records or resurrect terminal tombstones; actor-scoped semantic undo remains a
+separate layer.
 
 It must not project a Yjs document into another `Game`, store drawings twice,
 derive node IDs from move paths, or infer granular CRDT edits from replacement
 snapshots.
+
+The concrete schema and validated binary-update boundary are documented in
+[YJS_GAME_DOCUMENT.md](YJS_GAME_DOCUMENT.md).

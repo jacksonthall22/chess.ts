@@ -257,7 +257,7 @@ Replacing the destructive stream helper with cursor-backed `StringIO`
 semantics translates game skipping, tricky skipping, and header-only scanning,
 bringing the current inventory to 132 of 292 methods and 160 explicit TODOs.
 The only remaining PGN TODO depends on the unsupported variant module.
-Ninety-three chess.ts-only
+One hundred thirty-two chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -284,6 +284,22 @@ transactions, ordered reentrant delivery, changing subscriptions, and isolated
 observer failures. Final-state event regressions also suppress net-zero outer
 transactions and identify only a reordered variation's parent. Document root
 identity is getter-only at both the TypeScript and runtime boundaries.
+Thirty-nine exercise the Yjs implementation: full, differential, and
+idempotent synchronization; bounded update and state-vector boundaries;
+common-genesis replica convergence; stable facade handles; concurrent
+variations, comments, NAGs, headers, reorders, and delete-wins descendants;
+exact origins and final-state events; dependency and malformed-update
+atomicity; retained-history schema auditing; immutable shared-type identity;
+symmetric node-ID conflicts; three-replica delivery order; and iterative
+4,000-ply materialization. Repeated concurrent edits to header values,
+comments, starting comments, and NAG membership guard Yjs's merged scalar
+history representation. Public batched construction covers a complete
+4,000-ply lineage, and origin tests distinguish omission from explicit `null`.
+Retained placement-history tests reject wrong-parent placements, never-placed
+nodes, and tombstones without evidence of the corresponding placement delete.
+Independent same-root lineages reject each other, while listener-failure tests
+prove accepted updates commit before observer errors and are not redelivered by
+an idempotent retry.
 Another checks both compile-time inference and runtime construction for
 subclass-preserving PGN builders. Specialized builders must receive their
 concrete constructor, so their result types can not claim a subclass while

@@ -124,6 +124,8 @@ The structured game model's stable node-identity and future synchronization
 boundaries are documented in [GAME_MODEL.md](GAME_MODEL.md).
 The sole-backing contract, mutation surface, tombstone policy, and Yjs adapter
 requirements are documented in [GAME_DOCUMENT.md](GAME_DOCUMENT.md).
+The synchronized schema, validated update boundary, and transport contract are
+documented in [YJS_GAME_DOCUMENT.md](YJS_GAME_DOCUMENT.md).
 
 PRs welcome!
 

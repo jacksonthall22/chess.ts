@@ -26,6 +26,11 @@
       "require": "./dist/pgn.js",
       "types": "./dist/types/pgn.d.ts"
     },
+    "./pgn/yjs": {
+      "import": "./dist/yjs-game-document.js",
+      "require": "./dist/yjs-game-document.js",
+      "types": "./dist/types/yjs-game-document.d.ts"
+    },
     "./polyglot": {
       "import": "./dist/polyglot.js",
       "require": "./dist/polyglot.js",
@@ -80,5 +85,8 @@
     "@types/node": "^24.13.3",
     "typescript": "^5.9.3",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "yjs": "13.6.31"
   }
 }
