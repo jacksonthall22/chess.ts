@@ -58,33 +58,92 @@ export interface TextIO {
   write(str: string): number
 }
 
-/** A minimal in-memory text stream used by the PGN reader and writer. */
+/** A cursor-backed in-memory text stream used by the PGN reader and writer. */
 export class StringIO implements TextIO {
   private buffer: string = ''
+  private position: number = 0
 
   constructor(s: string = '') {
     this.buffer = s
   }
 
   write(str: string): number {
-    this.buffer += str
-    return codePointLength(str)
-  }
-
-  read(): string {
-    return this.buffer
-  }
-
-  readline(): string {
-    const index = this.buffer.indexOf('\n')
-    if (index === -1) {
-      const line = this.buffer
-      this.buffer = ''
-      return line
+    const buffer = Array.from(this.buffer)
+    const written = Array.from(str)
+    if (this.position > buffer.length) {
+      buffer.push(...Array(this.position - buffer.length).fill('\0'))
     }
-    const line = this.buffer.slice(0, index + 1)
-    this.buffer = this.buffer.slice(index + 1)
+    buffer.splice(this.position, written.length, ...written)
+    this.position += written.length
+    this.buffer = buffer.join('')
+    return written.length
+  }
+
+  read(size: number = -1): string {
+    if (!Number.isInteger(size)) {
+      throw new TypeError('StringIO read size must be an integer')
+    }
+    const buffer = Array.from(this.buffer)
+    if (this.position >= buffer.length) {
+      return ''
+    }
+    const end =
+      size < 0
+        ? buffer.length
+        : Math.min(this.position + size, buffer.length)
+    const value = buffer.slice(this.position, end).join('')
+    this.position = end
+    return value
+  }
+
+  readline(size: number = -1): string {
+    if (!Number.isInteger(size)) {
+      throw new TypeError('StringIO readline size must be an integer')
+    }
+    const buffer = Array.from(this.buffer)
+    if (this.position >= buffer.length) {
+      return ''
+    }
+    const newline = buffer.indexOf('\n', this.position)
+    let end = newline === -1 ? buffer.length : newline + 1
+    if (size >= 0) {
+      end = Math.min(end, this.position + size)
+    }
+    const line = buffer.slice(this.position, end).join('')
+    this.position = end
     return line
+  }
+
+  tell(): number {
+    return this.position
+  }
+
+  seek(offset: number, whence: 0 | 1 | 2 = 0): number {
+    if (!Number.isInteger(offset)) {
+      throw new TypeError('StringIO seek offset must be an integer')
+    }
+    if (whence !== 0 && whence !== 1 && whence !== 2) {
+      throw new RangeError('StringIO seek whence must be 0, 1, or 2')
+    }
+    if (whence !== 0 && offset !== 0) {
+      throw new Error('StringIO only supports zero relative seeks')
+    }
+    const base =
+      whence === 0
+        ? 0
+        : whence === 1
+          ? this.position
+          : codePointLength(this.buffer)
+    const position = base + offset
+    if (position < 0) {
+      throw new RangeError('StringIO seek position must not be negative')
+    }
+    this.position = position
+    return position
+  }
+
+  getValue(): string {
+    return this.buffer
   }
 }
 

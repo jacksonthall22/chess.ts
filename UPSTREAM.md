@@ -211,8 +211,8 @@ semicolon termination, header-only games, subgame projection, and node turns—
 brings the current inventory to 106 of 292 methods and 186 explicit TODOs.
 Translating the board-visitor trace and nested-variation skipping tests brings
 the current inventory to 108 of 292 methods and 184 explicit TODOs. The stream
-trace uses fresh `StringIO` instances because the minimal TypeScript stream
-does not expose Python's unrelated `seek()` API.
+trace uses fresh `StringIO` instances to keep that checkpoint independent of
+the cursor behavior translated later.
 Translating the variation-stack test brings the current inventory to 109 of
 292 methods and 183 explicit TODOs. It exposed and corrected a Python-list to
 JavaScript-array truthiness mismatch: a leading variation delimiter is valid
@@ -234,7 +234,11 @@ This batch corrected the over-escaped SAN separator character class and two
 time-control translation hazards: empty rest arrays are truthy in JavaScript,
 and permissive `parseInt()`/`parseFloat()` calls do not match Python's rejecting
 numeric conversions.
-Forty-three chess.ts-only
+Replacing the destructive stream helper with cursor-backed `StringIO`
+semantics translates game skipping, tricky skipping, and header-only scanning,
+bringing the current inventory to 132 of 292 methods and 160 explicit TODOs.
+The only remaining PGN TODO depends on the unsupported variant module.
+Forty-four chess.ts-only
 characterizations cover the original three game-tree cases plus polymorphic
 `BaseBoard` construction, Python-compatible float formatting, Unicode-aware
 PGN wrapping, comment sanitization, attack-query occupancy overrides, and
@@ -337,10 +341,9 @@ subtrees, and PGN parsing/export preserves both. Lookup or mutation by move
 selects the first matching child, while passing a child node targets that exact
 duplicate.
 
-The chess.ts characterization tests preserve this current behavior. A future
-collaboration layer may choose to converge concurrent identical moves into one
-child, but that would be an explicit Hyperchess product policy that narrows the
-general python-chess model—not a parity fix in this library.
+The chess.ts characterization tests preserve this current behavior.
+Deduplicating equal-move children would narrow the general python-chess model
+and belongs in a consumer-specific layer rather than this parity library.
 
 ## Multiple PGN comments
 

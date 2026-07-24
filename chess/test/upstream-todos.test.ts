@@ -55,9 +55,6 @@ describe('PolyglotTestCase — translation pending', () => {
 })
 
 describe('PgnTestCase — translation pending', () => {
-  test.todo('test_skip_game (python-chess test.py:2469)',)
-  test.todo('test_tricky_skip_game (python-chess test.py:2490)',)
-  test.todo('test_read_headers (python-chess test.py:2523)',)
   test.todo('test_variants (python-chess test.py:2756)',)
 })
 
@@ -212,5 +209,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Upstream pin: python-chess 9c24454dcea4f8a30259d811a2f10b26e911deb4
 // Total upstream tests: 292
-// Translated tests: 129
-// Pending tests: 163
+// Translated tests: 132
+// Pending tests: 160
