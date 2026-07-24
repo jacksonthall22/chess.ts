@@ -341,10 +341,9 @@ subtrees, and PGN parsing/export preserves both. Lookup or mutation by move
 selects the first matching child, while passing a child node targets that exact
 duplicate.
 
-The chess.ts characterization tests preserve this current behavior. A future
-collaboration layer may choose to converge concurrent identical moves into one
-child, but that would be an explicit Hyperchess product policy that narrows the
-general python-chess model—not a parity fix in this library.
+The chess.ts characterization tests preserve this current behavior.
+Deduplicating equal-move children would narrow the general python-chess model
+and belongs in a consumer-specific layer rather than this parity library.
 
 ## Multiple PGN comments
 
