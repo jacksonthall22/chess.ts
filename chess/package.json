@@ -72,5 +72,8 @@
   "bugs": {
     "url": "https://github.com/jacksonthall22/chess.ts/issues"
   },
-  "homepage": "https://github.com/jacksonthall22/chess.ts#readme"
+  "homepage": "https://github.com/jacksonthall22/chess.ts#readme",
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
 }
