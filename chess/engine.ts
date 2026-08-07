@@ -3,32 +3,22 @@ import { WHITE, BLACK, Color } from './index'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
-type ScoreTuple = [boolean, boolean, boolean, number, number | null]
+type ScoreTupleValue = boolean | number | null
+type ScoreTupleValues = readonly [
+  boolean,
+  boolean,
+  boolean,
+  number,
+  number | null,
+]
 
 /** Direct equivalent of `-(value or 0)` for Python numbers and `None`. */
 const negatedOrZero = (value: number | null): number =>
   value === null || value === 0 ? 0 : -value
 
-// Python tuple comparison preserves the identity of a Cp instance's stored
-// float. JavaScript numbers are primitives, so retain that source identity on
-// each transient tuple without changing its public array shape.
-const SCORE_TUPLE_CPS = new WeakMap<ScoreTuple, Cp>()
-
-const makeScoreTuple = (source: Score, tuple: ScoreTuple): ScoreTuple => {
-  if (source instanceof Cp) {
-    SCORE_TUPLE_CPS.set(tuple, source)
-  }
-  return tuple
-}
-
-const storedCpIsIdentical = (left: ScoreTuple, right: ScoreTuple): boolean => {
-  const leftCp = SCORE_TUPLE_CPS.get(left)
-  return leftCp !== undefined && leftCp === SCORE_TUPLE_CPS.get(right)
-}
-
 const scoreTupleValuesEqual = (
-  left: boolean | number | null,
-  right: boolean | number | null,
+  left: ScoreTupleValue,
+  right: ScoreTupleValue,
   index: number,
   storedCpIsIdentical: boolean,
 ): boolean =>
@@ -40,22 +30,9 @@ const scoreTupleValuesEqual = (
     Number.isNaN(left) &&
     Number.isNaN(right))
 
-const scoreTuplesEqual = (
-  left: ScoreTuple,
-  right: ScoreTuple,
-): boolean =>
-  left.every((value, index) =>
-    scoreTupleValuesEqual(
-      value,
-      right[index],
-      index,
-      storedCpIsIdentical(left, right),
-    ),
-  )
-
 const compareScoreTupleValues = (
-  left: boolean | number | null,
-  right: boolean | number | null,
+  left: ScoreTupleValue,
+  right: ScoreTupleValue,
   index: number,
   storedCpIsIdentical: boolean,
 ): number => {
@@ -84,24 +61,77 @@ const compareScoreTupleValues = (
   }
 }
 
-const compareScoreTuples = (
-  left: ScoreTuple,
-  right: ScoreTuple,
-): number => {
-  const sameStoredCp = storedCpIsIdentical(left, right)
-  for (let index = 0; index < left.length; index += 1) {
-    const comparison = compareScoreTupleValues(
-      left[index],
-      right[index],
-      index,
-      sameStoredCp,
-    )
-    if (comparison !== 0) {
-      return comparison
-    }
+/**
+ * The fixed-shape Python tuple returned by :meth:`Score._score_tuple()`.
+ *
+ * JavaScript arrays have reference equality and coercive ordering rather than
+ * Python's element-wise equality and lexicographic ordering. Keep that
+ * language-boundary behavior on the tuple value so translated comparison
+ * expressions retain the repository's established ``equals()``, ``lt()``,
+ * ``le()``, ``gt()``, and ``ge()`` shape.
+ */
+class ScoreTuple {
+  constructor(
+    private readonly source: Score,
+    private readonly values: ScoreTupleValues,
+  ) {}
+
+  private storedCpIsIdentical(other: ScoreTuple): boolean {
+    return this.source instanceof Cp && this.source === other.source
   }
 
-  return 0
+  equals(other: ScoreTuple): boolean {
+    if (other === this) {
+      return true
+    }
+
+    const sameStoredCp = this.storedCpIsIdentical(other)
+    return this.values.every((value, index) =>
+      scoreTupleValuesEqual(
+        value,
+        other.values[index],
+        index,
+        sameStoredCp,
+      ),
+    )
+  }
+
+  private compare(other: ScoreTuple): number {
+    if (other === this) {
+      return 0
+    }
+
+    const sameStoredCp = this.storedCpIsIdentical(other)
+    for (let index = 0; index < this.values.length; index += 1) {
+      const comparison = compareScoreTupleValues(
+        this.values[index],
+        other.values[index],
+        index,
+        sameStoredCp,
+      )
+      if (comparison !== 0) {
+        return comparison
+      }
+    }
+
+    return 0
+  }
+
+  lt(other: ScoreTuple): boolean {
+    return this.compare(other) < 0
+  }
+
+  le(other: ScoreTuple): boolean {
+    return this.compare(other) <= 0
+  }
+
+  gt(other: ScoreTuple): boolean {
+    return this.compare(other) > 0
+  }
+
+  ge(other: ScoreTuple): boolean {
+    return this.compare(other) >= 0
+  }
 }
 
 /** ========== Direct transpilation ========== */
@@ -283,7 +313,7 @@ export abstract class Score {
 
   _scoreTuple(): ScoreTuple {
     const mate = this.mate()
-    return makeScoreTuple(this, [
+    return new ScoreTuple(this, [
       this instanceof MateGivenType,
       mate !== null && mate > 0,
       mate === null,
@@ -295,7 +325,7 @@ export abstract class Score {
   // __eq__()
   equals(other: object): boolean {
     if (other instanceof Score) {
-      return scoreTuplesEqual(this._scoreTuple(), other._scoreTuple())
+      return this._scoreTuple().equals(other._scoreTuple())
     } else {
       return false
     }
@@ -304,7 +334,7 @@ export abstract class Score {
   // __lt__()
   lt(other: object): boolean {
     if (other instanceof Score) {
-      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) < 0
+      return this._scoreTuple().lt(other._scoreTuple())
     } else {
       return false
     }
@@ -313,7 +343,7 @@ export abstract class Score {
   // __le__()
   le(other: object): boolean {
     if (other instanceof Score) {
-      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) <= 0
+      return this._scoreTuple().le(other._scoreTuple())
     } else {
       return false
     }
@@ -322,7 +352,7 @@ export abstract class Score {
   // __gt__()
   gt(other: object): boolean {
     if (other instanceof Score) {
-      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) > 0
+      return this._scoreTuple().gt(other._scoreTuple())
     } else {
       return false
     }
@@ -331,7 +361,7 @@ export abstract class Score {
   // __ge__()
   ge(other: object): boolean {
     if (other instanceof Score) {
-      return compareScoreTuples(this._scoreTuple(), other._scoreTuple()) >= 0
+      return this._scoreTuple().ge(other._scoreTuple())
     } else {
       return false
     }

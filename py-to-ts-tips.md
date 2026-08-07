@@ -40,6 +40,44 @@ method should retain the Python shape and invoke that adapter exactly where the
 Python invokes its builtin or operator. The adapter is a language boundary; it
 must not absorb or rearrange chess-domain logic.
 
+### Comparison methods
+
+The existing production convention for comparisons of translated object
+types is to call a method on the left operand. Python `__eq__()` is represented
+as TypeScript `equals()`. The comparable `Score` hierarchy represents
+`__lt__()`, `__le__()`, `__gt__()`, and `__ge__()` as `lt()`, `le()`, `gt()`,
+and `ge()`, respectively. The generated upstream tests use those same methods
+when their proved operand shapes identify the corresponding production types.
+Native TypeScript primitives still use native operators whenever those
+operators have the required Python semantics.
+
+When Python applies one of these operators to a value whose JavaScript
+representation does not support the same operation, put the exceptional
+semantics on the smallest internal value adapter and retain the established
+method-shaped comparison at the translated call site. For example, JavaScript
+arrays do not provide Python tuple equality or lexicographic ordering, so the
+internal value returned by `Score._scoreTuple()` implements the same comparison
+methods:
+
+```py
+return self._score_tuple() < other._score_tuple()
+```
+
+```ts
+return this._scoreTuple().lt(other._scoreTuple())
+```
+
+Do not expose a lower-level implementation such as
+`compareScoreTuples(left, right) < 0` in that translated body: it turns the
+source's one object comparison into a helper call plus a different numeric
+comparison. A private comparison routine may implement the adapter's methods,
+but that target-only machinery stays behind the value's established method
+interface.
+
+This is the repository's existing comparison convention, not a general rule
+for renaming every Python dunder. Preserve the established mapping for each
+other protocol rather than deriving a new name mechanically.
+
 Start from the complete pinned Python method and edit its syntax in place.
 Transpilation helpers and AI can accelerate that syntax work, but neither is an
 authority for changing the program's structure. Always finish with a
