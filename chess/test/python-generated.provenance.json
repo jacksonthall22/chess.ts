@@ -1,0 +1,2282 @@
+{
+  "schemaVersion": 1,
+  "upstreamCommit": "cd7f5958289dd08156436a1f84b9ea03cb1f75a1",
+  "sourcePath": "python-chess core copy/test.py",
+  "translatedMethodCount": 76,
+  "sourceCommentCount": 53,
+  "semanticNodeCount": 5859,
+  "assertionCount": 406,
+  "parityGapRootCount": 8,
+  "parityGapCaseCount": 51,
+  "methods": [
+    {
+      "identity": "SquareTestCase.test_square",
+      "sourceSpan": {
+        "start": [
+          44,
+          4
+        ],
+        "end": [
+          48,
+          101
+        ]
+      },
+      "sourceSha256": "13f8fd99480697e6a17f2c78b46a2eef7af20d1fae08d5b188f28a856a338858",
+      "astSha256": "0f777a5112265b1c9ad210e583dbee39703835e5cd6a6830a630d512d42cd0ad",
+      "semanticNodeCount": 31,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareTestCase.test_shifts",
+      "sourceSpan": {
+        "start": [
+          50,
+          4
+        ],
+        "end": [
+          71,
+          75
+        ]
+      },
+      "sourceSha256": "529a5273d38e1fe898f053f129a86b4808d641d13732bb20d9ee5288e405080c",
+      "astSha256": "ee75006378c0adab46f5854e63faa7f1243bcf824aead9a19bbb959d4d0a310c",
+      "semanticNodeCount": 64,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareTestCase.test_parse_square",
+      "sourceSpan": {
+        "start": [
+          73,
+          4
+        ],
+        "end": [
+          78,
+          54
+        ]
+      },
+      "sourceSha256": "22a218c0f9bc87d68bd49225297769912df6d81fe960ea76d9c7ee7b95079753",
+      "astSha256": "0c1e0fbc9b54bdb4cba3af3d7ae2c1b7cf9ad348958422223a9e56e22b0aef16",
+      "semanticNodeCount": 36,
+      "assertionCount": 5,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareTestCase.test_square_distance",
+      "sourceSpan": {
+        "start": [
+          80,
+          4
+        ],
+        "end": [
+          85,
+          70
+        ]
+      },
+      "sourceSha256": "38e214b635479ba2454f78cd90550e7526ea605d35bf85ac5c0fa98b4fa0edff",
+      "astSha256": "8b910ae943ac61ea11b8829c56cc017d3009954572bcbffabe8697fe83263177",
+      "semanticNodeCount": 61,
+      "assertionCount": 5,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareTestCase.test_square_manhattan_distance",
+      "sourceSpan": {
+        "start": [
+          87,
+          4
+        ],
+        "end": [
+          92,
+          80
+        ]
+      },
+      "sourceSha256": "257cb0482c200c74dd5706aa905f1c424e84ac0153a78d614e0b1ed1892b2eca",
+      "astSha256": "6ef8edffbe120bb6c3950a7551ad3cb89d6a2bccf584900ed68019551d83e348",
+      "semanticNodeCount": 61,
+      "assertionCount": 5,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareTestCase.test_square_knight_distance",
+      "sourceSpan": {
+        "start": [
+          94,
+          4
+        ],
+        "end": [
+          103,
+          77
+        ]
+      },
+      "sourceSha256": "a756a25f1b624bf137cdc11485b10b14344c060f5db36a8f20d24f2fd044737e",
+      "astSha256": "163936168f53013afe098458dce2f90f8e08be2ab944710d0f7b8ab964d9c2af",
+      "semanticNodeCount": 109,
+      "assertionCount": 9,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "MoveTestCase.test_equality",
+      "sourceSpan": {
+        "start": [
+          108,
+          4
+        ],
+        "end": [
+          122,
+          34
+        ]
+      },
+      "sourceSha256": "eef83f25ce8d1902b4f711499a13c4cb636cf212329dc90d4aabb18dc9b68dc0",
+      "astSha256": "529f556400906440de10723177e311c37e64f98480cc27569aeecdaf055eaf24",
+      "semanticNodeCount": 91,
+      "assertionCount": 7,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "MoveTestCase.test_uci_parsing",
+      "sourceSpan": {
+        "start": [
+          124,
+          4
+        ],
+        "end": [
+          129,
+          67
+        ]
+      },
+      "sourceSha256": "ea5c4217c14ae483f0a9557debeeb4d20589db7a7e834b88fbc44b25ec777163",
+      "astSha256": "e480989d673418f2b6f8b5166a3067a4857d7cc74d6b0c7071680283fcdae513",
+      "semanticNodeCount": 61,
+      "assertionCount": 5,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "MoveTestCase.test_invalid_uci",
+      "sourceSpan": {
+        "start": [
+          131,
+          4
+        ],
+        "end": [
+          142,
+          39
+        ]
+      },
+      "sourceSha256": "6b0d9813f591b1d1368cef3067b2caf40c351b80c7981ee40067f6d1401ff820",
+      "astSha256": "bae147efbae765a56b1fa6e216c92065da77dedf6d0f08c56fb2a6d01c92f55e",
+      "semanticNodeCount": 49,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "MoveTestCase.test_xboard_move",
+      "sourceSpan": {
+        "start": [
+          144,
+          4
+        ],
+        "end": [
+          149,
+          70
+        ]
+      },
+      "sourceSha256": "99cedfee6512624af2173c3bfc171c62a298724709b3b83ecc5c0bdb1a311c8e",
+      "astSha256": "9c6d30a576bcb50c29da7da5a4a55e0065a9f19e558bcb18569716678354f29f",
+      "semanticNodeCount": 61,
+      "assertionCount": 5,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "MoveTestCase.test_copy",
+      "sourceSpan": {
+        "start": [
+          151,
+          4
+        ],
+        "end": [
+          157,
+          41
+        ]
+      },
+      "sourceSha256": "e076a4def1b57b947120dce3522bcb4f2d09110107b8d1552da3f1919d753dd9",
+      "astSha256": "3221f54dbb0c066b372081fe58f47c99b14afea0817b4d160631d2cf26b2a9ba",
+      "semanticNodeCount": 49,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PieceTestCase.test_equality",
+      "sourceSpan": {
+        "start": [
+          162,
+          4
+        ],
+        "end": [
+          186,
+          45
+        ]
+      },
+      "sourceSha256": "50b0879290fe995a3ad27461073e1f96d444ccefc568455434bf4b5e4840daf0",
+      "astSha256": "8be9932725498cbe6b403bb59df74d73610a5762fb2a38f6dfb8dab0d69de20e",
+      "semanticNodeCount": 160,
+      "assertionCount": 14,
+      "comments": [],
+      "parityGapCases": [
+        "piece-value-equality:PieceTestCase.test_equality@169:8-169:56:Call",
+        "piece-value-equality:PieceTestCase.test_equality@171:8-171:31:Call",
+        "piece-value-equality:PieceTestCase.test_equality@172:8-172:31:Call",
+        "piece-value-equality:PieceTestCase.test_equality@173:8-173:32:Call",
+        "piece-value-equality:PieceTestCase.test_equality@177:8-177:33:Call",
+        "piece-value-equality:PieceTestCase.test_equality@178:8-178:33:Call",
+        "piece-value-equality:PieceTestCase.test_equality@179:8-179:34:Call",
+        "piece-value-equality:PieceTestCase.test_equality@180:8-180:33:Call",
+        "piece-value-equality:PieceTestCase.test_equality@181:8-181:34:Call"
+      ]
+    },
+    {
+      "identity": "PieceTestCase.test_from_symbol",
+      "sourceSpan": {
+        "start": [
+          188,
+          4
+        ],
+        "end": [
+          201,
+          47
+        ]
+      },
+      "sourceSha256": "4f7e11da87441ec40af801e8b93a2b4fe24e1797c8e3cfbbe3430e5fefe12fe6",
+      "astSha256": "00ed305a0ea232a6380cb4c5663bd93a978b0aaebac2b49d45183c2c6c319204",
+      "semanticNodeCount": 79,
+      "assertionCount": 8,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PieceTestCase.test_hash",
+      "sourceSpan": {
+        "start": [
+          203,
+          4
+        ],
+        "end": [
+          207,
+          48
+        ]
+      },
+      "sourceSha256": "58d9cef440d23d534df206d9569adb7bd097d9cee42d9c6cf0c84fc8101a0ee4",
+      "astSha256": "c0e7add5f18c566a4b2f9a5f6603e918aa077d8c6438bf5d06dd6ee51ffeaace",
+      "semanticNodeCount": 39,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_default_position",
+      "sourceSpan": {
+        "start": [
+          212,
+          4
+        ],
+        "end": [
+          216,
+          49
+        ]
+      },
+      "sourceSha256": "9d58c6081ce48f5c77baeb1494c5a556b38ff3245e449422ff6dd22dd373c251",
+      "astSha256": "42af0307db3e9bd9d7ae12a69ec74d2233c4236bc219b0e68bce42e2854cf09e",
+      "semanticNodeCount": 37,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": [
+        "piece-value-equality:BoardTestCase.test_default_position@214:8-214:80:Call"
+      ]
+    },
+    {
+      "identity": "BoardTestCase.test_empty",
+      "sourceSpan": {
+        "start": [
+          218,
+          4
+        ],
+        "end": [
+          221,
+          50
+        ]
+      },
+      "sourceSha256": "ccfd1f863b06c51fa6301ada8ea6bed2ce86cc25929a5054dda1f0b2a6bf5537",
+      "astSha256": "56a8613b97504884943d52dfa89f63109cb8958e95a9d5e9421dd7f0c4593d3d",
+      "semanticNodeCount": 24,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_ply",
+      "sourceSpan": {
+        "start": [
+          223,
+          4
+        ],
+        "end": [
+          233,
+          40
+        ]
+      },
+      "sourceSha256": "3501619ad144925146e72ed3b3bbd43b76e514d254cd4d11998c6c6202db3520",
+      "astSha256": "a825d6dc6ea49bf0c9c546f96752b06e407a18d5f03cff93f4801257f99acdaa",
+      "semanticNodeCount": 65,
+      "assertionCount": 5,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_from_epd",
+      "sourceSpan": {
+        "start": [
+          235,
+          4
+        ],
+        "end": [
+          239,
+          56
+        ]
+      },
+      "sourceSha256": "c6315b50d71be340bab6763481850a061ff15014196f74f149771b0e88217a68",
+      "astSha256": "c205f1162e270b0f83424a7175a5dc25c74d896ff7f37edc6392059a62580662",
+      "semanticNodeCount": 33,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": [
+        "board-epd-operation-parsing:BoardTestCase.test_from_epd@237:21-237:63:Call"
+      ]
+    },
+    {
+      "identity": "BoardTestCase.test_move_making",
+      "sourceSpan": {
+        "start": [
+          241,
+          4
+        ],
+        "end": [
+          245,
+          44
+        ]
+      },
+      "sourceSha256": "50ea03151f98c4ba1da51dd87bf9e729f4d22ea98773314704d92d1b7187e967",
+      "astSha256": "03436e9e44de418dc33e1f3a2860070e794eae853144bb9f8286f4179622b0dd",
+      "semanticNodeCount": 28,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_fen",
+      "sourceSpan": {
+        "start": [
+          247,
+          4
+        ],
+        "end": [
+          256,
+          93
+        ]
+      },
+      "sourceSha256": "20e4f7788d80a2e10e9ac8d718baaa8d4f378d5ce29f6185e3d8ba9fcc55b335",
+      "astSha256": "8993c2e125504b6fabb1b195a2cc1f878b154a2c8e42110c4ff92251a2b417e6",
+      "semanticNodeCount": 48,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_xfen",
+      "sourceSpan": {
+        "start": [
+          258,
+          4
+        ],
+        "end": [
+          288,
+          72
+        ]
+      },
+      "sourceSha256": "606b671cc8a2c5ce42035629cd77fe86c247c3b3baf3074ad3bc938ab2dfe58b",
+      "astSha256": "69fa3ad0dc0806d12e3f7c7818bf2b331954c91da7a6c7630d88a273afc66f5f",
+      "semanticNodeCount": 182,
+      "assertionCount": 15,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              259,
+              8
+            ],
+            "end": [
+              259,
+              73
+            ]
+          },
+          "placement": "leading",
+          "text": "# https://de.wikipedia.org/wiki/Forsyth-Edwards-Notation#Beispiel"
+        },
+        {
+          "span": {
+            "start": [
+              273,
+              8
+            ],
+            "end": [
+              273,
+              33
+            ]
+          },
+          "placement": "leading",
+          "text": "# Chess960 position #284."
+        },
+        {
+          "span": {
+            "start": [
+              280,
+              8
+            ],
+            "end": [
+              280,
+              51
+            ]
+          },
+          "placement": "leading",
+          "text": "# Valid en passant square on illegal board."
+        },
+        {
+          "span": {
+            "start": [
+              285,
+              8
+            ],
+            "end": [
+              285,
+              53
+            ]
+          },
+          "placement": "leading",
+          "text": "# Illegal en passant square on illegal board."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_fen_en_passant",
+      "sourceSpan": {
+        "start": [
+          290,
+          4
+        ],
+        "end": [
+          294,
+          116
+        ]
+      },
+      "sourceSha256": "830fc367aaedd1f5f5e3862c3bff7c29c5d3d5b538e8ac1bcba12abffc8be7f7",
+      "astSha256": "293bc7d5aeee554988b7b789dc085d9ccaa95a437558bc11f9dfec35ee0a5b97",
+      "semanticNodeCount": 29,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_get_set",
+      "sourceSpan": {
+        "start": [
+          296,
+          4
+        ],
+        "end": [
+          314,
+          56
+        ]
+      },
+      "sourceSha256": "e75c561b08d722cf6b5b04097e68bfbb83d836d2cbcb37a06a521e88cf3ce7ec",
+      "astSha256": "f4395631aad2da595395669f03a704eb0527b4ea82a4d1d9ad071cf8851547bd",
+      "semanticNodeCount": 120,
+      "assertionCount": 7,
+      "comments": [],
+      "parityGapCases": [
+        "piece-value-equality:BoardTestCase.test_get_set@298:8-298:80:Call"
+      ]
+    },
+    {
+      "identity": "BoardTestCase.test_color_at",
+      "sourceSpan": {
+        "start": [
+          316,
+          4
+        ],
+        "end": [
+          320,
+          56
+        ]
+      },
+      "sourceSha256": "cd888b21d22506f03acd1ee5140728422c69bf4904afd38d4fc968eba3267671",
+      "astSha256": "b3d42e8642bedc3af4f4dd1a168ec9a6cb8e8dd79ceb97d461cb2df9dffb38fc",
+      "semanticNodeCount": 38,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_pawn_captures",
+      "sourceSpan": {
+        "start": [
+          322,
+          4
+        ],
+        "end": [
+          335,
+          19
+        ]
+      },
+      "sourceSha256": "80819932e74c417a3f734b856dac94db8d640169037200dfb7f697db34bc6c10",
+      "astSha256": "2cd80fb269049cbed8396d661f571f51239a3e8ce1f5ec1a9a6285014706a304",
+      "semanticNodeCount": 63,
+      "assertionCount": 2,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              325,
+              8
+            ],
+            "end": [
+              325,
+              24
+            ]
+          },
+          "placement": "leading",
+          "text": "# King's Gambit."
+        },
+        {
+          "span": {
+            "start": [
+              330,
+              8
+            ],
+            "end": [
+              330,
+              19
+            ]
+          },
+          "placement": "leading",
+          "text": "# Accepted."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_pawn_move_generation",
+      "sourceSpan": {
+        "start": [
+          337,
+          4
+        ],
+        "end": [
+          339,
+          76
+        ]
+      },
+      "sourceSha256": "63e8ef3c17b939728120133eca413c6b7f0eed3d6563f4c12a3178e24eec32a7",
+      "astSha256": "401a4772edb265352cedbca9f27c495fb11f63a92bc34b95ba712eaad745e04c",
+      "semanticNodeCount": 19,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_single_step_pawn_move",
+      "sourceSpan": {
+        "start": [
+          341,
+          4
+        ],
+        "end": [
+          348,
+          57
+        ]
+      },
+      "sourceSha256": "49dae8421500d2e83378f8c9cc3c727fee410fd7713f90b989af21cbd1da6736",
+      "astSha256": "7d2db76b7541481f89bbbac378510ca052fadebe2a0018b6769500ff884fa3e8",
+      "semanticNodeCount": 45,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_castling",
+      "sourceSpan": {
+        "start": [
+          350,
+          4
+        ],
+        "end": [
+          390,
+          77
+        ]
+      },
+      "sourceSha256": "d5de75b7bb5f768e02fb0b6a0d7660b4a297d2b3665e59d36d046ff89f3a7fae",
+      "astSha256": "305142ab950797b7160e44e44c7f589a14fc5be4f5cb5b1b60c37247d2d2c3c8",
+      "semanticNodeCount": 191,
+      "assertionCount": 15,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              353,
+              8
+            ],
+            "end": [
+              353,
+              33
+            ]
+          },
+          "placement": "leading",
+          "text": "# Let white castle short."
+        },
+        {
+          "span": {
+            "start": [
+              361,
+              8
+            ],
+            "end": [
+              361,
+              32
+            ]
+          },
+          "placement": "leading",
+          "text": "# Let black castle long."
+        },
+        {
+          "span": {
+            "start": [
+              369,
+              8
+            ],
+            "end": [
+              369,
+              35
+            ]
+          },
+          "placement": "leading",
+          "text": "# Undo both castling moves."
+        },
+        {
+          "span": {
+            "start": [
+              374,
+              8
+            ],
+            "end": [
+              374,
+              32
+            ]
+          },
+          "placement": "leading",
+          "text": "# Let white castle long."
+        },
+        {
+          "span": {
+            "start": [
+              380,
+              8
+            ],
+            "end": [
+              380,
+              33
+            ]
+          },
+          "placement": "leading",
+          "text": "# Let black castle short."
+        },
+        {
+          "span": {
+            "start": [
+              387,
+              8
+            ],
+            "end": [
+              387,
+              35
+            ]
+          },
+          "placement": "leading",
+          "text": "# Undo both castling moves."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_castling_san",
+      "sourceSpan": {
+        "start": [
+          392,
+          4
+        ],
+        "end": [
+          398,
+          34
+        ]
+      },
+      "sourceSha256": "3a2fa98db1ba0f18966b68a4937254ae68a8b13d8f9215950463d8aadc0e1f43",
+      "astSha256": "6142e5a5d2e4f3b56cf529127cb49819aeb18d96f01d0579bbc16b7bee2ac67d",
+      "semanticNodeCount": 42,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_ninesixty_castling",
+      "sourceSpan": {
+        "start": [
+          400,
+          4
+        ],
+        "end": [
+          449,
+          51
+        ]
+      },
+      "sourceSha256": "294e09842e7428e0eca1c09939eae2c69513856f16b7a561dedc16d4d9c39ad8",
+      "astSha256": "a89628dfa56a2b485dcb8a89d7f76485bb71aa12951cfccdc25067417f6568a9",
+      "semanticNodeCount": 240,
+      "assertionCount": 21,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              404,
+              8
+            ],
+            "end": [
+              404,
+              41
+            ]
+          },
+          "placement": "leading",
+          "text": "# Let white do the kingside swap."
+        },
+        {
+          "span": {
+            "start": [
+              414,
+              8
+            ],
+            "end": [
+              414,
+              40
+            ]
+          },
+          "placement": "leading",
+          "text": "# Black can not castle kingside."
+        },
+        {
+          "span": {
+            "start": [
+              417,
+              8
+            ],
+            "end": [
+              417,
+              37
+            ]
+          },
+          "placement": "leading",
+          "text": "# Let black castle queenside."
+        },
+        {
+          "span": {
+            "start": [
+              427,
+              8
+            ],
+            "end": [
+              427,
+              35
+            ]
+          },
+          "placement": "leading",
+          "text": "# Restore initial position."
+        },
+        {
+          "span": {
+            "start": [
+              435,
+              8
+            ],
+            "end": [
+              435,
+              43
+            ]
+          },
+          "placement": "leading",
+          "text": "# White can just hop the rook over."
+        },
+        {
+          "span": {
+            "start": [
+              444,
+              8
+            ],
+            "end": [
+              444,
+              54
+            ]
+          },
+          "placement": "leading",
+          "text": "# Black can not castle queenside nor kingside."
+        },
+        {
+          "span": {
+            "start": [
+              447,
+              8
+            ],
+            "end": [
+              447,
+              35
+            ]
+          },
+          "placement": "leading",
+          "text": "# Restore initial position."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_hside_rook_blocks_aside_castling",
+      "sourceSpan": {
+        "start": [
+          451,
+          4
+        ],
+        "end": [
+          457,
+          76
+        ]
+      },
+      "sourceSha256": "cf3c65de12db068b7c66bab541e016d6166d97e828446935324fa3a6e9c6f51a",
+      "astSha256": "79deaffd4b6e5b82f15f8d714a61342b6c4be43bff07c0f4233b17b108ac7f0e",
+      "semanticNodeCount": 63,
+      "assertionCount": 5,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              457,
+              71
+            ],
+            "end": [
+              457,
+              76
+            ]
+          },
+          "placement": "inline",
+          "text": "# Kh1"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_selective_castling",
+      "sourceSpan": {
+        "start": [
+          459,
+          4
+        ],
+        "end": [
+          467,
+          45
+        ]
+      },
+      "sourceSha256": "0f03ace909317dc1a87349588da1ce8e50c9ae7ebe6f237df3563e0dd2dc9916",
+      "astSha256": "901c46c618abef86719392fa7f8618a6bb62da522935f3565bbd1e2613107355",
+      "semanticNodeCount": 45,
+      "assertionCount": 2,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              462,
+              8
+            ],
+            "end": [
+              462,
+              28
+            ]
+          },
+          "placement": "leading",
+          "text": "# King not selected."
+        },
+        {
+          "span": {
+            "start": [
+              465,
+              8
+            ],
+            "end": [
+              465,
+              34
+            ]
+          },
+          "placement": "leading",
+          "text": "# Rook on h1 not selected."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_castling_right_not_destroyed_bug",
+      "sourceSpan": {
+        "start": [
+          469,
+          4
+        ],
+        "end": [
+          474,
+          100
+        ]
+      },
+      "sourceSha256": "caf9a6bba4de40f75d16eb743fd6699eea5625e55d01d8c424511994c8365a79",
+      "astSha256": "003c4c71b1a3c2f215f8c28b6c30f54af4ceb46802a8029bb361c4139735df5e",
+      "semanticNodeCount": 20,
+      "assertionCount": 1,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              470,
+              8
+            ],
+            "end": [
+              470,
+              77
+            ]
+          },
+          "placement": "leading",
+          "text": "# A rook move from h8 to h1 was only taking white's possible castling"
+        },
+        {
+          "span": {
+            "start": [
+              471,
+              8
+            ],
+            "end": [
+              471,
+              22
+            ]
+          },
+          "placement": "leading",
+          "text": "# rights away."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_invalid_castling_rights",
+      "sourceSpan": {
+        "start": [
+          476,
+          4
+        ],
+        "end": [
+          492,
+          81
+        ]
+      },
+      "sourceSha256": "e02d4f87125c1bb50d979936265a7e66eac34abb4172fcaf63b4c2de18140cbb",
+      "astSha256": "6a605047a7227e28b72b66d3fbda1c89a96f536afa46f0e4bbbde0cd877a0c26",
+      "semanticNodeCount": 108,
+      "assertionCount": 10,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              477,
+              8
+            ],
+            "end": [
+              477,
+              60
+            ]
+          },
+          "placement": "leading",
+          "text": "# KQkq is not valid in this standard chess position."
+        }
+      ],
+      "parityGapCases": [
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@479:8-479:74:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@480:8-480:74:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@482:8-482:73:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@483:8-483:74:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@484:8-484:73:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@487:8-487:74:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@488:8-488:73:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@491:8-491:74:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@492:8-492:81:Call"
+      ]
+    },
+    {
+      "identity": "BoardTestCase.test_ninesixty_different_king_and_rook_file",
+      "sourceSpan": {
+        "start": [
+          494,
+          4
+        ],
+        "end": [
+          500,
+          42
+        ]
+      },
+      "sourceSha256": "6b8448e1714c15b014430a38c28f9849034a3bab8b668b90d5ecd9e8ce63c41f",
+      "astSha256": "428c24d659f8d55238d9a8484b71fafc2042fc968d0ba3b0651e216ead5932dc",
+      "semanticNodeCount": 19,
+      "assertionCount": 1,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              495,
+              8
+            ],
+            "end": [
+              495,
+              80
+            ]
+          },
+          "placement": "leading",
+          "text": "# Theoretically, this position (with castling rights) can not be reached"
+        },
+        {
+          "span": {
+            "start": [
+              496,
+              8
+            ],
+            "end": [
+              496,
+              78
+            ]
+          },
+          "placement": "leading",
+          "text": "# with a series of legal moves from one of the 960 starting positions."
+        },
+        {
+          "span": {
+            "start": [
+              497,
+              8
+            ],
+            "end": [
+              497,
+              71
+            ]
+          },
+          "placement": "leading",
+          "text": "# Decision: We don't care, neither do Stockfish or lichess.org."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_ninesixty_prevented_castle",
+      "sourceSpan": {
+        "start": [
+          502,
+          4
+        ],
+        "end": [
+          504,
+          69
+        ]
+      },
+      "sourceSha256": "cdbca093498a27ce23fc061aa67af620d56da8010a9bd59a0ed5efcad25c43d2",
+      "astSha256": "68cfe1a472333998abba8730b9f20f823a29903afaa646aa255efa460518b079",
+      "semanticNodeCount": 20,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_find_move",
+      "sourceSpan": {
+        "start": [
+          506,
+          4
+        ],
+        "end": [
+          524,
+          90
+        ]
+      },
+      "sourceSha256": "d8c82e11c90afec4ddef4d9f0ec48aff3cfff59f0bcf191cb2b70c173daa0872",
+      "astSha256": "03f33882d64fd3c48858b890d7aecf8ff97384e2c4bd9e339d01a2d2938c2070",
+      "semanticNodeCount": 137,
+      "assertionCount": 8,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              509,
+              8
+            ],
+            "end": [
+              509,
+              21
+            ]
+          },
+          "placement": "leading",
+          "text": "# Pawn moves."
+        },
+        {
+          "span": {
+            "start": [
+              514,
+              8
+            ],
+            "end": [
+              514,
+              24
+            ]
+          },
+          "placement": "leading",
+          "text": "# Illegal moves."
+        },
+        {
+          "span": {
+            "start": [
+              520,
+              8
+            ],
+            "end": [
+              520,
+              19
+            ]
+          },
+          "placement": "leading",
+          "text": "# Castling."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_clean_castling_rights",
+      "sourceSpan": {
+        "start": [
+          526,
+          4
+        ],
+        "end": [
+          533,
+          79
+        ]
+      },
+      "sourceSha256": "50f4131a98f5d6f77e952be83d5bb699ec4d341b03883bb3d6a474ceab7b4835",
+      "astSha256": "23261086d57c1bc062690b52ebafc9d072e30aff46dc401008e5dc8488c7beae",
+      "semanticNodeCount": 50,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": [
+        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@529:8-529:71:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@530:8-530:79:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@532:8-532:71:Call",
+        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@533:8-533:79:Call"
+      ]
+    },
+    {
+      "identity": "BoardTestCase.test_promotion_with_check",
+      "sourceSpan": {
+        "start": [
+          593,
+          4
+        ],
+        "end": [
+          601,
+          78
+        ]
+      },
+      "sourceSha256": "00aff00970f2df801ec60e6daf6477cdd8d7351dcff5788de76756cab1c95eb3",
+      "astSha256": "7a6b395bfa0555f901273e556eb8b6af5bffe35f39b1ebfa60d370b2b2ef4392",
+      "semanticNodeCount": 50,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_ambiguous_move",
+      "sourceSpan": {
+        "start": [
+          603,
+          4
+        ],
+        "end": [
+          608,
+          34
+        ]
+      },
+      "sourceSha256": "de33f9102b2a94223665af7289cf51d39834ac52eaf73d6dce211cee125d787c",
+      "astSha256": "845b98d592b6f1aea6f84da83381e6db6c29e3d32a5f12ddc023708db4487b0c",
+      "semanticNodeCount": 29,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_scholars_mate",
+      "sourceSpan": {
+        "start": [
+          610,
+          4
+        ],
+        "end": [
+          652,
+          104
+        ]
+      },
+      "sourceSha256": "36a83f2595e4473b9e87757bea38b32f34c472e3a695b2a9e4aa28692c388544",
+      "astSha256": "dadc0825d88eb1d57d89b40f55e8a471dac80d492c31fcf377ef838b81f72c06",
+      "semanticNodeCount": 211,
+      "assertionCount": 17,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_result",
+      "sourceSpan": {
+        "start": [
+          654,
+          4
+        ],
+        "end": [
+          678,
+          66
+        ]
+      },
+      "sourceSha256": "45a0cd4571e2b8320054d64c750e3d650843b0b54bffe32aa038102a6edd7f8e",
+      "astSha256": "e52f0c100aabdef278df49dc986f0603a754bdbf6553a184ffdaf9fa334bd806",
+      "semanticNodeCount": 95,
+      "assertionCount": 7,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              655,
+              8
+            ],
+            "end": [
+              655,
+              23
+            ]
+          },
+          "placement": "leading",
+          "text": "# Undetermined."
+        },
+        {
+          "span": {
+            "start": [
+              659,
+              8
+            ],
+            "end": [
+              659,
+              27
+            ]
+          },
+          "placement": "leading",
+          "text": "# White checkmated."
+        },
+        {
+          "span": {
+            "start": [
+              663,
+              8
+            ],
+            "end": [
+              663,
+              20
+            ]
+          },
+          "placement": "leading",
+          "text": "# Stalemate."
+        },
+        {
+          "span": {
+            "start": [
+              667,
+              8
+            ],
+            "end": [
+              667,
+              32
+            ]
+          },
+          "placement": "leading",
+          "text": "# Insufficient material."
+        },
+        {
+          "span": {
+            "start": [
+              671,
+              8
+            ],
+            "end": [
+              671,
+              31
+            ]
+          },
+          "placement": "leading",
+          "text": "# Fiftyseven-move rule."
+        },
+        {
+          "span": {
+            "start": [
+              675,
+              8
+            ],
+            "end": [
+              675,
+              26
+            ]
+          },
+          "placement": "leading",
+          "text": "# Fifty-move rule."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_san",
+      "sourceSpan": {
+        "start": [
+          680,
+          4
+        ],
+        "end": [
+          717,
+          42
+        ]
+      },
+      "sourceSha256": "a4eedd0947343cecdf0dabe67dbd4bfb2c1f71612c610d5ad2865eb2ee8d8c1f",
+      "astSha256": "d2197a565d3c7db0859af0cf0168f2295f1db43935c8c8e98277a2d994282847",
+      "semanticNodeCount": 235,
+      "assertionCount": 16,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              681,
+              8
+            ],
+            "end": [
+              681,
+              30
+            ]
+          },
+          "placement": "leading",
+          "text": "# Castling with check."
+        },
+        {
+          "span": {
+            "start": [
+              688,
+              8
+            ],
+            "end": [
+              688,
+              26
+            ]
+          },
+          "placement": "leading",
+          "text": "# En passant mate."
+        },
+        {
+          "span": {
+            "start": [
+              695,
+              8
+            ],
+            "end": [
+              695,
+              30
+            ]
+          },
+          "placement": "leading",
+          "text": "# Test disambiguation."
+        },
+        {
+          "span": {
+            "start": [
+              706,
+              8
+            ],
+            "end": [
+              706,
+              51
+            ]
+          },
+          "placement": "leading",
+          "text": "# Do not disambiguate illegal alternatives."
+        },
+        {
+          "span": {
+            "start": [
+              712,
+              8
+            ],
+            "end": [
+              712,
+              20
+            ]
+          },
+          "placement": "leading",
+          "text": "# Promotion."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_lan",
+      "sourceSpan": {
+        "start": [
+          719,
+          4
+        ],
+        "end": [
+          739,
+          42
+        ]
+      },
+      "sourceSha256": "f61b6fed0f7d5bfa8b56aae61229934bcc46c02cab03616e5d095247d0d4250e",
+      "astSha256": "7a970cd59490fd5cb70d86b499711885d0bacfdbd7e52c1712433026728b2ca5",
+      "semanticNodeCount": 130,
+      "assertionCount": 9,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              720,
+              8
+            ],
+            "end": [
+              720,
+              49
+            ]
+          },
+          "placement": "leading",
+          "text": "# Normal moves always with origin square."
+        },
+        {
+          "span": {
+            "start": [
+              728,
+              8
+            ],
+            "end": [
+              728,
+              25
+            ]
+          },
+          "placement": "leading",
+          "text": "# Normal capture."
+        },
+        {
+          "span": {
+            "start": [
+              734,
+              8
+            ],
+            "end": [
+              734,
+              34
+            ]
+          },
+          "placement": "leading",
+          "text": "# Pawn captures and moves."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_san_newline",
+      "sourceSpan": {
+        "start": [
+          741,
+          4
+        ],
+        "end": [
+          746,
+          36
+        ]
+      },
+      "sourceSha256": "527f38bde858ac0a36dc23155f7dee233d4195ed8d4decd150adc1376ba0e4da",
+      "astSha256": "fe8dffe55bc1b802f90b910069880f98220fa2cec73edbebaf400ba80a92e7c1",
+      "semanticNodeCount": 29,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_pawn_capture_san_without_file",
+      "sourceSpan": {
+        "start": [
+          748,
+          4
+        ],
+        "end": [
+          754,
+          33
+        ]
+      },
+      "sourceSha256": "385ec94170d78812317241573d18a58bd109d9e1521a1427a1157a7d738e7b11",
+      "astSha256": "9c3f791c5e8fa01f20b0c3b7baba346a306d46f92b476ff679ccffceb126b1fc",
+      "semanticNodeCount": 35,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_variation_san",
+      "sourceSpan": {
+        "start": [
+          756,
+          4
+        ],
+        "end": [
+          789,
+          78
+        ]
+      },
+      "sourceSha256": "104c6ecc3e6368f9f8e1f1249ebdeebd92785212eef4ef2f2fad0202700da363",
+      "astSha256": "0dc5f5cb35823093349c934e48079f90e234acbc5b53fe8e37d0f46d9d070b2b",
+      "semanticNodeCount": 201,
+      "assertionCount": 8,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_move_stack_usage",
+      "sourceSpan": {
+        "start": [
+          791,
+          4
+        ],
+        "end": [
+          803,
+          79
+        ]
+      },
+      "sourceSha256": "3cde50bf7c48b7132164ee28d40bc7c4dc17a85a8bebea1d8d01c0cd3775a0ae",
+      "astSha256": "fa8f8ff75243567c1d35ac758176986098d92f0ebc451a988a14979fe25ab2dc",
+      "semanticNodeCount": 66,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_is_legal_move",
+      "sourceSpan": {
+        "start": [
+          805,
+          4
+        ],
+        "end": [
+          826,
+          42
+        ]
+      },
+      "sourceSha256": "28bb558c0778a3c488f7afe090b92339da90d7fedbc416ab2a27cc9efab6fdca",
+      "astSha256": "d449f90b25440c9094a577147a6b2cad2fdac23deae27edee729c5952662f0b3",
+      "semanticNodeCount": 121,
+      "assertionCount": 10,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              809,
+              8
+            ],
+            "end": [
+              809,
+              34
+            ]
+          },
+          "placement": "leading",
+          "text": "# Legal moves: Rg1, g8=R+."
+        },
+        {
+          "span": {
+            "start": [
+              813,
+              8
+            ],
+            "end": [
+              813,
+              40
+            ]
+          },
+          "placement": "leading",
+          "text": "# Impossible promotion: Kb5, h7."
+        },
+        {
+          "span": {
+            "start": [
+              817,
+              8
+            ],
+            "end": [
+              817,
+              28
+            ]
+          },
+          "placement": "leading",
+          "text": "# Missing promotion."
+        },
+        {
+          "span": {
+            "start": [
+              820,
+              8
+            ],
+            "end": [
+              820,
+              34
+            ]
+          },
+          "placement": "leading",
+          "text": "# Promote to pawn or king."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_move_count",
+      "sourceSpan": {
+        "start": [
+          828,
+          4
+        ],
+        "end": [
+          830,
+          85
+        ]
+      },
+      "sourceSha256": "9a56b3f3af3d6ab7fb5835efdd8bed8f493e577e2213d6071e7d933e5236c56f",
+      "astSha256": "0c9e2acb096f5f3e7e04911a9728a171282bdd1dd15d503cfad9e6ccd09d1c73",
+      "semanticNodeCount": 28,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": [
+        "move-generator-iterator-delegation:BoardTestCase.test_move_count@830:8-830:85:Call"
+      ]
+    },
+    {
+      "identity": "LegalMoveGeneratorTestCase.test_list_conversion",
+      "sourceSpan": {
+        "start": [
+          1716,
+          4
+        ],
+        "end": [
+          1717,
+          66
+        ]
+      },
+      "sourceSha256": "32af9ad7baa6b09f2567b032fc42dcc156cee53099a71120e3bfc2fa4a6ff344",
+      "astSha256": "1d93a131285f9d573c293abbc37061a79a3311cc45a49ab39de5d556a10dbd18",
+      "semanticNodeCount": 14,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": [
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_list_conversion@1717:8-1717:66:Call"
+      ]
+    },
+    {
+      "identity": "LegalMoveGeneratorTestCase.test_nonzero",
+      "sourceSpan": {
+        "start": [
+          1719,
+          4
+        ],
+        "end": [
+          1725,
+          58
+        ]
+      },
+      "sourceSha256": "b12c32ee58adfce32e72fc3de5549e00398138f0130077cc584f9e1f0d48db97",
+      "astSha256": "4eec5c7eb96444746b55345198a3dcef09222fe504b0450790c6e99cb1e33f36",
+      "semanticNodeCount": 35,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "LegalMoveGeneratorTestCase.test_string_conversion",
+      "sourceSpan": {
+        "start": [
+          1727,
+          4
+        ],
+        "end": [
+          1736,
+          61
+        ]
+      },
+      "sourceSha256": "51273ec9b5c747bf15ffd6a498ac63514573fad5b1de56cf0025e32fb2863018",
+      "astSha256": "c518477c09d293ca25536a78c6ad9aed2f6cb24b4a64bfed2e4fa73ae5e49cb5",
+      "semanticNodeCount": 61,
+      "assertionCount": 6,
+      "comments": [],
+      "parityGapCases": [
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1730:8-1730:54:Call",
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1731:8-1731:55:Call",
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1733:8-1733:61:Call",
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1734:8-1734:62:Call",
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1735:8-1735:60:Call",
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1736:8-1736:61:Call"
+      ]
+    },
+    {
+      "identity": "LegalMoveGeneratorTestCase.test_traverse_once",
+      "sourceSpan": {
+        "start": [
+          1738,
+          4
+        ],
+        "end": [
+          1751,
+          45
+        ]
+      },
+      "sourceSha256": "8deed3f8f70e5aa87f3f5095f55ae9dd7d973d7ab1064034c5a4becb30dddb60",
+      "astSha256": "a38eefec7556b33270cd6256f48ae4e3191ad2e439c4c7854174a0dd715f5b24",
+      "semanticNodeCount": 36,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": [
+        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_traverse_once@1751:8-1751:45:Call"
+      ]
+    },
+    {
+      "identity": "BaseBoardTestCase.test_set_piece_map",
+      "sourceSpan": {
+        "start": [
+          1756,
+          4
+        ],
+        "end": [
+          1762,
+          33
+        ]
+      },
+      "sourceSha256": "0ce9bcf58073bd87b32c9c8fbc5a47781217bf1394e664c38899e4e9618b090b",
+      "astSha256": "4afaddd24dcfe2af55d1cdcd093386a338fb275aa57728cff1268b0d7c4606dd",
+      "semanticNodeCount": 36,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": [
+        "base-board-default-position:BaseBoardTestCase.test_set_piece_map@1762:8-1762:33:Call"
+      ]
+    },
+    {
+      "identity": "SquareSetTestCase.test_equality",
+      "sourceSpan": {
+        "start": [
+          1767,
+          4
+        ],
+        "end": [
+          1787,
+          66
+        ]
+      },
+      "sourceSha256": "8b6b2903306037b2d17702aed4827ffdcfe70385c739126e3a54c69c78440b66",
+      "astSha256": "31e9df22d617551811d57babc6dc27158314d0df40ff463775409a68097dd83e",
+      "semanticNodeCount": 135,
+      "assertionCount": 12,
+      "comments": [],
+      "parityGapCases": [
+        "square-set-value-semantics:SquareSetTestCase.test_equality@1773:8-1773:32:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_equality@1774:8-1774:32:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_equality@1775:8-1775:34:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_equality@1776:8-1776:34:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_equality@1786:8-1786:73:Call"
+      ]
+    },
+    {
+      "identity": "SquareSetTestCase.test_string_conversion",
+      "sourceSpan": {
+        "start": [
+          1789,
+          4
+        ],
+        "end": [
+          1801,
+          43
+        ]
+      },
+      "sourceSha256": "dc22bdbb913648c7241ab9b21aa980dc5c7a94960b7b67fede95f34faa79c1e1",
+      "astSha256": "ea2cce327e497427e68e4262c7c0c85db4735f1b4f1a8470430f516e4938b06d",
+      "semanticNodeCount": 28,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_iter",
+      "sourceSpan": {
+        "start": [
+          1803,
+          4
+        ],
+        "end": [
+          1805,
+          56
+        ]
+      },
+      "sourceSha256": "5df31afa12c4ea81cf4c9f2ab2f425f29d5beae940af27f37eb6648c13839e62",
+      "astSha256": "cca3207d5f8016069608dc67c32371b2208676f1d393770cdd39ae0cd58430ca",
+      "semanticNodeCount": 23,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_reversed",
+      "sourceSpan": {
+        "start": [
+          1807,
+          4
+        ],
+        "end": [
+          1809,
+          86
+        ]
+      },
+      "sourceSha256": "c31cb855641e2f31205389d69566b0b317097689c2d4c63c516e97812faa1a0b",
+      "astSha256": "bab8e04c6689631367e236d4a2448331e44024fe05f606723a7b27c7594a5bdb",
+      "semanticNodeCount": 35,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_arithmetic",
+      "sourceSpan": {
+        "start": [
+          1811,
+          4
+        ],
+        "end": [
+          1831,
+          41
+        ]
+      },
+      "sourceSha256": "049273d7987d927d5980939b8c892b4e12d294b827b44427b7bae7e789ba4b8c",
+      "astSha256": "4a5435d440fa71d268a11b791a9a7b2c628bdd37f771e650feb8fbcce724973d",
+      "semanticNodeCount": 136,
+      "assertionCount": 10,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_immutable_set_operations",
+      "sourceSpan": {
+        "start": [
+          1833,
+          4
+        ],
+        "end": [
+          1857,
+          101
+        ]
+      },
+      "sourceSha256": "a4add3d14b6d3d9d8b2ae796b17b95a31d53fe341a19b9c0c8af61e177f0517d",
+      "astSha256": "c0a3f5ab247628ea8c37cae22bfee06f16d7d69dd7f6b8a8a3d283dc393376c8",
+      "semanticNodeCount": 170,
+      "assertionCount": 8,
+      "comments": [],
+      "parityGapCases": [
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1851:16-1851:76:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1852:16-1852:72:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1853:16-1853:76:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1854:16-1854:71:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1855:16-1855:85:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1856:16-1856:81:Call",
+        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1857:16-1857:101:Call"
+      ]
+    },
+    {
+      "identity": "SquareSetTestCase.test_mutable_set_operations",
+      "sourceSpan": {
+        "start": [
+          1859,
+          4
+        ],
+        "end": [
+          1895,
+          49
+        ]
+      },
+      "sourceSha256": "86150760972aeab1cbd9f5999b6ef1a8b7482af1b35675965d838f7a64138199",
+      "astSha256": "ba1ad6aee7c1bc43efce9c7e3ddb6e6ebfab56424ee2723d89ac62dbd355e685",
+      "semanticNodeCount": 173,
+      "assertionCount": 12,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_from_square",
+      "sourceSpan": {
+        "start": [
+          1897,
+          4
+        ],
+        "end": [
+          1899,
+          76
+        ]
+      },
+      "sourceSha256": "99b73102d0e66d10a9b3ac5080abf7f80bf408a9f72e9b6b16f16066ad90805b",
+      "astSha256": "9675776b98efd040ef79fe07e10d0429088f25708f0e7a9b63415e1baa104f86",
+      "semanticNodeCount": 25,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_carry_rippler",
+      "sourceSpan": {
+        "start": [
+          1901,
+          4
+        ],
+        "end": [
+          1903,
+          98
+        ]
+      },
+      "sourceSha256": "123f2bed13ae8ace2d6ff80dce1c9769e197ea6a4a5b261ed6c20c724c219390",
+      "astSha256": "616e3b8457763bcc783dcf0208467bfd96af5935e1a8d7fa82e264fa541020c4",
+      "semanticNodeCount": 41,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_mirror",
+      "sourceSpan": {
+        "start": [
+          1905,
+          4
+        ],
+        "end": [
+          1907,
+          96
+        ]
+      },
+      "sourceSha256": "efc2dde6dcf6a0613419f27385d33c0f58510665b4dced91ee7e9c4100030d52",
+      "astSha256": "10350719a87a4a6bf0f78e2130cf8f360fa06d4487e6da2172fc792ca72fb4d4",
+      "semanticNodeCount": 23,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_flip",
+      "sourceSpan": {
+        "start": [
+          1909,
+          4
+        ],
+        "end": [
+          1919,
+          76
+        ]
+      },
+      "sourceSha256": "8a963fbe7b722a59ebfd2d2eb33c932bbf7e964cc2888c21d0a703fb5ad23181",
+      "astSha256": "6b72dce73c41bc92ed43201d542c3467ea9332caeb691987c65c9f684d131bc2",
+      "semanticNodeCount": 87,
+      "assertionCount": 8,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              1915,
+              52
+            ],
+            "end": [
+              1915,
+              62
+            ]
+          },
+          "placement": "inline",
+          "text": "# Letter R"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_len_of_complenent",
+      "sourceSpan": {
+        "start": [
+          1921,
+          4
+        ],
+        "end": [
+          1926,
+          42
+        ]
+      },
+      "sourceSha256": "6911f84708cdbb72ac88235e26e653c31461b33088b0d0ef86c3a55cee2c4200",
+      "astSha256": "c4cd6112d4aab3ff240f40479e59e84399abb526271ae5a7cc5f61d9d67c9a76",
+      "semanticNodeCount": 33,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_int_conversion",
+      "sourceSpan": {
+        "start": [
+          1928,
+          4
+        ],
+        "end": [
+          1931,
+          106
+        ]
+      },
+      "sourceSha256": "18fc14c4c19060b0e8d768782ce411ae2bb3b609f400192b8e82e48cccd41df0",
+      "astSha256": "22964fc36c31004a1a46cba06f68c7048832d65c23c2b3db2b843dddc4cb09f8",
+      "semanticNodeCount": 37,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_tolist",
+      "sourceSpan": {
+        "start": [
+          1933,
+          4
+        ],
+        "end": [
+          1934,
+          90
+        ]
+      },
+      "sourceSha256": "5eba033bbc174e8a6944d8d6ca044e955393a4cba74295b7adfcaad635975e6d",
+      "astSha256": "de4e2dff63bc48309a0a62537a3b760798e1bc6d43865b1de69a9f3eafc5c4eb",
+      "semanticNodeCount": 16,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "SquareSetTestCase.test_flip_ducktyping",
+      "sourceSpan": {
+        "start": [
+          1936,
+          4
+        ],
+        "end": [
+          1941,
+          61
+        ]
+      },
+      "sourceSha256": "da16337d651f97b15f7056c5caf778dad604630e4e22a510bb0e2d35dea0b968",
+      "astSha256": "14761c405786466ecacb61fe5c126c2ddd9cfa958241457ca8e9756a9a5eb16d",
+      "semanticNodeCount": 41,
+      "assertionCount": 2,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              1941,
+              48
+            ],
+            "end": [
+              1941,
+              61
+            ]
+          },
+          "placement": "inline",
+          "text": "# Not mutated"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_exporter",
+      "sourceSpan": {
+        "start": [
+          2079,
+          4
+        ],
+        "end": [
+          2135,
+          63
+        ]
+      },
+      "sourceSha256": "17fc34e7d41d65ba49076ae2598a8d7b6a590527e961e8e8472e030f7219395a",
+      "astSha256": "d35d2caf092ae348fa93f71e518641cedef4ac9395688daaabdaf9d9a7922810",
+      "semanticNodeCount": 231,
+      "assertionCount": 4,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              2105,
+              8
+            ],
+            "end": [
+              2105,
+              52
+            ]
+          },
+          "placement": "leading",
+          "text": "# Test string exporter with various options."
+        },
+        {
+          "span": {
+            "start": [
+              2131,
+              8
+            ],
+            "end": [
+              2131,
+              29
+            ]
+          },
+          "placement": "leading",
+          "text": "# Test file exporter."
+        }
+      ],
+      "parityGapCases": [
+        "pgn-file-exporter:PgnTestCase.test_exporter@2133:19-2133:55:Call"
+      ]
+    },
+    {
+      "identity": "PgnTestCase.test_promote_to_main",
+      "sourceSpan": {
+        "start": [
+          2180,
+          4
+        ],
+        "end": [
+          2190,
+          89
+        ]
+      },
+      "sourceSha256": "c0944a1f70edc84fabe87c4b9390d0551977612412e647e9abc28e959a413711",
+      "astSha256": "3760eb086e88c1dbe94a0886d22a94151c9594aea21e91ad1f596bfa453458c3",
+      "semanticNodeCount": 68,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_tree_traversal",
+      "sourceSpan": {
+        "start": [
+          2367,
+          4
+        ],
+        "end": [
+          2396,
+          42
+        ]
+      },
+      "sourceSha256": "bfc6b3156f47f5fc948f66c8cf0aba4da56238c67af40ff789a994d2cef05fa9",
+      "astSha256": "9311d2a46e4c6c4f1bbd560b58f39324407c28a76f52ff60f1d8be7f0c943287",
+      "semanticNodeCount": 191,
+      "assertionCount": 20,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_promote_demote",
+      "sourceSpan": {
+        "start": [
+          2398,
+          4
+        ],
+        "end": [
+          2423,
+          36
+        ]
+      },
+      "sourceSha256": "6af9f4032bb6006d31314a8b1ada131666e36916158fd62e5b615685e99b67e8",
+      "astSha256": "ee54232264b6d38d07f8127b89d6d0b0aecc249868c2aea6724769323f29ec52",
+      "semanticNodeCount": 165,
+      "assertionCount": 15,
+      "comments": [],
+      "parityGapCases": [
+        "pgn-demote-swap:PgnTestCase.test_promote_demote@2415:8-2415:46:Call",
+        "pgn-demote-swap:PgnTestCase.test_promote_demote@2422:8-2422:36:Call",
+        "pgn-demote-swap:PgnTestCase.test_promote_demote@2423:8-2423:36:Call"
+      ]
+    },
+    {
+      "identity": "PgnTestCase.test_add_line",
+      "sourceSpan": {
+        "start": [
+          2679,
+          4
+        ],
+        "end": [
+          2694,
+          36
+        ]
+      },
+      "sourceSha256": "3a9ebb9bf6654fac4604697583241db8187ecb4146eae7201cf1125aa293c457",
+      "astSha256": "672cd4677ffc09db9ef27fe67d04bae6b0b2fd70c69217fdaa476c9bf81786f0",
+      "semanticNodeCount": 103,
+      "assertionCount": 7,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_mainline",
+      "sourceSpan": {
+        "start": [
+          2696,
+          4
+        ],
+        "end": [
+          2705,
+          71
+        ]
+      },
+      "sourceSha256": "586de0ac5288bdf8ba82a6175fe19a524f669c71f50079c6b8855162b512712d",
+      "astSha256": "94fc96119185ff4a0a3de6e43757c6615b0af4a0119040b848b47ea8b724fe9d",
+      "semanticNodeCount": 69,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    }
+  ]
+}

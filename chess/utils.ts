@@ -1,3 +1,5 @@
+import { ValueError } from './errors'
+
 /**
  * A mirror of Python's `collections.Counter` class.
  */
@@ -32,7 +34,7 @@ export const toGlobal = (pat: RegExp): RegExp => {
  */
 export const parseIntStrict = (str: string): number => {
   if (str.match(/^-?(0|[1-9]\d*)$/) === null) {
-    throw new Error(`ValueError: ${str} is not an integer`)
+    throw new ValueError(`${str} is not an integer`)
   }
   return parseInt(str, 10)
 }

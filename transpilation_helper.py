@@ -1,7 +1,6 @@
 import os
 import re
 from typing import List
-import pyperclip as pc
 
 
 def split_not_in_brackets(
@@ -297,6 +296,24 @@ def py_method_name_to_ts(py_method_name: str) -> str:
     if py_method_name == '__eq__':
         return 'equals'
     return py_method_name
+
+
+def py_identifier_to_ts(py_identifier: str) -> str:
+    """Convert one Python identifier to this project's TypeScript spelling.
+
+    Unlike :func:`py_misc_to_ts`, this works on an identifier already parsed
+    from Python source. Keeping the conversion at the AST boundary prevents
+    replacements inside strings and comments.
+    """
+    if py_identifier == 'self':
+        return 'this'
+
+    method_name = py_method_name_to_ts(py_identifier)
+    return re.sub(
+        r'(?<=[a-z0-9])_([a-z0-9])',
+        lambda match: match.group(1).upper(),
+        method_name,
+    )
 
 
 '''
@@ -670,6 +687,8 @@ def py_to_ts(py_str: str) -> str:
 
 
 def main():
+    import pyperclip as pc
+
     while True:
         input('Press Enter to paste Python code and convert it to TypeScript...')
         s = pc.paste()

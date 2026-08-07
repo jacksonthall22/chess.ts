@@ -113,7 +113,8 @@ over to the corresponding files in [`chess/`](chess/):
 - [x]  `__init__.py` → `index.ts`
 - [x]  `pgn.py` → `pgn.ts`
 - [ ]  `engine.py` → `engine.ts` (WIP: minimal functionality for `pgn.ts` to work)
-- [ ]  Transpile testing suite
+- [x]  Add a test harness and account for every frozen upstream test
+- [ ]  Complete the test-suite translation
 
 PRs welcome!
 
@@ -128,6 +129,27 @@ To use it, just run `python transpilation_helper.py` to open a CLI where you can
 and drag to select multiple code lines, including leading indents). Press `Enter` and the transpiled code will be copied to the clipboard
 (you may need `pip install pyperclip`). Paste it into a TypeScript file, continue to make edits until warnings disappear, and check the
 final TypeScript against the Python in a splitscreen to verify it works the same.
+
+For the frozen upstream test suite, the repository also has a deterministic
+compiler in
+[`scripts/python_test_compiler/`](scripts/python_test_compiler/). It parses the
+Python file and its comments once, recursively lowers each supported AST node,
+and proves target shapes and flow facts through finite symbol and call
+contracts. Target API differences—including constructors, keyword layout,
+structural protocols, adapters, and dependent return refinements—are declared
+in the registry rather than matched from individual test bodies. Atomic rules
+then emit native TypeScript operations such as `.length`, `Array.from()`, `Set`,
+bigint operators, and domain `.equals()` methods; there is no Python-semantics
+runtime or `py.*` compatibility layer. It reuses only the parsed-identifier
+conversion from `transpilation_helper.py`; it does not run the helper's textual
+rewrites. Unsupported constructs, unknown semantic inputs, unclaimed AST nodes,
+unclaimed comments, stale parity selectors, or generated drift fail the build
+instead of producing approximate code. All 76 translated upstream test bodies
+are generated this way, and a generated runtime oracle compares 1,917 assertion
+observations for the 61 gap-free methods directly with the frozen Python
+implementation. See
+[`UPSTREAM.md`](UPSTREAM.md) for the architecture, provenance, and update
+process.
 
 ### `chess.ts`'s GPT
 I made a GPT to help with this project, [`python-chess` to `chess.ts` helper](https://chat.openai.com/g/g-Ht5toEWik-python-chess-to-chess-ts-helper).
