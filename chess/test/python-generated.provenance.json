@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "upstreamCommit": "cd7f5958289dd08156436a1f84b9ea03cb1f75a1",
-  "sourcePath": "python-chess core copy/test.py",
+  "sourcePath": "python-chess/test.py",
   "translatedMethodCount": 76,
   "sourceCommentCount": 53,
   "semanticNodeCount": 5859,

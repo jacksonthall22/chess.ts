@@ -2,7 +2,7 @@
 
 The syntax compiler proves where each generated TypeScript expression came
 from.  This module supplies the complementary runtime check: every translated
-method without a declared parity gap is executed against the frozen Python
+method without a declared parity gap is executed against the pinned Python
 implementation, and its assertion observations become a checked TypeScript
 artifact.
 
@@ -31,7 +31,8 @@ from .selection import TRANSLATED_TESTS
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-UPSTREAM_ROOT = REPOSITORY_ROOT / "python-chess core copy"
+UPSTREAM_ROOT = REPOSITORY_ROOT / "python-chess"
+UPSTREAM_PACKAGE = UPSTREAM_ROOT / "chess"
 UPSTREAM_TEST = UPSTREAM_ROOT / "test.py"
 GENERATED_ASSERTION_ORACLE = (
     REPOSITORY_ROOT
@@ -89,7 +90,7 @@ def _selected_partitions() -> tuple[tuple[Any, ...], tuple[Any, ...]]:
 
 @contextmanager
 def _loaded_frozen_suite() -> Iterator[tuple[types.ModuleType, types.ModuleType]]:
-    """Load the copied package as ``chess`` without consulting site packages."""
+    """Load the pinned package as ``chess`` without consulting site packages."""
 
     displaced = {
         name: module
@@ -103,8 +104,8 @@ def _loaded_frozen_suite() -> Iterator[tuple[types.ModuleType, types.ModuleType]
     try:
         package_spec = importlib.util.spec_from_file_location(
             "chess",
-            UPSTREAM_ROOT / "__init__.py",
-            submodule_search_locations=[str(UPSTREAM_ROOT)],
+            UPSTREAM_PACKAGE / "__init__.py",
+            submodule_search_locations=[str(UPSTREAM_PACKAGE)],
         )
         if package_spec is None or package_spec.loader is None:
             raise AssertionOracleError("could not create the frozen chess package spec")

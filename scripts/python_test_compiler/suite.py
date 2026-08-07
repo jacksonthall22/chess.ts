@@ -22,7 +22,7 @@ from .source import load_source_unit, parse_source_unit
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
-UPSTREAM_TEST = REPOSITORY_ROOT / "python-chess core copy" / "test.py"
+UPSTREAM_TEST = REPOSITORY_ROOT / "python-chess" / "test.py"
 GENERATED_TEST = REPOSITORY_ROOT / "chess" / "test" / "python-generated.test.ts"
 GENERATED_PROVENANCE = (
     REPOSITORY_ROOT / "chess" / "test" / "python-generated.provenance.json"
@@ -151,7 +151,7 @@ def compile_suite(source: str | None = None) -> CompiledSuite:
     provenance = {
         "schemaVersion": 1,
         "upstreamCommit": UPSTREAM_COMMIT,
-        "sourcePath": "python-chess core copy/test.py",
+        "sourcePath": "python-chess/test.py",
         "translatedMethodCount": len(source_unit.methods),
         "sourceCommentCount": len(source_unit.comments),
         "semanticNodeCount": sum(
