@@ -748,6 +748,9 @@ export class Wdl {
   }
 
   equals(other: object): boolean {
+    if (other === this) {
+      return true
+    }
     return (
       other instanceof Wdl &&
       other.constructor === this.constructor &&

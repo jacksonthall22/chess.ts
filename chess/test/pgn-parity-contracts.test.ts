@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
 import * as pgn from '../pgn'
+import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
   test('StringExporter output round-trips the mainline and sidelines', () => {
@@ -129,5 +130,26 @@ describe('TypeScript-native PGN parity contracts', () => {
     expect(
       game.accept(new pgn.StringExporter({ headers: false, columns: null })),
     ).toBe('{ abc } *')
+  })
+
+  test('annotation affixes use Python exact Unicode whitespace', () => {
+    const game = new pgn.Game()
+    const cases: [string, (node: pgn.Game) => void][] = [
+      ['[%cal Ra1a2]', node => node.setArrows([])],
+      ['[%eval 0.00]', node => node.setEval(null)],
+      ['[%clk 0:00:01]', node => node.setClock(null)],
+      ['[%emt 0:00:01]', node => node.setEmt(null)],
+    ]
+
+    for (const [annotation, remove] of cases) {
+      game.comment = `\ufeff${annotation}\ufefffoo`
+      remove(game)
+      expect(game.comment).toBe('\ufeff\ufefffoo')
+    }
+
+    expect(pgn.TAG_REGEX.test('[Event "x"]\ufeff')).toBe(false)
+    expect(pgn.TAG_REGEX.test('[Event "x"]\u001c')).toBe(true)
+    expect(utils.isspace('\ufeff')).toBe(false)
+    expect(utils.isspace('\u001c')).toBe(true)
   })
 })

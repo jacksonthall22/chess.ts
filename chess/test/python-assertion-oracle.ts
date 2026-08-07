@@ -70,10 +70,6 @@ export class AssertionValueCanonicalizer {
     if (value instanceof chess.SquareSet) return ['int', value.int().toString()]
     if (typeof value === 'bigint') return ['int', value.toString()]
     if (typeof value === 'number') {
-      if (!Number.isFinite(value))
-        throw new TypeError(
-          `assertion oracle requires a finite number, got ${String(value)}`,
-        )
       if (Number.isSafeInteger(value)) return ['int', value.toString()]
       if (Number.isInteger(value))
         throw new TypeError(

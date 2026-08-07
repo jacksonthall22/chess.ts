@@ -19,6 +19,10 @@ describe('TypeScript-native parity contracts', () => {
     expect(wdl.equals(new engine.Wdl(1, 2, 3))).toBe(true)
     expect(wdl.equals(derivedWdl)).toBe(false)
     expect(derivedWdl.equals(wdl)).toBe(false)
+
+    const nanWdl = new engine.Wdl(Number.NaN, 2, 3)
+    expect(nanWdl.equals(nanWdl)).toBe(true)
+    expect(nanWdl.equals(new engine.Wdl(Number.NaN, 2, 3))).toBe(false)
   })
 
   test('Score ordering preserves Python unordered NaN comparisons', () => {

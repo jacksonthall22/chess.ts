@@ -9,6 +9,13 @@ import { KeyError, ValueError } from './errors'
 
 import * as utils from './utils'
 
+/** Replace Python's Unicode `\\s` atom before compiling a JavaScript regex. */
+const pythonWhitespaceRegex = (source: string, flags?: string): RegExp =>
+  new RegExp(
+    source.replaceAll('\\s', utils.PYTHON_WHITESPACE_SOURCE),
+    flags,
+  )
+
 const codePointLength = (value: string): number => Array.from(value).length
 
 /** Direct equivalent of Python's ordered `max()`, including NaN behavior. */
@@ -156,8 +163,9 @@ export const NAG_BLACK_SEVERE_TIME_PRESSURE = 139
 
 export const NAG_NOVELTY = 146
 
-export const TAG_REGEX =
-  /^\[([A-Za-z0-9][A-Za-z0-9_+#=:-]*)\s+\"([^\r]*)\"\]\s*$/
+export const TAG_REGEX = pythonWhitespaceRegex(
+  '^\\[([A-Za-z0-9][A-Za-z0-9_+#=:-]*)\\s+"([^\\r]*)"\\]\\s*$',
+)
 
 export const TAG_NAME_REGEX = /^[A-Za-z0-9][A-Za-z0-9_+#=:-]*$/ // NOTE: `\Z` -> `$`
 
@@ -184,12 +192,14 @@ export const MOVETEXT_REGEX = new RegExp(
 
 export const SKIP_MOVETEXT_REGEX = /;|\{|\}/
 
-export const CLOCK_REGEX =
-  /(?<prefix>\s?)\[%clk\s(?<hours>\d+):(?<minutes>\d+):(?<seconds>\d+(?:\.\d*)?)\](?<suffix>\s?)/
-export const EMT_REGEX =
-  /(?<prefix>\s?)\[%emt\s(?<hours>\d+):(?<minutes>\d+):(?<seconds>\d+(?:\.\d*)?)\](?<suffix>\s?)/
+export const CLOCK_REGEX = pythonWhitespaceRegex(
+  '(?<prefix>\\s?)\\[%clk\\s(?<hours>\\d+):(?<minutes>\\d+):(?<seconds>\\d+(?:\\.\\d*)?)\\](?<suffix>\\s?)',
+)
+export const EMT_REGEX = pythonWhitespaceRegex(
+  '(?<prefix>\\s?)\\[%emt\\s(?<hours>\\d+):(?<minutes>\\d+):(?<seconds>\\d+(?:\\.\\d*)?)\\](?<suffix>\\s?)',
+)
 
-export const EVAL_REGEX = new RegExp(
+export const EVAL_REGEX = pythonWhitespaceRegex(
   '(?<prefix>\\s?)' +
     '\\[%eval\\s(?:' +
     '\\#(?<mate>[+-]?\\d+)' +
@@ -200,7 +210,7 @@ export const EVAL_REGEX = new RegExp(
     '(?<suffix>\\s?)',
 )
 
-export const ARROWS_REGEX = new RegExp(
+export const ARROWS_REGEX = pythonWhitespaceRegex(
   '(?<prefix>\\s?)' +
     '\\[%(?:csl|cal)\\s(?<arrows>' +
     '[RGYB][a-h][1-8](?:[a-h][1-8])?' +

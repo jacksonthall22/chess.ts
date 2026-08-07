@@ -1,5 +1,13 @@
 import { ValueError } from './errors'
 
+/** Python 3.12 / Unicode 15.0 whitespace used by `str` and `re`. */
+export const PYTHON_WHITESPACE_SOURCE =
+  '[\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]'
+
+const PYTHON_WHITESPACE_ONLY = new RegExp(
+  `^(?:${PYTHON_WHITESPACE_SOURCE})+$`,
+)
+
 /**
  * A mirror of Python's `collections.Counter` class.
  */
@@ -75,7 +83,7 @@ export const sub = (
  * A mirror of Python's `str.isspace()` method.
  */
 export const isspace = (s: string): boolean => {
-  return s !== '' && s.trim() === ''
+  return PYTHON_WHITESPACE_ONLY.test(s)
 }
 
 /**

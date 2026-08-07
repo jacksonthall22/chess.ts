@@ -25,6 +25,7 @@ import {
   iterMap,
   iterNext,
   parseIntStrict,
+  PYTHON_WHITESPACE_SOURCE,
   range,
   StopIteration,
 } from './utils'
@@ -37,12 +38,9 @@ export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
 export const colorIdx = (color: Color): 1 | 0 => boolToNumber(color)
 
-const PYTHON_WHITESPACE =
-  /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/
-const PYTHON_WHITESPACE_RUN =
-  /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/
-const PYTHON_WHITESPACE_RUNS =
-  /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/g
+const PYTHON_WHITESPACE = new RegExp(PYTHON_WHITESPACE_SOURCE)
+const PYTHON_WHITESPACE_RUN = new RegExp(`${PYTHON_WHITESPACE_SOURCE}+`)
+const PYTHON_WHITESPACE_RUNS = new RegExp(`${PYTHON_WHITESPACE_SOURCE}+`, 'g')
 
 const PYTHON_INTEGER = /^[+-]?[0-9](?:_?[0-9])*$/
 const PYTHON_FLOAT =
