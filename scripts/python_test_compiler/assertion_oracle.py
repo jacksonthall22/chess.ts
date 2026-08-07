@@ -16,6 +16,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import struct
 import sys
 import types
 import unittest
@@ -157,6 +158,14 @@ class _TraceSession:
             return ["int", str(int(value))]
         if isinstance(value, int):
             return ["int", str(value)]
+        if isinstance(value, float):
+            if value.is_integer():
+                if -(2**53 - 1) <= value <= 2**53 - 1:
+                    return ["int", str(int(value))]
+                raise AssertionOracleError(
+                    "integral Python float exceeds TypeScript's safe range"
+                )
+            return ["number", struct.pack(">d", value).hex()]
         if isinstance(value, str):
             return ["str", value]
         if isinstance(value, chess.Move):
@@ -165,6 +174,15 @@ class _TraceSession:
             return ["piece", value.symbol()]
         if isinstance(value, chess.Board):
             return ["board", value.fen()]
+        if isinstance(value, chess.BaseBoard):
+            return ["base-board", value.board_fen()]
+        if isinstance(value, chess.engine.Wdl):
+            return [
+                "wdl",
+                str(value.wins),
+                str(value.draws),
+                str(value.losses),
+            ]
         if isinstance(value, (list, tuple)):
             return ["sequence", [self.value(item) for item in value]]
         if isinstance(value, (set, frozenset)):

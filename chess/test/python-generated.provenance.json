@@ -2,12 +2,12 @@
   "schemaVersion": 1,
   "upstreamCommit": "cd7f5958289dd08156436a1f84b9ea03cb1f75a1",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 76,
-  "sourceCommentCount": 53,
-  "semanticNodeCount": 5859,
-  "assertionCount": 406,
-  "parityGapRootCount": 8,
-  "parityGapCaseCount": 51,
+  "translatedMethodCount": 84,
+  "sourceCommentCount": 57,
+  "semanticNodeCount": 6805,
+  "assertionCount": 465,
+  "parityGapRootCount": 0,
+  "parityGapCaseCount": 0,
   "methods": [
     {
       "identity": "SquareTestCase.test_square",
@@ -235,17 +235,7 @@
       "semanticNodeCount": 160,
       "assertionCount": 14,
       "comments": [],
-      "parityGapCases": [
-        "piece-value-equality:PieceTestCase.test_equality@169:8-169:56:Call",
-        "piece-value-equality:PieceTestCase.test_equality@171:8-171:31:Call",
-        "piece-value-equality:PieceTestCase.test_equality@172:8-172:31:Call",
-        "piece-value-equality:PieceTestCase.test_equality@173:8-173:32:Call",
-        "piece-value-equality:PieceTestCase.test_equality@177:8-177:33:Call",
-        "piece-value-equality:PieceTestCase.test_equality@178:8-178:33:Call",
-        "piece-value-equality:PieceTestCase.test_equality@179:8-179:34:Call",
-        "piece-value-equality:PieceTestCase.test_equality@180:8-180:33:Call",
-        "piece-value-equality:PieceTestCase.test_equality@181:8-181:34:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "PieceTestCase.test_from_symbol",
@@ -302,9 +292,7 @@
       "semanticNodeCount": 37,
       "assertionCount": 3,
       "comments": [],
-      "parityGapCases": [
-        "piece-value-equality:BoardTestCase.test_default_position@214:8-214:80:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "BoardTestCase.test_empty",
@@ -361,9 +349,7 @@
       "semanticNodeCount": 33,
       "assertionCount": 2,
       "comments": [],
-      "parityGapCases": [
-        "board-epd-operation-parsing:BoardTestCase.test_from_epd@237:21-237:63:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "BoardTestCase.test_move_making",
@@ -515,9 +501,7 @@
       "semanticNodeCount": 120,
       "assertionCount": 7,
       "comments": [],
-      "parityGapCases": [
-        "piece-value-equality:BoardTestCase.test_get_set@298:8-298:80:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "BoardTestCase.test_color_at",
@@ -1027,17 +1011,7 @@
           "text": "# KQkq is not valid in this standard chess position."
         }
       ],
-      "parityGapCases": [
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@479:8-479:74:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@480:8-480:74:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@482:8-482:73:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@483:8-483:74:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@484:8-484:73:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@487:8-487:74:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@488:8-488:73:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@491:8-491:74:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@492:8-492:81:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "BoardTestCase.test_ninesixty_different_king_and_rook_file",
@@ -1199,12 +1173,7 @@
       "semanticNodeCount": 50,
       "assertionCount": 4,
       "comments": [],
-      "parityGapCases": [
-        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@529:8-529:71:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@530:8-530:79:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@532:8-532:71:Call",
-        "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@533:8-533:79:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "BoardTestCase.test_promotion_with_check",
@@ -1688,9 +1657,7 @@
       "semanticNodeCount": 28,
       "assertionCount": 1,
       "comments": [],
-      "parityGapCases": [
-        "move-generator-iterator-delegation:BoardTestCase.test_move_count@830:8-830:85:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "LegalMoveGeneratorTestCase.test_list_conversion",
@@ -1709,9 +1676,7 @@
       "semanticNodeCount": 14,
       "assertionCount": 1,
       "comments": [],
-      "parityGapCases": [
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_list_conversion@1717:8-1717:66:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "LegalMoveGeneratorTestCase.test_nonzero",
@@ -1749,14 +1714,7 @@
       "semanticNodeCount": 61,
       "assertionCount": 6,
       "comments": [],
-      "parityGapCases": [
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1730:8-1730:54:Call",
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1731:8-1731:55:Call",
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1733:8-1733:61:Call",
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1734:8-1734:62:Call",
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1735:8-1735:60:Call",
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1736:8-1736:61:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "LegalMoveGeneratorTestCase.test_traverse_once",
@@ -1775,9 +1733,7 @@
       "semanticNodeCount": 36,
       "assertionCount": 1,
       "comments": [],
-      "parityGapCases": [
-        "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_traverse_once@1751:8-1751:45:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "BaseBoardTestCase.test_set_piece_map",
@@ -1796,9 +1752,7 @@
       "semanticNodeCount": 36,
       "assertionCount": 2,
       "comments": [],
-      "parityGapCases": [
-        "base-board-default-position:BaseBoardTestCase.test_set_piece_map@1762:8-1762:33:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "SquareSetTestCase.test_equality",
@@ -1817,13 +1771,7 @@
       "semanticNodeCount": 135,
       "assertionCount": 12,
       "comments": [],
-      "parityGapCases": [
-        "square-set-value-semantics:SquareSetTestCase.test_equality@1773:8-1773:32:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_equality@1774:8-1774:32:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_equality@1775:8-1775:34:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_equality@1776:8-1776:34:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_equality@1786:8-1786:73:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "SquareSetTestCase.test_string_conversion",
@@ -1918,15 +1866,7 @@
       "semanticNodeCount": 170,
       "assertionCount": 8,
       "comments": [],
-      "parityGapCases": [
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1851:16-1851:76:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1852:16-1852:72:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1853:16-1853:76:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1854:16-1854:71:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1855:16-1855:85:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1856:16-1856:81:Call",
-        "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1857:16-1857:101:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "SquareSetTestCase.test_mutable_set_operations",
@@ -2175,9 +2115,7 @@
           "text": "# Test file exporter."
         }
       ],
-      "parityGapCases": [
-        "pgn-file-exporter:PgnTestCase.test_exporter@2133:19-2133:55:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "PgnTestCase.test_promote_to_main",
@@ -2195,6 +2133,92 @@
       "astSha256": "3760eb086e88c1dbe94a0886d22a94151c9594aea21e91ad1f596bfa453458c3",
       "semanticNodeCount": 68,
       "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_comment_at_eol",
+      "sourceSpan": {
+        "start": [
+          2218,
+          4
+        ],
+        "end": [
+          2232,
+          58
+        ]
+      },
+      "sourceSha256": "0af535eb916f1437cb49009865b5a3607c69b6011b87d59d8358691339db7921",
+      "astSha256": "e24c91e026450777990f16fc6257958ecc998c375586e4f3f4e8fb763bb2a676",
+      "semanticNodeCount": 56,
+      "assertionCount": 2,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              2225,
+              8
+            ],
+            "end": [
+              2225,
+              55
+            ]
+          },
+          "placement": "leading",
+          "text": "# Seek the node after 6.Nbd2 and before 6...a6."
+        },
+        {
+          "span": {
+            "start": [
+              2230,
+              8
+            ],
+            "end": [
+              2230,
+              66
+            ]
+          },
+          "placement": "leading",
+          "text": "# Make sure the comment for the second variation is there."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_game_starting_comment",
+      "sourceSpan": {
+        "start": [
+          2317,
+          4
+        ],
+        "end": [
+          2325,
+          71
+        ]
+      },
+      "sourceSha256": "2bf253d6e8c6da48aea541ce64e029a467396b7c9846778b4e4447bebbfc13b7",
+      "astSha256": "fd2e5958f919bca9326533e7c8d5185f7ada353f184048cd7a85c7b4ccf8d023",
+      "semanticNodeCount": 51,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_game_starting_variation",
+      "sourceSpan": {
+        "start": [
+          2327,
+          4
+        ],
+        "end": [
+          2343,
+          69
+        ]
+      },
+      "sourceSha256": "acb709a06944b13b17ba1e162160069e68610e3162aae02893ccaf23dc4a7fc8",
+      "astSha256": "4aa07c2bddc3d2129ef75c735a9520ae590709f9e125be5e23d3be887f0e960d",
+      "semanticNodeCount": 81,
+      "assertionCount": 7,
       "comments": [],
       "parityGapCases": []
     },
@@ -2234,11 +2258,7 @@
       "semanticNodeCount": 165,
       "assertionCount": 15,
       "comments": [],
-      "parityGapCases": [
-        "pgn-demote-swap:PgnTestCase.test_promote_demote@2415:8-2415:46:Call",
-        "pgn-demote-swap:PgnTestCase.test_promote_demote@2422:8-2422:36:Call",
-        "pgn-demote-swap:PgnTestCase.test_promote_demote@2423:8-2423:36:Call"
-      ]
+      "parityGapCases": []
     },
     {
       "identity": "PgnTestCase.test_add_line",
@@ -2275,6 +2295,131 @@
       "astSha256": "94fc96119185ff4a0a3de6e43757c6615b0af4a0119040b848b47ea8b724fe9d",
       "semanticNodeCount": 69,
       "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_annotations",
+      "sourceSpan": {
+        "start": [
+          2821,
+          4
+        ],
+        "end": [
+          2864,
+          56
+        ]
+      },
+      "sourceSha256": "90995bceb0de714f8d0abbef7b8a80ec5f9f76b32f9852bb429e8ced2e51c3ff",
+      "astSha256": "4181f298cec596dfff6c967a0ca37eb6d2c6ffd90fc915fc0374b103f429c7af",
+      "semanticNodeCount": 294,
+      "assertionCount": 22,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_float_emt",
+      "sourceSpan": {
+        "start": [
+          2872,
+          4
+        ],
+        "end": [
+          2883,
+          39
+        ]
+      },
+      "sourceSha256": "855bb858c0d65bfc342cb8aeb2f537872cc370e24e75944a4f01a7c611e65911",
+      "astSha256": "223ef77e2bf9759fc9f652ff48784442cae8975f98fbc8da6c0e0392c0f2799c",
+      "semanticNodeCount": 60,
+      "assertionCount": 5,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              2882,
+              58
+            ],
+            "end": [
+              2882,
+              67
+            ]
+          },
+          "placement": "inline",
+          "text": "# Clamped"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_float_clk",
+      "sourceSpan": {
+        "start": [
+          2885,
+          4
+        ],
+        "end": [
+          2896,
+          41
+        ]
+      },
+      "sourceSha256": "dd4a084c2ba7c3b2dfd59205eeb267f7bdfcd4a481671924ebee65b316c59de3",
+      "astSha256": "56bb6fd26eabbbafd2b2720848576742dfaeb8518e07264b26c2c9f9a2540fcd",
+      "semanticNodeCount": 60,
+      "assertionCount": 5,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              2895,
+              58
+            ],
+            "end": [
+              2895,
+              67
+            ]
+          },
+          "placement": "inline",
+          "text": "# Clamped"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "EngineTestCase.test_score_ordering",
+      "sourceSpan": {
+        "start": [
+          2973,
+          4
+        ],
+        "end": [
+          3001,
+          124
+        ]
+      },
+      "sourceSha256": "cb5973eb635346bff14a03de350a61a8ed5863eefe3f2852aa1daf59f60b963d",
+      "astSha256": "86d0dbe96a0368e64b471c5fcee17e1033c02a8a23cc6c1f95d5a888cc6fa917",
+      "semanticNodeCount": 242,
+      "assertionCount": 10,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "EngineTestCase.test_wdl_model",
+      "sourceSpan": {
+        "start": [
+          3032,
+          4
+        ],
+        "end": [
+          3037,
+          102
+        ]
+      },
+      "sourceSha256": "505e7c66d7ab48eeac8e99ae2279e242a78b9a5da9a97ea5fd7106aaa1aa97e2",
+      "astSha256": "1c10569f5a03a7a7f5087a78f2bf475d92eb7ab901f43e543957e4c98b5ac2c7",
+      "semanticNodeCount": 102,
+      "assertionCount": 5,
       "comments": [],
       "parityGapCases": []
     }

@@ -58,7 +58,7 @@ def _semantic_node_count(node: ast.AST) -> int:
 
 
 def compile_suite(source: str | None = None) -> CompiledSuite:
-    """Compile all 76 methods from one parsed frozen source unit."""
+    """Compile all 84 methods from one parsed frozen source unit."""
 
     if source is None:
         source_unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
@@ -73,7 +73,9 @@ def compile_suite(source: str | None = None) -> CompiledSuite:
         f"// Source: python-chess test.py at {UPSTREAM_COMMIT}.",
         "// Every selected method body and source comment is lowered from Python's AST/tokens.",
         "import * as chess from '../index'",
+        "import * as engineModule from '../engine'",
         "import * as pgnModule from '../pgn'",
+        "import * as svgModule from '../svg'",
         "import { registerTestCase, TestCase } from './unittest'",
         "",
     ]

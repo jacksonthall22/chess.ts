@@ -1,14 +1,18 @@
 import * as chess from '../index'
+import * as engine from '../engine'
 import * as pgn from '../pgn'
 
 export type CanonicalValue =
   | readonly ['none']
   | readonly ['bool', boolean]
   | readonly ['int', string]
+  | readonly ['number', string]
   | readonly ['str', string]
   | readonly ['move', string]
   | readonly ['piece', string]
   | readonly ['board', string]
+  | readonly ['base-board', string]
+  | readonly ['wdl', string, string, string]
   | readonly ['sequence', readonly CanonicalValue[]]
   | readonly ['set', readonly CanonicalValue[]]
   | readonly ['pgn-node', number]
@@ -66,17 +70,35 @@ export class AssertionValueCanonicalizer {
     if (value instanceof chess.SquareSet) return ['int', value.int().toString()]
     if (typeof value === 'bigint') return ['int', value.toString()]
     if (typeof value === 'number') {
-      if (!Number.isSafeInteger(value)) {
+      if (!Number.isFinite(value))
+        throw new TypeError(
+          `assertion oracle requires a finite number, got ${String(value)}`,
+        )
+      if (Number.isSafeInteger(value)) return ['int', value.toString()]
+      if (Number.isInteger(value))
         throw new TypeError(
           `assertion oracle requires a safe integer, got ${String(value)}`,
         )
-      }
-      return ['int', value.toString()]
+      const bytes = new Uint8Array(8)
+      new DataView(bytes.buffer).setFloat64(0, value, false)
+      return [
+        'number',
+        Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join(''),
+      ]
     }
     if (typeof value === 'string') return ['str', value]
     if (value instanceof chess.Move) return ['move', value.uci()]
     if (value instanceof chess.Piece) return ['piece', value.symbol()]
     if (value instanceof chess.Board) return ['board', value.fen()]
+    if (value instanceof chess.BaseBoard)
+      return ['base-board', value.boardFen()]
+    if (value instanceof engine.Wdl)
+      return [
+        'wdl',
+        value.wins.toString(),
+        value.draws.toString(),
+        value.losses.toString(),
+      ]
     if (Array.isArray(value)) {
       return ['sequence', value.map(item => this.value(item))]
     }

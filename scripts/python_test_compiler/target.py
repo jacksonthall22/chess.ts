@@ -19,6 +19,7 @@ class ShapeKind(str, Enum):
     NULL = "null"
     BOOLEAN = "boolean"
     NUMBER = "number"
+    FLOAT = "float"
     BIGINT = "bigint"
     STRING = "string"
     ERROR = "error"
@@ -44,7 +45,15 @@ class ShapeKind(str, Enum):
     HEADERS = "headers"
     MAINLINE = "mainline"
     STRING_EXPORTER = "string-exporter"
+    FILE_EXPORTER = "file-exporter"
+    EXPORTER = "exporter"
     STRING_IO = "string-io"
+    SCORE = "score"
+    POV_SCORE = "pov-score"
+    WDL = "wdl"
+    WDL_MODEL = "wdl-model"
+    ARROW = "arrow"
+    ARROW_INPUT = "arrow-input"
     LOCAL_OBJECT = "local-object"
     PIECE_VALUE_SET = "piece-value-set"
     KEYED_MAP = "keyed-map"
@@ -135,6 +144,10 @@ BOOLEAN = TargetShape(ShapeKind.BOOLEAN)
 # JavaScript number. Dynamic arithmetic checks Number.isSafeInteger before it
 # retains this shape. Float syntax is rejected at the compiler boundary.
 NUMBER = TargetShape(ShapeKind.NUMBER)
+# Python and JavaScript both use IEEE-754 binary64 for ordinary float values.
+# Keep floats distinct from proved integers so integer-only chess APIs cannot
+# accidentally accept a mechanically translated float.
+FLOAT = TargetShape(ShapeKind.FLOAT)
 BIGINT = TargetShape(ShapeKind.BIGINT)
 STRING = TargetShape(ShapeKind.STRING)
 ERROR = TargetShape(ShapeKind.ERROR)
@@ -156,7 +169,17 @@ GAME = TargetShape(ShapeKind.GAME)
 HEADERS = TargetShape(ShapeKind.HEADERS)
 MAINLINE_MOVE = TargetShape(ShapeKind.MAINLINE, element=MOVE)
 STRING_EXPORTER = TargetShape(ShapeKind.STRING_EXPORTER)
+FILE_EXPORTER = TargetShape(ShapeKind.FILE_EXPORTER)
+EXPORTER = TargetShape(ShapeKind.EXPORTER)
 STRING_IO = TargetShape(ShapeKind.STRING_IO)
+SCORE = TargetShape(ShapeKind.SCORE)
+POV_SCORE = TargetShape(ShapeKind.POV_SCORE)
+WDL = TargetShape(ShapeKind.WDL)
+WDL_MODEL = TargetShape(ShapeKind.WDL_MODEL)
+ARROW = TargetShape(ShapeKind.ARROW)
+# ``GameNode.set_arrows`` accepts either an Arrow or a pair of squares. Keep
+# that public union explicit instead of erasing a mixed Python list to unknown.
+ARROW_INPUT = TargetShape(ShapeKind.ARROW_INPUT)
 
 
 def array_of(element: TargetShape) -> TargetShape:

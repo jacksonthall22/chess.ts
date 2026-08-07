@@ -2,7 +2,9 @@
 // Source: python-chess test.py at cd7f5958289dd08156436a1f84b9ea03cb1f75a1.
 // Every selected method body and source comment is lowered from Python's AST/tokens.
 import * as chess from '../index'
+import * as engineModule from '../engine'
 import * as pgnModule from '../pgn'
+import * as svgModule from '../svg'
 import { registerTestCase, TestCase } from './unittest'
 
 /** Generated directly from the frozen python-chess syntax tree. */
@@ -160,91 +162,19 @@ class PieceTestCase extends TestCase {
     const d1 = new chess.Piece(chess.BISHOP, chess.WHITE)
     const d2 = new chess.Piece(chess.BISHOP, chess.WHITE)
 
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@169:8-169:56:Call",
-      () => this.assertEqualUsing((Array.from([a, b, c, d1, d2])).filter((__value, __index, __values) => !__values.slice(0, __index).some(__candidate => (() => { const __piece = __candidate as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { hash(): number; equals?: (other: unknown) => boolean }; const __other = __value as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { hash(): number }; if (__piece.hash() !== __other.hash()) return false; const __equals = ((__candidate2: unknown): ((other: unknown) => boolean) => { if (typeof __candidate2 !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate2 as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__other); })())).length, 3, (__actual, __expected) => __actual === __expected),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertEqualUsing((Array.from([a, b, c, d1, d2])).filter((__value, __index, __values) => !__values.slice(0, __index).some(__candidate => (() => { const __piece = __candidate as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { hash(): number; equals?: (other: unknown) => boolean }; const __other = __value as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { hash(): number }; if (__piece.hash() !== __other.hash()) return false; const __equals = ((__candidate2: unknown): ((other: unknown) => boolean) => { if (typeof __candidate2 !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate2 as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__other); })())).length, 3, (__actual, __expected) => __actual === __expected)
-    }
+    this.assertEqualUsing((Array.from([a, b, c, d1, d2])).filter((__value, __index, __values) => !__values.slice(0, __index).some(__candidate => (() => { const __piece = __candidate; const __other = __value; if (__piece.hash() !== __other.hash()) return false; return __piece.equals(__other); })())).length, 3, (__actual, __expected) => __actual === __expected)
 
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@171:8-171:31:Call",
-      () => this.assertEqualUsing(a, d1, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertEqualUsing(a, d1, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@172:8-172:31:Call",
-      () => this.assertEqualUsing(d1, a, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertEqualUsing(d1, a, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@173:8-173:32:Call",
-      () => this.assertEqualUsing(d1, d2, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertEqualUsing(d1, d2, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
+    this.assertEqualUsing(a, d1, (__actual, __expected) => (__actual).equals(__expected))
+    this.assertEqualUsing(d1, a, (__actual, __expected) => (__actual).equals(__expected))
+    this.assertEqualUsing(d1, d2, (__actual, __expected) => (__actual).equals(__expected))
 
     this.assertEqualUsing(a.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected)
 
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@177:8-177:33:Call",
-      () => this.assertNotEqualUsing(a, b, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertNotEqualUsing(a, b, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@178:8-178:33:Call",
-      () => this.assertNotEqualUsing(b, c, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertNotEqualUsing(b, c, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@179:8-179:34:Call",
-      () => this.assertNotEqualUsing(b, d1, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertNotEqualUsing(b, d1, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@180:8-180:33:Call",
-      () => this.assertNotEqualUsing(a, c, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertNotEqualUsing(a, c, (__actual, __expected) => (() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())
-    }
-    this.assertKnownError(
-      "piece-value-equality:PieceTestCase.test_equality@181:8-181:34:Call",
-      () => this.assertFalse(!(((__left, __right) => (() => { const __piece = __left as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__right); })())(d1, d2))),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertFalse(!(((__left, __right) => (() => { const __piece = __left as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__right); })())(d1, d2)))
-    }
+    this.assertNotEqualUsing(a, b, (__actual, __expected) => (__actual).equals(__expected))
+    this.assertNotEqualUsing(b, c, (__actual, __expected) => (__actual).equals(__expected))
+    this.assertNotEqualUsing(b, d1, (__actual, __expected) => (__actual).equals(__expected))
+    this.assertNotEqualUsing(a, c, (__actual, __expected) => (__actual).equals(__expected))
+    this.assertFalse(!(((__left, __right) => (__left).equals(__right))(d1, d2)))
 
     this.assertNotEqualUsing(a.toRepr(), b.toRepr(), (__actual, __expected) => __actual === __expected)
     this.assertNotEqualUsing(b.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected)
@@ -269,7 +199,7 @@ class PieceTestCase extends TestCase {
   }
 
   testHash(): void {
-    const pieces = (Array.from("pnbrqkPNBRQK", __symbolItem => chess.Piece.fromSymbol(__symbolItem))).filter((__value, __index, __values) => !__values.slice(0, __index).some(__candidate => (() => { const __piece = __candidate as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { hash(): number; equals?: (other: unknown) => boolean }; const __other = __value as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { hash(): number }; if (__piece.hash() !== __other.hash()) return false; const __equals = ((__candidate2: unknown): ((other: unknown) => boolean) => { if (typeof __candidate2 !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate2 as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__other); })()))
+    const pieces = (Array.from("pnbrqkPNBRQK", __symbolItem => chess.Piece.fromSymbol(__symbolItem))).filter((__value, __index, __values) => !__values.slice(0, __index).some(__candidate => (() => { const __piece = __candidate; const __other = __value; if (__piece.hash() !== __other.hash()) return false; return __piece.equals(__other); })()))
     this.assertEqualUsing(pieces.length, 12, (__actual, __expected) => __actual === __expected)
     const hashes = new Set(Array.from(pieces, __pieceItem => __pieceItem.hash()))
     this.assertEqualUsing(hashes, new Set(Array.from(({ *[Symbol.iterator]() { for (let __index = 0; __index < 12; __index += 1) { yield __index; } } }))), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
@@ -288,15 +218,7 @@ registerTestCase('PieceTestCase', PieceTestCase, {
 class BoardTestCase extends TestCase {
   testDefaultPosition(): void {
     const board = new chess.Board()
-    this.assertKnownError(
-      "piece-value-equality:BoardTestCase.test_default_position@214:8-214:80:Call",
-      () => this.assertEqualUsing(board.pieceAt(chess.B1), chess.Piece.fromSymbol("N"), (__actual, __expected) => __actual !== null && ((() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertEqualUsing(board.pieceAt(chess.B1), chess.Piece.fromSymbol("N"), (__actual, __expected) => __actual !== null && ((() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()))
-    }
+    this.assertEqualUsing(board.pieceAt(chess.B1), chess.Piece.fromSymbol("N"), (__actual, __expected) => __actual !== null && ((__actual).equals(__expected)))
     this.assertEqualUsing(board.fen(), chess.STARTING_FEN, (__actual, __expected) => __actual === __expected)
     this.assertEqualUsing(board.turn, chess.WHITE, (__actual, __expected) => __actual === __expected)
   }
@@ -322,17 +244,9 @@ class BoardTestCase extends TestCase {
 
   testFromEpd(): void {
     const baseEpd = "rnbqkb1r/ppp1pppp/5n2/3P4/8/8/PPPP1PPP/RNBQKBNR w KQkq -"
-    this.assertKnownError(
-      "board-epd-operation-parsing:BoardTestCase.test_from_epd@237:21-237:63:Call",
-      () => chess.Board.fromEpd((baseEpd + " ce 55;")),
-      chess.ValueError,
-      new RegExp("invalid half-move clock"),
-    )
-    if (false) {
-      const [board, ops] = chess.Board.fromEpd((baseEpd + " ce 55;"))
-      this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(ops, "ce"), 55, (__actual, __expected) => __actual === __expected)
-      this.assertEqualUsing(board.fen(), (baseEpd + " 0 1"), (__actual, __expected) => __actual === __expected)
-    }
+    const [board, ops] = chess.Board.fromEpd((baseEpd + " ce 55;"))
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(ops, "ce"), 55, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(board.fen(), (baseEpd + " 0 1"), (__actual, __expected) => __actual === __expected)
   }
 
   testMoveMaking(): void {
@@ -396,15 +310,7 @@ class BoardTestCase extends TestCase {
 
   testGetSet(): void {
     const board = new chess.Board()
-    this.assertKnownError(
-      "piece-value-equality:BoardTestCase.test_get_set@298:8-298:80:Call",
-      () => this.assertEqualUsing(board.pieceAt(chess.B1), chess.Piece.fromSymbol("N"), (__actual, __expected) => __actual !== null && ((() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })())),
-      TypeError,
-      new RegExp("Piece\\.equals is not implemented"),
-    )
-    if (false) {
-      this.assertEqualUsing(board.pieceAt(chess.B1), chess.Piece.fromSymbol("N"), (__actual, __expected) => __actual !== null && ((() => { const __piece = __actual as /* parity-gap: piece-value-equality */ unknown as /* parity-gap: piece-value-equality */ { equals?: (other: unknown) => boolean }; const __equals = ((__candidate: unknown): ((other: unknown) => boolean) => { if (typeof __candidate !== "function") throw new TypeError("Piece.equals is not implemented"); return (__argument: unknown): boolean => Reflect.apply(__candidate as /* parity-gap: piece-value-equality */ Function, __piece, [__argument]); })(__piece.equals); return __equals(__expected); })()))
-    }
+    this.assertEqualUsing(board.pieceAt(chess.B1), chess.Piece.fromSymbol("N"), (__actual, __expected) => __actual !== null && ((__actual).equals(__expected)))
 
     board.removePieceAt(chess.E2)
     this.assertEqualUsing(board.pieceAt(chess.E2), null, (__actual, __expected) => __actual === null)
@@ -598,47 +504,20 @@ class BoardTestCase extends TestCase {
   testInvalidCastlingRights(): void {
     // KQkq is not valid in this standard chess position.
     let board = new chess.Board("1r2k3/8/8/8/8/8/8/R3KR2 w KQkq - 0 1")
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@479:8-479:74:Call",
-      () => this.assertEqualUsing(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS, (__actual, __expected) => __actual === __expected),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@480:8-480:74:Call",
-      () => this.assertEqualUsing(board.fen(), "1r2k3/8/8/8/8/8/8/R3KR2 w Q - 0 1", (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(board.fen(), "1r2k3/8/8/8/8/8/8/R3KR2 w Q - 0 1", (__actual, __expected) => __actual === __expected)
     this.assertTrue(board.hasQueensideCastlingRights(chess.WHITE))
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@482:8-482:73:Call",
-      () => this.assertFalse(board.hasKingsideCastlingRights(chess.WHITE)),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@483:8-483:74:Call",
-      () => this.assertFalse(board.hasQueensideCastlingRights(chess.BLACK)),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@484:8-484:73:Call",
-      () => this.assertFalse(board.hasKingsideCastlingRights(chess.BLACK)),
-    )
+    this.assertFalse(board.hasKingsideCastlingRights(chess.WHITE))
+    this.assertFalse(board.hasQueensideCastlingRights(chess.BLACK))
+    this.assertFalse(board.hasKingsideCastlingRights(chess.BLACK))
 
     board = new chess.Board("4k2r/8/8/8/8/8/8/R1K5 w KQkq - 0 1", { chess960: true })
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@487:8-487:74:Call",
-      () => this.assertEqualUsing(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS, (__actual, __expected) => __actual === __expected),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@488:8-488:73:Call",
-      () => this.assertEqualUsing(board.fen(), "4k2r/8/8/8/8/8/8/R1K5 w Qk - 0 1", (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(board.fen(), "4k2r/8/8/8/8/8/8/R1K5 w Qk - 0 1", (__actual, __expected) => __actual === __expected)
 
     board = new chess.Board("1r2k3/8/1p6/8/8/5P2/8/1R2KR2 w KQkq - 0 1", { chess960: true })
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@491:8-491:74:Call",
-      () => this.assertEqualUsing(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS, (__actual, __expected) => __actual === __expected),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_invalid_castling_rights@492:8-492:81:Call",
-      () => this.assertEqualUsing(board.fen(), "1r2k3/8/1p6/8/8/5P2/8/1R2KR2 w KQq - 0 1", (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.status(), chess.STATUS_BAD_CASTLING_RIGHTS, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(board.fen(), "1r2k3/8/1p6/8/8/5P2/8/1R2KR2 w KQq - 0 1", (__actual, __expected) => __actual === __expected)
   }
 
   testNinesixtyDifferentKingAndRookFile(): void {
@@ -681,23 +560,11 @@ class BoardTestCase extends TestCase {
   testCleanCastlingRights(): void {
     const board = new chess.Board()
     board.setBoardFen("k6K/8/8/pppppppp/8/8/8/QqQq4")
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@529:8-529:71:Call",
-      () => this.assertEqualUsing(board.cleanCastlingRights(), chess.BB_EMPTY, (__actual, __expected) => __actual === __expected),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@530:8-530:79:Call",
-      () => this.assertEqualUsing(board.fen(), "k6K/8/8/pppppppp/8/8/8/QqQq4 w - - 0 1", (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.cleanCastlingRights(), chess.BB_EMPTY, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(board.fen(), "k6K/8/8/pppppppp/8/8/8/QqQq4 w - - 0 1", (__actual, __expected) => __actual === __expected)
     board.pushSan("Qxc5")
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@532:8-532:71:Call",
-      () => this.assertEqualUsing(board.cleanCastlingRights(), chess.BB_EMPTY, (__actual, __expected) => __actual === __expected),
-    )
-    this.assertKnownAssertionFailure(
-      "board-castling-rights-cleanup:BoardTestCase.test_clean_castling_rights@533:8-533:79:Call",
-      () => this.assertEqualUsing(board.fen(), "k6K/8/8/ppQppppp/8/8/8/Qq1q4 b - - 0 1", (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.cleanCastlingRights(), chess.BB_EMPTY, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(board.fen(), "k6K/8/8/ppQppppp/8/8/8/Qq1q4 b - - 0 1", (__actual, __expected) => __actual === __expected)
   }
 
   testPromotionWithCheck(): void {
@@ -943,10 +810,7 @@ class BoardTestCase extends TestCase {
 
   testMoveCount(): void {
     const board = new chess.Board("1N2k3/P7/8/8/3n4/8/2PP4/R3K2R w KQ - 0 1")
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:BoardTestCase.test_move_count@830:8-830:85:Call",
-      () => this.assertEqualUsing(board.pseudoLegalMoves.count(), ((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(8, 4), 3), 2), 1), 6), 9), (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.pseudoLegalMoves.count(), ((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(((__leftNumber, __rightNumber) => { const __numberResult = __leftNumber + __rightNumber; if (!Number.isSafeInteger(__numberResult)) throw new RangeError("integer result is outside TypeScript's safe range"); return __numberResult; })(8, 4), 3), 2), 1), 6), 9), (__actual, __expected) => __actual === __expected)
   }
 }
 
@@ -994,10 +858,7 @@ registerTestCase('BoardTestCase', BoardTestCase, {
 /** Generated directly from the frozen python-chess syntax tree. */
 class LegalMoveGeneratorTestCase extends TestCase {
   testListConversion(): void {
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_list_conversion@1717:8-1717:66:Call",
-      () => this.assertEqualUsing(Array.from(new chess.Board().legalMoves).length, 20, (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(Array.from(new chess.Board().legalMoves).length, 20, (__actual, __expected) => __actual === __expected)
   }
 
   testNonzero(): void {
@@ -1012,31 +873,13 @@ class LegalMoveGeneratorTestCase extends TestCase {
   testStringConversion(): void {
     const board = new chess.Board("r3k1nr/ppq1pp1p/2p3p1/8/1PPR4/2N5/P3QPPP/5RK1 b kq b3 0 16")
 
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1730:8-1730:54:Call",
-      () => this.assertContainsUsing("Qxh2+", board.legalMoves.toString(), (__container, __member) => __container.includes(__member)),
-    )
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1731:8-1731:55:Call",
-      () => this.assertContainsUsing("Qxh2+", board.legalMoves.toString(), (__container, __member) => __container.includes(__member)),
-    )
+    this.assertContainsUsing("Qxh2+", board.legalMoves.toString(), (__container, __member) => __container.includes(__member))
+    this.assertContainsUsing("Qxh2+", board.legalMoves.toString(), (__container, __member) => __container.includes(__member))
 
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1733:8-1733:61:Call",
-      () => this.assertContainsUsing("Qxh2+", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member)),
-    )
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1734:8-1734:62:Call",
-      () => this.assertContainsUsing("Qxh2+", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member)),
-    )
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1735:8-1735:60:Call",
-      () => this.assertContainsUsing("e8d7", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member)),
-    )
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_string_conversion@1736:8-1736:61:Call",
-      () => this.assertContainsUsing("e8d7", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member)),
-    )
+    this.assertContainsUsing("Qxh2+", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member))
+    this.assertContainsUsing("Qxh2+", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member))
+    this.assertContainsUsing("e8d7", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member))
+    this.assertContainsUsing("e8d7", board.pseudoLegalMoves.toString(), (__container, __member) => __container.includes(__member))
   }
 
   testTraverseOnce(): void {
@@ -1055,10 +898,7 @@ class LegalMoveGeneratorTestCase extends TestCase {
     const board = new MockBoard()
     const gen = new chess.LegalMoveGenerator((board as /* protocol-adapter: legal-move-generator-board */ unknown as /* protocol-adapter: legal-move-generator-board */ chess.Board))
     Array.from(gen)
-    this.assertKnownAssertionFailure(
-      "move-generator-iterator-delegation:LegalMoveGeneratorTestCase.test_traverse_once@1751:8-1751:45:Call",
-      () => this.assertEqualUsing(board.traversals, 1, (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(board.traversals, 1, (__actual, __expected) => __actual === __expected)
   }
 }
 
@@ -1079,10 +919,7 @@ class BaseBoardTestCase extends TestCase {
     a.setPieceMap(b.pieceMap())
     this.assertEqualUsing(a, b, (__actual, __expected) => __actual.equals(__expected))
     a.setPieceMap(new Map())
-    this.assertKnownAssertionFailure(
-      "base-board-default-position:BaseBoardTestCase.test_set_piece_map@1762:8-1762:33:Call",
-      () => this.assertNotEqualUsing(a, b, (__actual, __expected) => __actual.equals(__expected)),
-    )
+    this.assertNotEqualUsing(a, b, (__actual, __expected) => __actual.equals(__expected))
   }
 }
 
@@ -1100,22 +937,10 @@ class SquareSetTestCase extends TestCase {
     const b1 = new chess.SquareSet((chess.BB_RANK_5 | chess.BB_RANK_6))
     const b2 = new chess.SquareSet((chess.BB_RANK_5 | chess.BB_RANK_6))
 
-    this.assertKnownAssertionFailure(
-      "square-set-value-semantics:SquareSetTestCase.test_equality@1773:8-1773:32:Call",
-      () => this.assertEqualUsing(a1, a2, (__actual, __expected) => __actual.equals(__expected)),
-    )
-    this.assertKnownAssertionFailure(
-      "square-set-value-semantics:SquareSetTestCase.test_equality@1774:8-1774:32:Call",
-      () => this.assertEqualUsing(b1, b2, (__actual, __expected) => __actual.equals(__expected)),
-    )
-    this.assertKnownAssertionFailure(
-      "square-set-value-semantics:SquareSetTestCase.test_equality@1775:8-1775:34:Call",
-      () => this.assertFalse(!(((__left, __right) => __left.equals(__right))(a1, a2))),
-    )
-    this.assertKnownAssertionFailure(
-      "square-set-value-semantics:SquareSetTestCase.test_equality@1776:8-1776:34:Call",
-      () => this.assertFalse(!(((__left, __right) => __left.equals(__right))(b1, b2))),
-    )
+    this.assertEqualUsing(a1, a2, (__actual, __expected) => __actual.equals(__expected))
+    this.assertEqualUsing(b1, b2, (__actual, __expected) => __actual.equals(__expected))
+    this.assertFalse(!(((__left, __right) => __left.equals(__right))(a1, a2)))
+    this.assertFalse(!(((__left, __right) => __left.equals(__right))(b1, b2)))
 
     this.assertNotEqualUsing(a1, b1, (__actual, __expected) => __actual.equals(__expected))
     this.assertNotEqualUsing(a2, b2, (__actual, __expected) => __actual.equals(__expected))
@@ -1125,15 +950,7 @@ class SquareSetTestCase extends TestCase {
     this.assertEqualUsing(new chess.SquareSet(chess.BB_ALL), chess.BB_ALL, (__actual, __expected) => __actual.equals(__expected))
     this.assertEqualUsing(chess.BB_ALL, new chess.SquareSet(chess.BB_ALL), (__actual, __expected) => __expected.equals(__actual))
 
-    this.assertKnownError(
-      "square-set-value-semantics:SquareSetTestCase.test_equality@1786:8-1786:73:Call",
-      () => new chess.SquareSet((new chess.SquareSet(BigInt(999)) as /* parity-gap: square-set-value-semantics */ unknown as /* parity-gap: square-set-value-semantics */ chess.IntoSquareSet)),
-      TypeError,
-      new RegExp("squares is not iterable"),
-    )
-    if (false) {
-      this.assertEqualUsing(new chess.SquareSet((new chess.SquareSet(BigInt(999)) as /* parity-gap: square-set-value-semantics */ unknown as /* parity-gap: square-set-value-semantics */ chess.IntoSquareSet)).int(), 999, (__actual, __expected) => __actual === BigInt(__expected))
-    }
+    this.assertEqualUsing(new chess.SquareSet(new chess.SquareSet(BigInt(999))).int(), 999, (__actual, __expected) => __actual === BigInt(__expected))
     this.assertEqualUsing(new chess.SquareSet([chess.B8]), chess.BB_B8, (__actual, __expected) => __actual.equals(__expected))
   }
 
@@ -1188,69 +1005,13 @@ class SquareSetTestCase extends TestCase {
       let __aRebound = new chess.SquareSet(a)
       for (let b of examples) {
         let __bRebound = new chess.SquareSet(b)
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1851:16-1851:76:Call",
-          () => __aRebound.isdisjoint((__bRebound as /* parity-gap: square-set-value-semantics */ never)),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => Array.from(__leftSet).every(__setValue => !__rightSet.has(__setValue)))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), __aRebound.isdisjoint((__bRebound as /* parity-gap: square-set-value-semantics */ never)), (__actual, __expected) => __actual === __expected)
-        }
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1852:16-1852:72:Call",
-          () => __aRebound.issubset((__bRebound as /* parity-gap: square-set-value-semantics */ never)),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => Array.from(__leftSet).every(__setValue => __rightSet.has(__setValue)))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), __aRebound.issubset((__bRebound as /* parity-gap: square-set-value-semantics */ never)), (__actual, __expected) => __actual === __expected)
-        }
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1853:16-1853:76:Call",
-          () => __aRebound.issuperset((__bRebound as /* parity-gap: square-set-value-semantics */ never)),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => Array.from(__rightSet).every(__setValue => __leftSet.has(__setValue)))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), __aRebound.issuperset((__bRebound as /* parity-gap: square-set-value-semantics */ never)), (__actual, __expected) => __actual === __expected)
-        }
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1854:16-1854:71:Call",
-          () => __aRebound.union((__bRebound as /* parity-gap: square-set-value-semantics */ never)),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => new Set([...__leftSet, ...__rightSet]))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.union((__bRebound as /* parity-gap: square-set-value-semantics */ never)).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
-        }
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1855:16-1855:85:Call",
-          () => __aRebound.intersection((__bRebound as /* parity-gap: square-set-value-semantics */ never)),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => new Set(Array.from(__leftSet).filter(__setValue => __rightSet.has(__setValue))))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.intersection((__bRebound as /* parity-gap: square-set-value-semantics */ never)).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
-        }
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1856:16-1856:81:Call",
-          () => __aRebound.difference((__bRebound as /* parity-gap: square-set-value-semantics */ never)),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => new Set(Array.from(__leftSet).filter(__setValue => !__rightSet.has(__setValue))))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.difference((__bRebound as /* parity-gap: square-set-value-semantics */ never)).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
-        }
-        this.assertKnownError(
-          "square-set-value-semantics:SquareSetTestCase.test_immutable_set_operations@1857:16-1857:101:Call",
-          () => (__aRebound.symmetricDifference((__bRebound as /* parity-gap: square-set-value-semantics */ never)) as /* parity-gap: square-set-value-semantics */ unknown as /* parity-gap: square-set-value-semantics */ chess.SquareSet),
-          TypeError,
-          new RegExp("squares is not iterable"),
-        )
-        if (false) {
-          this.assertEqualUsing(((__leftSet, __rightSet) => new Set([...Array.from(__leftSet).filter(__leftValue => !__rightSet.has(__leftValue)), ...Array.from(__rightSet).filter(__rightValue => !__leftSet.has(__rightValue))]))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from((__aRebound.symmetricDifference((__bRebound as /* parity-gap: square-set-value-semantics */ never)) as /* parity-gap: square-set-value-semantics */ unknown as /* parity-gap: square-set-value-semantics */ chess.SquareSet).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
-        }
+        this.assertEqualUsing(((__leftSet, __rightSet) => Array.from(__leftSet).every(__setValue => !__rightSet.has(__setValue)))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), __aRebound.isdisjoint(__bRebound), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(((__leftSet, __rightSet) => Array.from(__leftSet).every(__setValue => __rightSet.has(__setValue)))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), __aRebound.issubset(__bRebound), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(((__leftSet, __rightSet) => Array.from(__rightSet).every(__setValue => __leftSet.has(__setValue)))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), __aRebound.issuperset(__bRebound), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(((__leftSet, __rightSet) => new Set([...__leftSet, ...__rightSet]))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.union(__bRebound).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
+        this.assertEqualUsing(((__leftSet, __rightSet) => new Set(Array.from(__leftSet).filter(__setValue => __rightSet.has(__setValue))))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.intersection(__bRebound).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
+        this.assertEqualUsing(((__leftSet, __rightSet) => new Set(Array.from(__leftSet).filter(__setValue => !__rightSet.has(__setValue))))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.difference(__bRebound).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
+        this.assertEqualUsing(((__leftSet, __rightSet) => new Set([...Array.from(__leftSet).filter(__leftValue => !__rightSet.has(__leftValue)), ...Array.from(__rightSet).filter(__rightValue => !__leftSet.has(__rightValue))]))(new Set(Array.from(__aRebound.iter())), new Set(Array.from(__bRebound.iter()))), new Set(Array.from(__aRebound.symmetricDifference(__bRebound).iter())), (__actual, __expected) => __actual.size === __expected.size && Array.from(__actual).every(__setValue => __expected.has(__setValue)))
       }
     }
   }
@@ -1401,7 +1162,7 @@ class PgnTestCase extends TestCase {
     ;((__newValue, __receiver) => { __receiver.comment = __newValue; })("Best", e4D5Exd5)
 
     // Test string exporter with various options.
-    let exporter = new pgnModule.StringExporter({ headers: false, comments: false, variations: false })
+    let exporter: pgnModule.StringExporter | pgnModule.FileExporter = new pgnModule.StringExporter({ headers: false, comments: false, variations: false })
     game.accept(exporter)
     this.assertEqualUsing(exporter.toString(), "1. e4 d5 2. exd5 *", (__actual, __expected) => __actual === __expected)
 
@@ -1416,17 +1177,9 @@ class PgnTestCase extends TestCase {
 
     // Test file exporter.
     const virtualFile = new pgnModule.StringIO()
-    this.assertKnownError(
-      "pgn-file-exporter:PgnTestCase.test_exporter@2133:19-2133:55:Call",
-      () => (() => { const __constructor = (pgnModule as /* missing-capability: pgn-file-exporter */ unknown as /* missing-capability: pgn-file-exporter */ Record<string, unknown>)["FileExporter"]; if (typeof __constructor !== "function") throw new TypeError("missing constructor FileExporter"); return (Reflect.construct((__constructor as /* missing-capability: pgn-file-exporter */ Function), [virtualFile]) as /* missing-capability: pgn-file-exporter */ pgnModule.StringExporter); })(),
-      TypeError,
-      new RegExp("missing constructor FileExporter"),
-    )
-    if (false) {
-      exporter = (() => { const __constructor = (pgnModule as /* missing-capability: pgn-file-exporter */ unknown as /* missing-capability: pgn-file-exporter */ Record<string, unknown>)["FileExporter"]; if (typeof __constructor !== "function") throw new TypeError("missing constructor FileExporter"); return (Reflect.construct((__constructor as /* missing-capability: pgn-file-exporter */ Function), [virtualFile]) as /* missing-capability: pgn-file-exporter */ pgnModule.StringExporter); })()
-      game.accept(exporter)
-      this.assertEqualUsing(virtualFile.read(), (pgn + "\n\n"), (__actual, __expected) => __actual === __expected)
-    }
+    exporter = new pgnModule.FileExporter(virtualFile)
+    game.accept(exporter)
+    this.assertEqualUsing(virtualFile.read(), (pgn + "\n\n"), (__actual, __expected) => __actual === __expected)
   }
 
   testPromoteToMain(): void {
@@ -1440,6 +1193,50 @@ class PgnTestCase extends TestCase {
 
     node.promoteToMain(d4)
     this.assertEqualUsing(Array.from(((__iterable) => (function* () { for (const __variationItem2 of __iterable) { yield __variationItem2.move; } })())(node.variations)), [d4, e4], (__actual, __expected) => __actual.length === __expected.length && __actual.every((__value0, __index0) => __expected.slice(__index0, __index0 + 1).some(__expected0 => __value0.equals(__expected0))))
+  }
+
+  testCommentAtEol(): void {
+    const pgn = new pgnModule.StringIO("1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. Nbd2 a6 $6 (6... Bb6 $5 {\n/\\ Ne7, c6}) *")
+
+    const game = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
+
+    // Seek the node after 6.Nbd2 and before 6...a6.
+    let node: pgnModule.GameNode = game
+    while ((node.variations.length !== 0 && !(node.hasVariation(chess.Move.fromUci("a7a6"))))) {
+      node = node.getitem(0)
+    }
+
+    // Make sure the comment for the second variation is there.
+    this.assertContainsUsing(5, node.getitem(1).nags, (__container, __member) => __container.has(__member))
+    this.assertEqualUsing(node.getitem(1).comment, "\n/\\ Ne7, c6", (__actual, __expected) => __actual === __expected)
+  }
+
+  testGameStartingComment(): void {
+    let pgn = new pgnModule.StringIO("{ Game starting comment } 1. d3")
+    let game: pgnModule.GameNode = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
+    this.assertEqualUsing(game.comment, "Game starting comment", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(game.getitem(0).san(), "d3", (__actual, __expected) => __actual === __expected)
+
+    pgn = new pgnModule.StringIO("{ Empty game, but has a comment }")
+    game = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
+    this.assertEqualUsing(game.comment, "Empty game, but has a comment", (__actual, __expected) => __actual === __expected)
+  }
+
+  testGameStartingVariation(): void {
+    const pgn = new pgnModule.StringIO("{Start of game} 1. e4 ({Start of variation} 1. d4) 1... e5\n")
+
+    const game = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
+    this.assertEqualUsing(game.comment, "Start of game", (__actual, __expected) => __actual === __expected)
+
+    let node: pgnModule.GameNode = game.getitem(0)
+    this.assertEqualUsing(node.move, chess.Move.fromUci("e2e4"), (__actual, __expected) => __actual !== null && (__actual.equals(__expected)))
+    this.assertFalse(node.comment.length !== 0)
+    this.assertFalse(node.startingComment.length !== 0)
+
+    node = game.getitem(1)
+    this.assertEqualUsing(node.move, chess.Move.fromUci("d2d4"), (__actual, __expected) => __actual !== null && (__actual.equals(__expected)))
+    this.assertFalse(node.comment.length !== 0)
+    this.assertEqualUsing(node.startingComment, "Start of variation", (__actual, __expected) => __actual === __expected)
   }
 
   testTreeTraversal(): void {
@@ -1491,24 +1288,15 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(game.getitem(1), a, (__actual, __expected) => __actual === __expected)
 
     game.demote(b)
-    this.assertKnownAssertionFailure(
-      "pgn-demote-swap:PgnTestCase.test_promote_demote@2415:8-2415:46:Call",
-      () => this.assertTrue(a.isMainVariation()),
-    )
+    this.assertTrue(a.isMainVariation())
 
     const c = game.addMainVariation(new chess.Move(chess.C2, chess.C3))
     this.assertTrue(c.isMainVariation())
     this.assertFalse(a.isMainVariation())
     this.assertFalse(b.isMainVariation())
     this.assertEqualUsing(game.getitem(0), c, (__actual, __expected) => __actual === __expected)
-    this.assertKnownAssertionFailure(
-      "pgn-demote-swap:PgnTestCase.test_promote_demote@2422:8-2422:36:Call",
-      () => this.assertEqualUsing(game.getitem(1), a, (__actual, __expected) => __actual === __expected),
-    )
-    this.assertKnownAssertionFailure(
-      "pgn-demote-swap:PgnTestCase.test_promote_demote@2423:8-2423:36:Call",
-      () => this.assertEqualUsing(game.getitem(2), b, (__actual, __expected) => __actual === __expected),
-    )
+    this.assertEqualUsing(game.getitem(1), a, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(game.getitem(2), b, (__actual, __expected) => __actual === __expected)
   }
 
   testAddLine(): void {
@@ -1540,15 +1328,135 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(Array.from(game.mainlineMoves().reversed()), Array.from(((__sequence) => { const __length = __sequence.length; return (function* () { for (let __index = __length - 1; __index >= 0; __index -= 1) { const __value = __sequence.at(__index); if (__value === undefined) return; yield __value; } })(); })(moves)), (__actual, __expected) => __actual.length === __expected.length && __actual.every((__value0, __index0) => __expected.slice(__index0, __index0 + 1).some(__expected0 => __value0.equals(__expected0))))
     this.assertEqualUsing(game.mainlineMoves().toString(), "1. d3 Nf6 2. e4", (__actual, __expected) => __actual === __expected)
   }
+
+  testAnnotations(): void {
+    const game = new pgnModule.Game()
+    ;((__newValue, __receiver) => { __receiver.comment = __newValue; })("foo [%bar] baz", game)
+
+    this.assertTrue(((__left, __right) => __left === null)(game.clock(), null))
+    const clock = 12345
+    game.setClock(clock)
+    this.assertEqualUsing(game.comment, "foo [%bar] baz [%clk 3:25:45]", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(game.clock(), clock, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    this.assertTrue(((__left, __right) => __left === null)(game.eval(), null))
+    game.setEval(new engineModule.PovScore(new engineModule.Cp(-(80)), chess.WHITE))
+    this.assertEqualUsing(game.comment, "foo [%bar] baz [%clk 3:25:45] [%eval -0.80]", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game.eval()).white().score(), -(80), (__actual, __expected) => __actual !== null && (__actual === __expected))
+    this.assertEqualUsing(game.evalDepth(), null, (__actual, __expected) => __actual === null)
+    game.setEval(new engineModule.PovScore(new engineModule.Mate(1), chess.WHITE), 5)
+    this.assertEqualUsing(game.comment, "foo [%bar] baz [%clk 3:25:45] [%eval #1,5]", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game.eval()).white().mate(), 1, (__actual, __expected) => __actual !== null && (__actual === __expected))
+    this.assertEqualUsing(game.evalDepth(), 5, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    this.assertEqualUsing(game.arrows(), [], (__actual, __expected) => __actual.length === 0 && __expected.length === 0)
+    game.setArrows([[chess.A1, chess.A1], new svgModule.Arrow(chess.A1, chess.H1, { color: "red" }), new svgModule.Arrow(chess.B1, chess.B8)])
+    this.assertEqualUsing(game.comment, "[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5]", (__actual, __expected) => __actual === __expected)
+    const arrows = game.arrows()
+    this.assertEqualUsing(arrows.length, 3, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__sequence, __index) => { const __indexedValue = __sequence.at(__index); if (__indexedValue === undefined) throw new RangeError("array index out of range"); return __indexedValue; })(arrows, 0).color, "green", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__sequence, __index) => { const __indexedValue = __sequence.at(__index); if (__indexedValue === undefined) throw new RangeError("array index out of range"); return __indexedValue; })(arrows, 1).color, "red", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__sequence, __index) => { const __indexedValue = __sequence.at(__index); if (__indexedValue === undefined) throw new RangeError("array index out of range"); return __indexedValue; })(arrows, 2).color, "green", (__actual, __expected) => __actual === __expected)
+
+    this.assertTrue(((__left, __right) => __left === null)(game.emt(), null))
+    const emt = 321
+    game.setEmt(emt)
+    this.assertEqualUsing(game.comment, "[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5] [%emt 0:05:21]", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(game.emt(), emt, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    game.setEval(null)
+    this.assertEqualUsing(game.comment, "[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%emt 0:05:21]", (__actual, __expected) => __actual === __expected)
+
+    game.setEmt(null)
+    this.assertEqualUsing(game.comment, "[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45]", (__actual, __expected) => __actual === __expected)
+
+    game.setClock(null)
+    game.setArrows([])
+    this.assertEqualUsing(game.comment, "foo [%bar] baz", (__actual, __expected) => __actual === __expected)
+  }
+
+  testFloatEmt(): void {
+    const game = new pgnModule.Game()
+    ;((__newValue, __receiver) => { __receiver.comment = __newValue; })("[%emt 0:00:01.234]", game)
+    this.assertEqualUsing(game.emt(), 1.234, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    game.setEmt(6.54321)
+    this.assertEqualUsing(game.comment, "[%emt 0:00:06.543]", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(game.emt(), 6.543, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    game.setEmt(-(70))
+    this.assertEqualUsing(game.comment, "[%emt 0:00:00]", (__actual, __expected) => __actual === __expected) // Clamped
+    this.assertEqualUsing(game.emt(), 0, (__actual, __expected) => __actual !== null && (__actual === __expected))
+  }
+
+  testFloatClk(): void {
+    const game = new pgnModule.Game()
+    ;((__newValue, __receiver) => { __receiver.comment = __newValue; })("[%clk 0:00:01.234]", game)
+    this.assertEqualUsing(game.clock(), 1.234, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    game.setClock(6.54321)
+    this.assertEqualUsing(game.comment, "[%clk 0:00:06.543]", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(game.clock(), 6.543, (__actual, __expected) => __actual !== null && (__actual === __expected))
+
+    game.setClock(-(70))
+    this.assertEqualUsing(game.comment, "[%clk 0:00:00]", (__actual, __expected) => __actual === __expected) // Clamped
+    this.assertEqualUsing(game.clock(), 0, (__actual, __expected) => __actual !== null && (__actual === __expected))
+  }
 }
 
 registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2079,
     testPromoteToMain: 2180,
+    testCommentAtEol: 2218,
+    testGameStartingComment: 2317,
+    testGameStartingVariation: 2327,
     testTreeTraversal: 2367,
     testPromoteDemote: 2398,
     testAddLine: 2679,
     testMainline: 2696,
+    testAnnotations: 2821,
+    testFloatEmt: 2872,
+    testFloatClk: 2885,
+  },
+})
+
+/** Generated directly from the frozen python-chess syntax tree. */
+class EngineTestCase extends TestCase {
+  testScoreOrdering(): void {
+    const order = [new engineModule.Mate(-(0)), new engineModule.Mate(-(1)), new engineModule.Mate(-(99)), new engineModule.Cp(-(123)), new engineModule.Cp(-(50)), new engineModule.Cp(0), new engineModule.Cp(+(30)), new engineModule.Cp(+(800)), new engineModule.Mate(+(77)), new engineModule.Mate(+(1)), engineModule.MateGiven]
+
+    for (let [i, a] of Array.from(order).entries()) {
+      for (let [j, b] of Array.from(order).entries()) {
+        this.assertEqualUsing(((__left, __right) => __left < __right)(i, j), ((__left, __right) => __left.lt(__right))(a, b), (__actual, __expected) => __actual === __expected, `${a.toRepr()} < ${b.toRepr()}`)
+        this.assertEqualUsing(((__left, __right) => __left === __right)(i, j), ((__left, __right) => __left.equals(__right))(a, b), (__actual, __expected) => __actual === __expected, `${a.toRepr()} == ${b.toRepr()}`)
+        this.assertEqualUsing(((__left, __right) => __left <= __right)(i, j), ((__left, __right) => __left.le(__right))(a, b), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(!(((__left, __right) => __left === __right)(i, j)), !(((__left, __right) => __left.equals(__right))(a, b)), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(((__left, __right) => __left > __right)(i, j), ((__left, __right) => __left.gt(__right))(a, b), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(((__left, __right) => __left >= __right)(i, j), ((__left, __right) => __left.ge(__right))(a, b), (__actual, __expected) => __actual === __expected)
+        this.assertEqualUsing(((__left, __right) => __left < __right)(i, j), ((__left, __right) => (() => { if (__left === null || __right === null) throw new TypeError("cannot order null and a value"); return __left < __right; })())(a.score({ mateScore: 100000 }), b.score({ mateScore: 100000 })), (__actual, __expected) => __actual === __expected)
+
+        for (let model of (["sf12", "sf14", "sf15", "sf15.1", "sf16"] satisfies engineModule.WdlModel[])) {
+          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left <= __right)(a.wdl({ model: model }).expectation(), b.wdl({ model: model }).expectation())))
+          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left <= __right)(a.wdl({ model: model }).winningChance(), b.wdl({ model: model }).winningChance())))
+          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left >= __right)(a.wdl({ model: model }).losingChance(), b.wdl({ model: model }).losingChance())))
+        }
+      }
+    }
+  }
+
+  testWdlModel(): void {
+    this.assertEqualUsing(new engineModule.Cp(131).wdl({ model: "sf12", ply: 25 }), new engineModule.Wdl(524, 467, 9), (__actual, __expected) => __actual.equals(__expected))
+    this.assertEqualUsing(new engineModule.Cp(146).wdl({ model: "sf14", ply: 25 }), new engineModule.Wdl(601, 398, 1), (__actual, __expected) => __actual.equals(__expected))
+    this.assertEqualUsing(new engineModule.Cp(40).wdl({ model: "sf15", ply: 25 }), new engineModule.Wdl(58, 937, 5), (__actual, __expected) => __actual.equals(__expected))
+    this.assertEqualUsing(new engineModule.Cp(100).wdl({ model: "sf15.1", ply: 64 }), new engineModule.Wdl(497, 503, 0), (__actual, __expected) => __actual.equals(__expected))
+    this.assertEqualUsing(new engineModule.Cp(-(52)).wdl({ model: "sf16", ply: 63 }), new engineModule.Wdl(0, 932, 68), (__actual, __expected) => __actual.equals(__expected))
+  }
+}
+
+registerTestCase('EngineTestCase', EngineTestCase, {
+  lines: {
+    testScoreOrdering: 2973,
+    testWdlModel: 3032,
   },
 })
