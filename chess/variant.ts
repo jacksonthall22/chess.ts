@@ -3,6 +3,7 @@
 
 import { iterAny } from './utils'
 import { Board } from './index'
+import { ValueError } from './errors'
 
 const VARIANTS: (typeof Board)[] = [
   Board,
@@ -31,7 +32,7 @@ export const findVariant = (name: string): typeof Board => {
       return variant
     }
   }
-  throw new Error(`ValueError: unsupported variant: ${name}`)
+  throw new ValueError(`unsupported variant: ${name}`)
 }
 
 export default {

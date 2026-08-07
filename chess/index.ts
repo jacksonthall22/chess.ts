@@ -28,6 +28,9 @@ import {
   range,
   StopIteration,
 } from './utils'
+import { KeyError, ValueError } from './errors'
+
+export { KeyError, ValueError } from './errors'
 
 export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
@@ -210,7 +213,7 @@ export class Outcome {
 /**
  * Raised when move notation is not syntactically valid
  */
-export class InvalidMoveError extends Error {
+export class InvalidMoveError extends ValueError {
   constructor(message?: string) {
     super(message)
     this.name = 'InvalidMoveError'
@@ -221,7 +224,7 @@ export class InvalidMoveError extends Error {
 /**
  * Raised when the attempted move is illegal in the current position
  */
-export class IllegalMoveError extends Error {
+export class IllegalMoveError extends ValueError {
   constructor(message?: string) {
     super(message)
     this.name = 'IllegalMoveError'
@@ -232,7 +235,7 @@ export class IllegalMoveError extends Error {
 /**
  * Raised when the attempted move is ambiguous in the current position
  */
-export class AmbiguousMoveError extends Error {
+export class AmbiguousMoveError extends ValueError {
   constructor(message?: string) {
     super(message)
     this.name = 'AmbiguousMoveError'
@@ -270,12 +273,12 @@ export const SQUARE_NAMES = RANK_NAMES.flatMap(r => FILE_NAMES.map(f => f + r))
  * Gets the square index for the given square *name*
  * (e.g., ``a1`` returns ``0``).
  *
- * @throws :exc:`Error` if the square name is invalid.
+ * @throws :exc:`ValueError` if the square name is invalid.
  */
 export const parseSquare = (name: string): Square => {
   const idx = SQUARE_NAMES.indexOf(name)
   if (idx === -1) {
-    throw new Error(`Invalid square name ${name}`)
+    throw new ValueError(`Invalid square name ${name}`)
   }
   return idx as Square
 }
@@ -1370,16 +1373,16 @@ export class BaseBoard {
     // Compatibility with setFen().
     fen = fen.trim()
     if (fen.includes(' ')) {
-      throw new Error(
-        `ValueError: expected position part of fen, got multiple parts: ${fen}`,
+      throw new ValueError(
+        `expected position part of fen, got multiple parts: ${fen}`,
       )
     }
 
     // Ensure the FEN is valid.
     const rows = fen.split('/')
     if (rows.length !== 8) {
-      throw new Error(
-        `ValueError: expected 8 rows in position part of fen: ${fen}`,
+      throw new ValueError(
+        `expected 8 rows in position part of fen: ${fen}`,
       )
     }
 
@@ -1392,8 +1395,8 @@ export class BaseBoard {
       for (const c of row) {
         if (['1', '2', '3', '4', '5', '6', '7', '8'].includes(c)) {
           if (previousWasDigit) {
-            throw new Error(
-              `ValueError: two subsequent digits in position part of fen: ${fen}`,
+            throw new ValueError(
+              `two subsequent digits in position part of fen: ${fen}`,
             )
           }
           fieldSum += parseInt(c)
@@ -1401,8 +1404,8 @@ export class BaseBoard {
           previousWasPiece = false
         } else if (c === '~') {
           if (!previousWasPiece) {
-            throw new Error(
-              `ValueError: '~' not after piece in position part of fen: ${fen}`,
+            throw new ValueError(
+              `'~' not after piece in position part of fen: ${fen}`,
             )
           }
           previousWasDigit = false
@@ -1412,15 +1415,15 @@ export class BaseBoard {
           previousWasDigit = false
           previousWasPiece = true
         } else {
-          throw new Error(
-            `ValueError: invalid character in position part of fen: ${fen}`,
+          throw new ValueError(
+            `invalid character in position part of fen: ${fen}`,
           )
         }
       }
 
       if (fieldSum !== 8) {
-        throw new Error(
-          `ValueError: expected 8 columns per row in position part of fen: ${fen}`,
+        throw new ValueError(
+          `expected 8 columns per row in position part of fen: ${fen}`,
         )
       }
     }
@@ -1449,7 +1452,7 @@ export class BaseBoard {
    *
    * :class:`~chess.Board` also clears the move stack.
    *
-   * @throws Error if syntactically invalid.
+   * @throws ValueError if syntactically invalid.
    */
   setBoardFen(fen: string): void {
     this._setBoardFen(fen)
@@ -1485,8 +1488,8 @@ export class BaseBoard {
 
   _setChess960Pos(scharnagl: number): void {
     if (!(0 <= scharnagl && scharnagl <= 959)) {
-      throw new Error(
-        `ValueError: chess960 position index not 0 <= {scharnagl} <= 959`,
+      throw new ValueError(
+        `chess960 position index not 0 <= {scharnagl} <= 959`,
       )
     }
 
@@ -3242,7 +3245,7 @@ export class Board extends BaseBoard {
     // Board part.
     const boardPart = parts.shift()
     if (boardPart === undefined) {
-      throw new Error('ValueError: empty fen')
+      throw new ValueError('empty fen')
     }
 
     // Turn.
@@ -3256,8 +3259,8 @@ export class Board extends BaseBoard {
       } else if (turnPart === 'b') {
         turn = BLACK
       } else {
-        throw new Error(
-          `ValueError: expected 'w' or 'b' for turn part of fen: ${fen}`,
+        throw new ValueError(
+          `expected 'w' or 'b' for turn part of fen: ${fen}`,
         )
       }
     }
@@ -3268,7 +3271,7 @@ export class Board extends BaseBoard {
       castlingPart = '-'
     } else {
       if (castlingPart.match(FEN_CASTLING_REGEX) === null) {
-        throw new Error(`ValueError: invalid castling part in fen: ${fen}`)
+        throw new ValueError(`invalid castling part in fen: ${fen}`)
       }
     }
 
@@ -3281,7 +3284,7 @@ export class Board extends BaseBoard {
       const squareIdx = epPart === '-' ? null : SQUARE_NAMES.indexOf(epPart)
 
       if (squareIdx === -1) {
-        throw new Error(`ValueError: invalid en passant part in fen: ${fen}`)
+        throw new ValueError(`invalid en passant part in fen: ${fen}`)
       }
       epSquare = epPart === '-' ? null : squareIdx
     }
@@ -3294,13 +3297,14 @@ export class Board extends BaseBoard {
     } else {
       try {
         halfmoveClock = parseIntStrict(halfmovePart)
-      } catch (e) {
-        throw new Error(`ValueError: invalid half-move clock in fen: ${fen}`)
+      } catch (error) {
+        if (!(error instanceof ValueError)) throw error
+        throw new ValueError(`invalid half-move clock in fen: ${fen}`)
       }
 
       if (halfmoveClock < 0) {
-        throw new Error(
-          `ValueError: half-move clock cannot be negative: ${fen}`,
+        throw new ValueError(
+          `half-move clock cannot be negative: ${fen}`,
         )
       }
     }
@@ -3314,13 +3318,14 @@ export class Board extends BaseBoard {
     } else {
       try {
         fullmoveNumber = parseIntStrict(fullmovePart)
-      } catch (e) {
-        throw new Error(`ValueError: invalid fullmove number in fen: ${fen}`)
+      } catch (error) {
+        if (!(error instanceof ValueError)) throw error
+        throw new ValueError(`invalid fullmove number in fen: ${fen}`)
       }
 
       if (fullmoveNumber < 0) {
-        throw new Error(
-          `ValueError: fullmove number cannot be negative: ${fen}`,
+        throw new ValueError(
+          `fullmove number cannot be negative: ${fen}`,
         )
       }
 
@@ -3329,8 +3334,8 @@ export class Board extends BaseBoard {
 
     // All parts should be consumed now.
     if (parts.length !== 0) {
-      throw new Error(
-        `ValueError: fen string has more parts than expected: ${fen}`,
+      throw new ValueError(
+        `fen string has more parts than expected: ${fen}`,
       )
     }
 
@@ -3353,7 +3358,7 @@ export class Board extends BaseBoard {
     }
 
     if (castlingFen.match(FEN_CASTLING_REGEX) === null) {
-      throw new Error(`ValueError: invalid castling fen: ${castlingFen}`)
+      throw new ValueError(`invalid castling fen: ${castlingFen}`)
     }
 
     this.castlingRights = BB_EMPTY
@@ -3675,7 +3680,7 @@ export class Board extends BaseBoard {
             ) {
               parsed = parseFloat(operand)
               if (!isFinite(parsed)) {
-                throw new Error(
+                throw new ValueError(
                   `Invalid numeric operand for epd operation ${opcode}: ${operand}`,
                 )
               }
@@ -5446,14 +5451,14 @@ export class SquareSet {
   /**
    * Removes a square from the set.
    *
-   * @thrwos :exc:`Error` if the given *square* was not in the set.
+   * @throws :exc:`KeyError` if the given *square* was not in the set.
    */
   remove(square: Square) {
     const mask = BB_SQUARES[square]
     if (this.mask & mask) {
       this.mask ^= mask
     } else {
-      throw new Error(`KeyError: ${square}`)
+      throw new KeyError(String(square))
     }
   }
 
@@ -5464,7 +5469,7 @@ export class SquareSet {
    */
   pop() {
     if (!this.mask) {
-      throw new Error('pop from empty SquareSet')
+      throw new KeyError('pop from empty SquareSet')
     }
 
     const square = lsb(this.mask)
@@ -5672,6 +5677,8 @@ export default {
   STATUS_IMPOSSIBLE_CHECK,
   Termination,
   Outcome,
+  ValueError,
+  KeyError,
   InvalidMoveError,
   IllegalMoveError,
   AmbiguousMoveError,

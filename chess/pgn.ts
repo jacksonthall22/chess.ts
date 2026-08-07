@@ -3,6 +3,7 @@ import { Board, Color, Move, Square, WHITE } from './index'
 import { PovScore, Cp, Score, Mate } from './engine'
 import { Arrow } from './svg'
 import { findVariant } from './variant'
+import { KeyError, ValueError } from './errors'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
@@ -453,7 +454,7 @@ export abstract class GameNode {
       }
     }
 
-    throw new Error(`KeyError: ${move}`)
+    throw new KeyError(String(move))
   }
 
   // __contains__()
@@ -1345,9 +1346,9 @@ export class Headers {
     if (TAG_ROSTER.includes(key)) {
       this._tagRoster.set(key, value)
     } else if (key.match(TAG_NAME_REGEX) === null) {
-      throw new Error(`ValueError: invalid pgn header tag: ${key}`)
+      throw new ValueError(`invalid pgn header tag: ${key}`)
     } else if (value.includes('\n') || value.includes('\r')) {
-      throw new Error(`line break in pgn header ${key}: ${value}`)
+      throw new ValueError(`line break in pgn header ${key}: ${value}`)
     } else {
       this._others.set(key, value)
     }
@@ -2527,7 +2528,7 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
   if (tc.parts.length > 1) {
     for (const part of tc.parts.slice(0, -1)) {
       if (part.moves === 0) {
-        throw new Error("ValueError: Only last part can be 'sudden death'.")
+        throw new ValueError("Only last part can be 'sudden death'.")
       }
     }
   }
