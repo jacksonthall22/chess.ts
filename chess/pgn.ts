@@ -18,7 +18,7 @@ const max = (first: number, ...rest: number[]): number =>
 /** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
 const formatFixed = (value: number, fractionDigits: number): string => {
   if (!Number.isFinite(value)) {
-    throw new RangeError('cannot format a non-finite number')
+    throw new ValueError('cannot convert float NaN to integer')
   }
 
   const negative = value < 0

@@ -9,14 +9,57 @@ type ScoreTuple = [boolean, boolean, boolean, number, number | null]
 const negatedOrZero = (value: number | null): number =>
   value === null || value === 0 ? 0 : -value
 
-const scoreTuplesEqual = (left: ScoreTuple, right: ScoreTuple): boolean =>
-  left.every((value, index) => value === right[index])
+// Python tuple comparison preserves the identity of a Cp instance's stored
+// float. JavaScript numbers are primitives, so retain that source identity on
+// each transient tuple without changing its public array shape.
+const SCORE_TUPLE_CPS = new WeakMap<ScoreTuple, Cp>()
+
+const makeScoreTuple = (source: Score, tuple: ScoreTuple): ScoreTuple => {
+  if (source instanceof Cp) {
+    SCORE_TUPLE_CPS.set(tuple, source)
+  }
+  return tuple
+}
+
+const storedCpIsIdentical = (left: ScoreTuple, right: ScoreTuple): boolean => {
+  const leftCp = SCORE_TUPLE_CPS.get(left)
+  return leftCp !== undefined && leftCp === SCORE_TUPLE_CPS.get(right)
+}
+
+const scoreTupleValuesEqual = (
+  left: boolean | number | null,
+  right: boolean | number | null,
+  index: number,
+  storedCpIsIdentical: boolean,
+): boolean =>
+  left === right ||
+  (index === 4 &&
+    storedCpIsIdentical &&
+    typeof left === 'number' &&
+    typeof right === 'number' &&
+    Number.isNaN(left) &&
+    Number.isNaN(right))
+
+const scoreTuplesEqual = (
+  left: ScoreTuple,
+  right: ScoreTuple,
+): boolean =>
+  left.every((value, index) =>
+    scoreTupleValuesEqual(
+      value,
+      right[index],
+      index,
+      storedCpIsIdentical(left, right),
+    ),
+  )
 
 const compareScoreTupleValues = (
   left: boolean | number | null,
   right: boolean | number | null,
+  index: number,
+  storedCpIsIdentical: boolean,
 ): number => {
-  if (left === right) {
+  if (scoreTupleValuesEqual(left, right, index, storedCpIsIdentical)) {
     return 0
   }
 
@@ -41,9 +84,18 @@ const compareScoreTupleValues = (
   }
 }
 
-const compareScoreTuples = (left: ScoreTuple, right: ScoreTuple): number => {
+const compareScoreTuples = (
+  left: ScoreTuple,
+  right: ScoreTuple,
+): number => {
+  const sameStoredCp = storedCpIsIdentical(left, right)
   for (let index = 0; index < left.length; index += 1) {
-    const comparison = compareScoreTupleValues(left[index], right[index])
+    const comparison = compareScoreTupleValues(
+      left[index],
+      right[index],
+      index,
+      sameStoredCp,
+    )
     if (comparison !== 0) {
       return comparison
     }
@@ -231,13 +283,13 @@ export abstract class Score {
 
   _scoreTuple(): ScoreTuple {
     const mate = this.mate()
-    return [
+    return makeScoreTuple(this, [
       this instanceof MateGivenType,
       mate !== null && mate > 0,
       mate === null,
       negatedOrZero(mate),
       this.score(),
-    ]
+    ])
   }
 
   // __eq__()

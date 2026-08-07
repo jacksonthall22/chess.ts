@@ -103,6 +103,13 @@ describe('TypeScript-native PGN parity contracts', () => {
       game.setEmt(seconds)
       expect(game.comment).toBe(`[%emt 0:00:${formatted}]`)
     }
+
+    expect(() => game.setClock(Number.POSITIVE_INFINITY)).toThrow(
+      chess.ValueError,
+    )
+    expect(() => game.setEmt(Number.POSITIVE_INFINITY)).toThrow(
+      chess.ValueError,
+    )
   })
 
   test('export wrapping counts Unicode code points', () => {

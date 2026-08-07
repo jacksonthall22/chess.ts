@@ -36,6 +36,18 @@ describe('TypeScript-native parity contracts', () => {
       expect(left.gt(right)).toBe(false)
       expect(left.ge(right)).toBe(false)
     }
+
+    const cp = new engine.Cp(Number.NaN)
+    expect(cp.equals(cp)).toBe(true)
+    expect(cp.lt(cp)).toBe(false)
+    expect(cp.le(cp)).toBe(true)
+    expect(cp.gt(cp)).toBe(false)
+    expect(cp.ge(cp)).toBe(true)
+
+    const mate = new engine.Mate(Number.NaN)
+    expect(mate.equals(mate)).toBe(false)
+    expect(mate.le(mate)).toBe(false)
+    expect(mate.ge(mate)).toBe(false)
   })
 
   test('BaseBoard factories and copies preserve subclasses', () => {
@@ -83,6 +95,41 @@ describe('TypeScript-native parity contracts', () => {
     expect(operations.get('ce')).toBe(55)
     expect(operations.get('acd')).toBe(1.5)
     expect(operations.get('id')).toBe('x')
+  })
+
+  test('setEpd uses Python exact whitespace characters', () => {
+    const separator = '\u001c'
+    const operations = new chess.Board().setEpd(
+      ['8/8/8/8/8/8/8/8', 'w', '-', '-', 'ce 55\u0085;'].join(separator),
+    )
+
+    expect(operations.get('ce')).toBe(55)
+    expect(() =>
+      new chess.Board().setEpd(
+        '\ufeff8/8/8/8/8/8/8/8 w - -',
+      ),
+    ).toThrow(chess.ValueError)
+  })
+
+  test.each(['hmvc 1.0;', 'fmvn 1e3;', 'hmvc -0.0;'])(
+    'setEpd rejects the Python float counter operation %s',
+    operation => {
+      const board = new chess.Board()
+      const originalFen = board.fen()
+
+      expect(() =>
+        board.setEpd(`8/8/8/8/8/8/8/8 w - - ${operation}`),
+      ).toThrow(chess.ValueError)
+      expect(board.fen()).toBe(originalFen)
+    },
+  )
+
+  test('setEpd counter type follows the final repeated operation', () => {
+    const operations = new chess.Board().setEpd(
+      '8/8/8/8/8/8/8/8 w - - hmvc 1.0; hmvc 2;',
+    )
+
+    expect(operations.get('hmvc')).toBe(2)
   })
 
   test('setEpd uses Python whitespace splitting for move operands', () => {

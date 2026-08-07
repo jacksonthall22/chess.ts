@@ -37,13 +37,33 @@ export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
 export const colorIdx = (color: Color): 1 | 0 => boolToNumber(color)
 
+const PYTHON_WHITESPACE =
+  /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]/
+const PYTHON_WHITESPACE_RUN =
+  /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/
+const PYTHON_WHITESPACE_RUNS =
+  /[\u0009-\u000d\u001c-\u0020\u0085\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/g
+
 const PYTHON_INTEGER = /^[+-]?[0-9](?:_?[0-9])*$/
 const PYTHON_FLOAT =
   /^[+-]?(?:(?:[0-9](?:_?[0-9])*(?:\.[0-9](?:_?[0-9])*)?)|(?:[0-9](?:_?[0-9])*\.)|(?:\.[0-9](?:_?[0-9])*))(?:[eE][+-]?[0-9](?:_?[0-9])*)?$/
 
+/** Direct equivalent of Python's `str.strip()` default whitespace behavior. */
+const stripPythonWhitespace = (value: string): string => {
+  let start = 0
+  let end = value.length
+  while (start < end && PYTHON_WHITESPACE.test(value[start])) {
+    start += 1
+  }
+  while (end > start && PYTHON_WHITESPACE.test(value[end - 1])) {
+    end -= 1
+  }
+  return value.slice(start, end)
+}
+
 /** Direct equivalents of Python's strict `int()` and `float()` string parsing. */
 const parsePythonInt = (value: string): number => {
-  const normalized = value.trim()
+  const normalized = stripPythonWhitespace(value)
   if (!PYTHON_INTEGER.test(normalized)) {
     throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
   }
@@ -56,7 +76,7 @@ const parsePythonInt = (value: string): number => {
 }
 
 const parsePythonFloat = (value: string): number => {
-  const normalized = value.trim()
+  const normalized = stripPythonWhitespace(value)
   if (!PYTHON_FLOAT.test(normalized)) {
     throw new ValueError(`could not convert string to float: ${value}`)
   }
@@ -65,17 +85,17 @@ const parsePythonFloat = (value: string): number => {
 
 /** Direct equivalent of `str.split(None, maxsplit)`. */
 const splitWhitespace = (value: string, maxSplit?: number): string[] => {
-  const normalized = value.trim()
+  const normalized = stripPythonWhitespace(value)
   if (!normalized) {
     return []
   }
   if (maxSplit === undefined) {
-    return normalized.split(/\s+/)
+    return normalized.split(PYTHON_WHITESPACE_RUN)
   }
 
   const parts: string[] = []
   let start = 0
-  for (const match of normalized.matchAll(/\s+/g)) {
+  for (const match of normalized.matchAll(PYTHON_WHITESPACE_RUNS)) {
     if (parts.length === maxSplit) {
       break
     }
@@ -84,6 +104,38 @@ const splitWhitespace = (value: string, maxSplit?: number): string[] => {
   }
   parts.push(normalized.slice(start))
   return parts
+}
+
+/** Retains Python's numeric type when JavaScript collapses int and float. */
+const EPD_FLOAT_OPERATIONS = new WeakMap<object, Set<string>>()
+
+const setEpdOperation = <T>(
+  operations: Map<string, T>,
+  opcode: string,
+  value: T,
+  { pythonFloat = false }: { pythonFloat?: boolean } = {},
+): void => {
+  operations.set(opcode, value)
+  let floatOpcodes = EPD_FLOAT_OPERATIONS.get(operations)
+  if (pythonFloat) {
+    if (floatOpcodes === undefined) {
+      floatOpcodes = new Set()
+      EPD_FLOAT_OPERATIONS.set(operations, floatOpcodes)
+    }
+    floatOpcodes.add(opcode)
+  } else {
+    floatOpcodes?.delete(opcode)
+  }
+}
+
+const stringifyEpdCounter = <T>(
+  operations: Map<string, T>,
+  opcode: string,
+): string => {
+  if (EPD_FLOAT_OPERATIONS.get(operations)?.has(opcode)) {
+    throw new ValueError(`invalid ${opcode}: expected an integer`)
+  }
+  return String(operations.get(opcode))
 }
 
 /** ========== Direct transpilation ========== */
@@ -1429,7 +1481,7 @@ export class BaseBoard {
 
   _setBoardFen(fen: string): void {
     // Compatibility with setFen().
-    fen = fen.trim()
+    fen = stripPythonWhitespace(fen)
     if (fen.includes(' ')) {
       throw new ValueError(
         `expected position part of fen, got multiple parts: ${fen}`,
@@ -3303,7 +3355,7 @@ export class Board extends BaseBoard {
    *     :func:`~chess.Board.isValid()` to detect invalid positions.
    */
   setFen(fen: string): void {
-    const parts = fen.split(' ')
+    const parts = splitWhitespace(fen)
 
     // Board part.
     const boardPart = parts.shift()
@@ -3701,7 +3753,8 @@ export class Board extends BaseBoard {
             if (opcode === '-') {
               opcode = ''
             } else if (opcode) {
-              operations.set(
+              setEpdOperation(
+                operations,
                 opcode,
                 ['pv', 'am', 'bm'].includes(opcode) ? [] : null,
               )
@@ -3718,7 +3771,8 @@ export class Board extends BaseBoard {
             state = 'string'
           } else if (ch === null || ch === ';') {
             if (opcode) {
-              operations.set(
+              setEpdOperation(
+                operations,
                 opcode,
                 ['pv', 'am', 'bm'].includes(opcode) ? [] : null,
               )
@@ -3746,9 +3800,11 @@ export class Board extends BaseBoard {
                   `invalid numeric operand for epd operation ${JSON.stringify(opcode)}: ${JSON.stringify(operand)}`,
                 )
               }
-              operations.set(opcode, parsed)
+              setEpdOperation(operations, opcode, parsed, {
+                pythonFloat: true,
+              })
             } else {
-              operations.set(opcode, parsePythonInt(operand))
+              setEpdOperation(operations, opcode, parsePythonInt(operand))
             }
             opcode = ''
             operand = ''
@@ -3759,7 +3815,7 @@ export class Board extends BaseBoard {
           break
         case 'string':
           if (ch === null || ch === '"') {
-            operations.set(opcode, operand)
+            setEpdOperation(operations, opcode, operand)
             opcode = ''
             operand = ''
             state = 'opcode'
@@ -3771,7 +3827,7 @@ export class Board extends BaseBoard {
           break
         case 'string_escape':
           if (ch === null) {
-            operations.set(opcode, operand)
+            setEpdOperation(operations, opcode, operand)
             opcode = ''
             operand = ''
             state = 'opcode'
@@ -3807,16 +3863,21 @@ export class Board extends BaseBoard {
                 position.pop()
               }
 
-              operations.set(opcode, variation)
+              setEpdOperation(operations, opcode, variation)
             } else if (['bm', 'am'].includes(opcode)) {
-              operations.set(
+              setEpdOperation(
+                operations,
                 opcode,
                 splitWhitespace(operand).map(token =>
                   (position as T).parseXboard(token),
                 ),
               )
             } else {
-              operations.set(opcode, position.parseXboard(operand))
+              setEpdOperation(
+                operations,
+                opcode,
+                position.parseXboard(operand),
+              )
             }
 
             opcode = ''
@@ -3847,7 +3908,10 @@ export class Board extends BaseBoard {
    * :raises: :exc:`ValueError` if the EPD string is invalid.
    */
   setEpd(epd: string): Map<string, string | number | null | Move | Move[]> {
-    const parts = splitWhitespace(epd.trim().replace(/;+$/, ''), 4)
+    const parts = splitWhitespace(
+      stripPythonWhitespace(epd).replace(/;+$/, ''),
+      4,
+    )
 
     // Parse ops.
     if (parts.length > 4) {
@@ -3858,8 +3922,16 @@ export class Board extends BaseBoard {
             parts.join(' ') + ' 0 1',
           ),
       )
-      parts.push(operations.has('hmvc') ? String(operations.get('hmvc')) : '0')
-      parts.push(operations.has('fmvn') ? String(operations.get('fmvn')) : '1')
+      parts.push(
+        operations.has('hmvc')
+          ? stringifyEpdCounter(operations, 'hmvc')
+          : '0',
+      )
+      parts.push(
+        operations.has('fmvn')
+          ? stringifyEpdCounter(operations, 'fmvn')
+          : '1',
+      )
       this.setFen(parts.join(' '))
       return operations
     } else {
