@@ -105,8 +105,12 @@ Q . p . . . . .
 
 
 ## Contributing
-This package aims to be a direct port of `python-chess` to TypeScript, faithful down to the line.
-I compiled some notes about how I approached this massive transpilation effort [here](py-to-ts-tips.md).
+This package aims to be a source-faithful port of `python-chess` to TypeScript,
+not merely a behaviorally compatible reimplementation. After accounting for
+language syntax, the control flow, decomposition, expressions, and comments
+should remain faithful down to the line. The mandatory translation contract is
+in [AGENTS.md](AGENTS.md), with detailed language mappings in
+[py-to-ts-tips.md](py-to-ts-tips.md).
 
 In the long run, this repo should aim to transpile everything from the [pinned python-chess submodule](./python-chess/)
 over to the corresponding files in [`chess/`](chess/):
@@ -116,8 +120,9 @@ over to the corresponding files in [`chess/`](chess/):
 - [x]  Add a test harness and account for every frozen upstream test
 - [ ]  Complete the test-suite translation
 
-The exact upstream commit represented by the pinned source and test snapshot is
-recorded in [UPSTREAM.md](UPSTREAM.md).
+The exact upstream commit represented by the pinned source and test snapshot,
+and the one-upstream-state-at-a-time synchronization process, are recorded in
+[UPSTREAM.md](UPSTREAM.md).
 
 PRs welcome!
 
@@ -147,9 +152,9 @@ runtime or `py.*` compatibility layer. It reuses only the parsed-identifier
 conversion from `transpilation_helper.py`; it does not run the helper's textual
 rewrites. Unsupported constructs, unknown semantic inputs, unclaimed AST nodes,
 unclaimed comments, stale parity selectors, or generated drift fail the build
-instead of producing approximate code. All 76 translated upstream test bodies
-are generated this way, and a generated runtime oracle compares 1,917 assertion
-observations for the 61 gap-free methods directly with the frozen Python
+instead of producing approximate code. All 84 translated upstream test bodies
+are generated this way, and a generated runtime oracle compares 5,060 assertion
+observations for all 84 methods directly with the frozen Python
 implementation. See
 [`UPSTREAM.md`](UPSTREAM.md) for the architecture, provenance, and update
 process.

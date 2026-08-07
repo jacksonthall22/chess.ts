@@ -11,20 +11,44 @@ examples to show the most important ideas to be aware of when trying to
 understand how to correctly (or effectively) convert different Python code 
 patterns to TS.
 
-## Rule `0`
-Use ChatGPT. If you need help transpiling a particular Python code pattern, just explain the problem like you would explain it to a friend or coworker.
+## Translation contract: the same program in different syntax
 
-## Note
-I try to keep the TS files as closely aligned to their Python counterparts
-as possible. In fact, I have been copying entire Python methods into the TS
-files and editing them from there until all the red lines go away. However, 
-some Python builtins have no equivalent in TS and need to be manually
-defined. An example is `int.bit_count()` and `int.bit_length()`
+The goal is stronger than making the two libraries return the same answers.
+The TypeScript should preserve the structure of the pinned Python source down
+to classes, methods, blocks, branches, local steps, expression order, comments,
+and docstrings. Imagine wearing glasses that hide each language's syntax. What
+remains should look like the same program.
 
-My plan is to include a section at the top of each file, below any imports, 
-for all functions, constants, etc. that can be useful in more than one place
-throughout the file and do not exactly mirror the `python-chess` code.
-Check [`init.ts`]('/init.ts') for an example.
+This matters because the intended user may already know how `python-chess`
+works internally. The familiar implementation is itself a library benefit, not
+an incidental detail. It also makes this unaffiliated port easy to audit and
+makes future upstream maintenance mechanical: a Python diff should point to an
+obvious TypeScript diff in the same place and with the same shape.
+
+Most of this code is assignments, control flow, exceptions, functions, and
+classes. Those constructs have direct TypeScript forms. Do not refactor them
+into a more idiomatic TypeScript design, extract different abstractions,
+reorder work, or otherwise make a new implementation merely because it behaves
+the same. Behavioral parity is necessary, but it is not sufficient.
+
+Some Python primitives do not have semantically equivalent JavaScript syntax.
+Examples include `int.bit_count()`, lexicographic tuple comparison, Unicode
+`len()`, and Python's round-half-even fixed-point formatting. Put the smallest
+reusable adapter for such a primitive near the top of the target file under
+`Custom declarations (no mirror in python-chess)`. The directly translated
+method should retain the Python shape and invoke that adapter exactly where the
+Python invokes its builtin or operator. The adapter is a language boundary; it
+must not absorb or rearrange chess-domain logic.
+
+Start from the complete pinned Python method and edit its syntax in place.
+Transpilation helpers and AI can accelerate that syntax work, but neither is an
+authority for changing the program's structure. Always finish with a
+side-by-side source comparison. Do not fix an upstream defect only in the
+TypeScript synchronization; upstream it first or make the divergence a
+separate, explicitly approved change.
+
+See [`AGENTS.md`](AGENTS.md) for the mandatory review rules and
+[`UPSTREAM.md`](UPSTREAM.md) for the commit-by-commit update process.
 
 ## Style, comments, and docstrings
 Unfortunately the TS norm is `camelCase` for variables and functions \:'(. 
