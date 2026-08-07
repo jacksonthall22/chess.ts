@@ -273,13 +273,60 @@ class RecursiveLoweringTest(unittest.TestCase):
             "        self.assertTrue(score.wdl(model=model).expectation() <= 1)"
         )
 
-        self.assertIn("for (let [index, score] of Array.from(scores).entries())", generated)
+        self.assertIn("for (let [index, score] of ((__iterable) =>", generated)
+        self.assertIn("function* ()", generated)
+        self.assertIn(
+            "yield [__index, __value] satisfies [number, typeof __value]",
+            generated,
+        )
+        self.assertNotIn("Array.from(scores).entries()", generated)
         self.assertIn(
             "__left.lt(__right))(score, engineModule.MateGiven)", generated
         )
         self.assertIn("satisfies engineModule.WdlModel[]", generated)
         self.assertIn("score.wdl({ model: model }).expectation()", generated)
         self.assertNotIn(" as ", generated)
+
+    def test_enumerate_preserves_lazy_source_iteration(self) -> None:
+        generated = compile_fixture(
+            "values = [1, 2, 3]\n"
+            "indexed = enumerate(value for value in values)\n"
+            "values.pop(0)\n"
+            "observed = list(indexed)"
+        )
+
+        self.assertIn("const indexed = ((__iterable) => (function* ()", generated)
+        self.assertNotIn("Array.from(__iterable).entries()", generated)
+        self.assertLess(
+            generated.index("__sequence.splice("),
+            generated.index("const observed = Array.from(indexed)"),
+        )
+
+    def test_wdl_models_narrow_only_in_registered_finite_contexts(self) -> None:
+        generated = compile_fixture(
+            'lowered = "sf".lower()\n'
+            'self.assertEqual("sf", "sf")\n'
+            'model = "sf16"\n'
+            "wdl = chess.engine.Cp(0).wdl(model=model)"
+        )
+
+        self.assertIn('})("sf")', generated)
+        self.assertIn('(__actual, __expected) => __actual === __expected', generated)
+        self.assertIn(".wdl({ model: model })", generated)
+        self.assertNotIn(" as ", generated)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            re.escape("keyword 'model' requires registered WDL model, got string"),
+        ):
+            compile_fixture('chess.engine.Cp(0).wdl(model="unknown")')
+
+    def test_string_ordering_compares_unicode_code_points(self) -> None:
+        generated = compile_fixture('self.assertFalse("𐀀" < "\\ue000")')
+
+        self.assertIn("Array.from(__left)", generated)
+        self.assertIn(".codePointAt(0)", generated)
+        self.assertNotIn("=> __left < __right", generated)
 
     def test_composes_mixed_arrow_inputs_without_erasing_the_union(self) -> None:
         generated = compile_fixture(
@@ -302,6 +349,7 @@ class RecursiveLoweringTest(unittest.TestCase):
             "self.assertEqual(str(exporter), \"\")\n"
             "virtual_file = io.StringIO()\n"
             "exporter = chess.pgn.FileExporter(virtual_file)\n"
+            "file_representation = str(exporter)\n"
             "game.accept(exporter)"
         )
 
@@ -311,6 +359,10 @@ class RecursiveLoweringTest(unittest.TestCase):
         )
         self.assertIn("exporter.toString()", generated)
         self.assertIn("exporter = new pgnModule.FileExporter(virtualFile)", generated)
+        self.assertIn(
+            "const fileRepresentation = exporter.toString()",
+            generated,
+        )
         self.assertNotIn(" as ", generated)
 
     def test_composes_assignments_loops_calls_and_operators(self) -> None:

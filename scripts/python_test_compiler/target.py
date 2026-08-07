@@ -126,6 +126,7 @@ class ValueFacts:
     """Flow facts proved from syntax and preserved only while they stay valid."""
 
     exact_sequence_length: int | None = None
+    exact_string: str | None = None
     repeated_attributes: tuple[RepeatedAttributeFact, ...] = ()
 
     def __post_init__(self) -> None:
@@ -133,7 +134,10 @@ class ValueFacts:
             raise ValueError("an exact sequence length cannot be negative")
 
     def without_sequence_length(self) -> ValueFacts:
-        return ValueFacts(repeated_attributes=self.repeated_attributes)
+        return ValueFacts(
+            exact_string=self.exact_string,
+            repeated_attributes=self.repeated_attributes,
+        )
 
 
 UNKNOWN = TargetShape(ShapeKind.UNKNOWN)

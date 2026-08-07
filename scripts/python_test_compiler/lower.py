@@ -43,7 +43,9 @@ from .registry import (
     CallContractError,
     InvocationKind,
     KeywordStyle,
+    ShapeRule,
     TypeAssertion,
+    WDL_MODEL_VALUES,
     attribute_shape,
     callable_shape_contract,
     exception_has_ordinary_message,
@@ -1665,47 +1667,79 @@ class MethodCompiler:
         except CallContractError as error:
             self.fail(node, str(error))
 
+    def contextualize_contract_value(
+        self,
+        source: ast.expr,
+        value: Expression,
+        rule: ShapeRule,
+    ) -> Expression:
+        """Apply one syntax- and fact-proved shape supplied by call context."""
+
+        if (
+            value.shape == STRING
+            and value.facts.exact_string in rule.contextual_string_literals
+        ):
+            return Expression(value.code, rule.shapes[0], value.facts)
+
+        if (
+            value.shape.kind is ShapeKind.MAP
+            and isinstance(source, ast.Dict)
+            and not source.keys
+        ):
+            map_targets = tuple(
+                shape for shape in rule.shapes if shape.kind is ShapeKind.MAP
+            )
+            if len(map_targets) == 1:
+                return Expression(value.code, map_targets[0], value.facts)
+
+        if (
+            value.shape.kind is ShapeKind.ARRAY
+            and isinstance(source, ast.List)
+            and not source.elts
+        ):
+            array_targets = tuple(
+                shape for shape in rule.shapes if shape.kind is ShapeKind.ARRAY
+            )
+            if len(array_targets) == 1:
+                return Expression(value.code, array_targets[0], value.facts)
+
+        return value
+
     def contextualize_contract_arguments(
         self,
         node: ast.Call,
         contract: CallContract,
         arguments: list[Expression],
-    ) -> list[Expression]:
-        """Give empty literals the sole collection shape admitted by context."""
+        keyword_values: list[tuple[str, Expression]],
+    ) -> tuple[list[Expression], list[tuple[str, Expression]]]:
+        """Apply finite literal context to positional and keyword arguments."""
 
         rules = contract.required + contract.optional
-        converted = list(arguments)
+        converted_arguments = list(arguments)
         for index, (argument, rule) in enumerate(
             zip(arguments, rules, strict=False)
         ):
-            source_argument = node.args[index]
-            if (
-                argument.shape.kind is ShapeKind.MAP
-                and isinstance(source_argument, ast.Dict)
-                and not source_argument.keys
-            ):
-                map_targets = tuple(
-                    shape for shape in rule.shapes if shape.kind is ShapeKind.MAP
+            converted_arguments[index] = self.contextualize_contract_value(
+                node.args[index], argument, rule
+            )
+
+        keyword_rules = dict(contract.keywords)
+        converted_keywords = [
+            (
+                name,
+                self.contextualize_contract_value(
+                    source_keyword.value,
+                    value,
+                    keyword_rules[name],
                 )
-                if len(map_targets) == 1:
-                    converted[index] = Expression(
-                        argument.code, map_targets[0], argument.facts
-                    )
-                    continue
-            if (
-                argument.shape.kind is ShapeKind.ARRAY
-                and isinstance(source_argument, ast.List)
-                and not source_argument.elts
-            ):
-                array_targets = tuple(
-                    shape for shape in rule.shapes if shape.kind is ShapeKind.ARRAY
-                )
-                if len(array_targets) == 1:
-                    converted[index] = Expression(
-                        argument.code, array_targets[0], argument.facts
-                    )
-                    continue
-        return converted
+                if name in keyword_rules
+                else value,
+            )
+            for source_keyword, (name, value) in zip(
+                node.keywords, keyword_values, strict=True
+            )
+        ]
+        return converted_arguments, converted_keywords
 
     @staticmethod
     def type_assertion_code(code: str, assertion: TypeAssertion) -> str:
@@ -2103,9 +2137,27 @@ class MethodCompiler:
                 self.fail(node, "enumerate() requires one argument")
             argument = arguments[0]
             element = self.iterated_shape(argument, node.args[0])
-            iterable = self.iterable_code(argument, node.args[0])
+            iterable = Expression(
+                self.iterable_code(argument, node.args[0]), argument.shape
+            )
+
+            def lower_enumerate(
+                names: tuple[str, ...], fresh: FreshName
+            ) -> str:
+                index = fresh("__index")
+                value = fresh("__value")
+                return (
+                    "(function* () { "
+                    f"let {index} = 0; "
+                    f"for (const {value} of {names[0]}) {{ "
+                    f"yield [{index}, {value}] satisfies "
+                    f"[number, typeof {value}]; "
+                    f"{index} += 1; "
+                    "} })()"
+                )
+
             return Expression(
-                f"Array.from({iterable}).entries()",
+                self.bind_once((iterable,), ("__iterable",), lower_enumerate),
                 iterable_of(tuple_of(NUMBER, element)),
             )
         if len(arguments) != 1:
@@ -2258,6 +2310,7 @@ class MethodCompiler:
             ShapeKind.PSEUDO_LEGAL_MOVE_GENERATOR,
             ShapeKind.MAINLINE,
             ShapeKind.STRING_EXPORTER,
+            ShapeKind.FILE_EXPORTER,
         }:
             return Expression(f"{argument.code}.toString()", STRING)
         if kind is ShapeKind.LEGAL_MOVE_GENERATOR:
@@ -2798,13 +2851,11 @@ class MethodCompiler:
             if node.value is False:
                 return Expression("false", BOOLEAN)
             if isinstance(node.value, str):
-                shape = (
-                    WDL_MODEL
-                    if node.value
-                    in {"sf", "sf16", "sf15.1", "sf15", "sf14", "sf12", "lichess"}
-                    else STRING
+                return Expression(
+                    json.dumps(node.value, ensure_ascii=False),
+                    STRING,
+                    ValueFacts(exact_string=node.value),
                 )
-                return Expression(json.dumps(node.value, ensure_ascii=False), shape)
             if isinstance(node.value, int) and not isinstance(node.value, bool):
                 if abs(node.value) > 2**53 - 1:
                     source = ast.get_source_segment(self.source_unit.source, node)
@@ -2830,8 +2881,20 @@ class MethodCompiler:
                     f"[{values}]",
                     tuple_of(*(expression.shape for expression in expressions)),
                 )
-            element_shape = self.common_shape(
-                [expression.shape for expression in expressions], node
+            is_wdl_model_array = bool(expressions) and all(
+                expression.shape == WDL_MODEL
+                or (
+                    expression.shape == STRING
+                    and expression.facts.exact_string in WDL_MODEL_VALUES
+                )
+                for expression in expressions
+            )
+            element_shape = (
+                WDL_MODEL
+                if is_wdl_model_array
+                else self.common_shape(
+                    [expression.shape for expression in expressions], node
+                )
             )
             array_code = f"[{values}]"
             if element_shape == WDL_MODEL:
@@ -3000,12 +3063,13 @@ class MethodCompiler:
                     code = self.bind_once(
                         (left, right),
                         ("__left", "__right"),
-                        lambda names, _fresh: native_ordering_code(
+                        lambda names, fresh: native_ordering_code(
                             ordering,
                             left.shape,
                             right.shape,
                             names[0],
                             names[1],
+                            fresh_name=fresh,
                         ),
                     )
                 except NativeLoweringError as error:
@@ -3280,7 +3344,9 @@ class MethodCompiler:
                 receiver.facts,
             )
         contract = self.resolve_call_contract(node, name, function, receiver)
-        arguments = self.contextualize_contract_arguments(node, contract, arguments)
+        arguments, keyword_values = self.contextualize_contract_arguments(
+            node, contract, arguments, keyword_values
+        )
         self.validate_contract(node, contract, arguments, keyword_values)
         arguments, result_override = self.adapt_contract_arguments(
             node,

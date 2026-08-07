@@ -1426,8 +1426,8 @@ class EngineTestCase extends TestCase {
   testScoreOrdering(): void {
     const order = [new engineModule.Mate(-(0)), new engineModule.Mate(-(1)), new engineModule.Mate(-(99)), new engineModule.Cp(-(123)), new engineModule.Cp(-(50)), new engineModule.Cp(0), new engineModule.Cp(+(30)), new engineModule.Cp(+(800)), new engineModule.Mate(+(77)), new engineModule.Mate(+(1)), engineModule.MateGiven]
 
-    for (let [i, a] of Array.from(order).entries()) {
-      for (let [j, b] of Array.from(order).entries()) {
+    for (let [i, a] of ((__iterable) => (function* () { let __index = 0; for (const __value of __iterable) { yield [__index, __value] satisfies [number, typeof __value]; __index += 1; } })())(order)) {
+      for (let [j, b] of ((__iterable) => (function* () { let __index = 0; for (const __value of __iterable) { yield [__index, __value] satisfies [number, typeof __value]; __index += 1; } })())(order)) {
         this.assertEqualUsing(((__left, __right) => __left < __right)(i, j), ((__left, __right) => __left.lt(__right))(a, b), (__actual, __expected) => __actual === __expected, `${a.toRepr()} < ${b.toRepr()}`)
         this.assertEqualUsing(((__left, __right) => __left === __right)(i, j), ((__left, __right) => __left.equals(__right))(a, b), (__actual, __expected) => __actual === __expected, `${a.toRepr()} == ${b.toRepr()}`)
         this.assertEqualUsing(((__left, __right) => __left <= __right)(i, j), ((__left, __right) => __left.le(__right))(a, b), (__actual, __expected) => __actual === __expected)

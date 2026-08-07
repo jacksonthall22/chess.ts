@@ -68,7 +68,14 @@ class ShapeRule:
     shapes: tuple[TargetShape, ...] = ()
     kinds: tuple[ShapeKind, ...] = ()
     structural: tuple[TargetShape, ...] = ()
+    contextual_string_literals: frozenset[str] = frozenset()
     description: str = "proved value"
+
+    def __post_init__(self) -> None:
+        if self.contextual_string_literals and len(self.shapes) != 1:
+            raise ValueError(
+                "contextual string literals require exactly one target shape"
+            )
 
     def accepts(self, shape: TargetShape) -> bool:
         if shape.kind in {ShapeKind.UNKNOWN, ShapeKind.VOID}:
@@ -293,6 +300,20 @@ def exact(*shapes: TargetShape, description: str | None = None) -> ShapeRule:
     return ShapeRule(
         shapes=shapes,
         description=description or " or ".join(shape.kind.value for shape in shapes),
+    )
+
+
+def finite_string_literals(
+    result: TargetShape,
+    *values: str,
+    description: str | None = None,
+) -> ShapeRule:
+    """Admit ordinary source strings only when their exact value is finite."""
+
+    return ShapeRule(
+        shapes=(result,),
+        contextual_string_literals=frozenset(values),
+        description=description or result.kind.value,
     )
 
 
@@ -652,7 +673,20 @@ NUMBER_RULE = exact(NUMBER)
 BIGINT_RULE = exact(BIGINT)
 BOOLEAN_RULE = exact(BOOLEAN)
 STRING_RULE = exact(STRING, WDL_MODEL, description="string")
-WDL_MODEL_RULE = exact(WDL_MODEL)
+WDL_MODEL_VALUES = (
+    "sf",
+    "sf16",
+    "sf15.1",
+    "sf15",
+    "sf14",
+    "sf12",
+    "lichess",
+)
+WDL_MODEL_RULE = finite_string_literals(
+    WDL_MODEL,
+    *WDL_MODEL_VALUES,
+    description="registered WDL model",
+)
 MOVE_RULE = exact(MOVE)
 PIECE_RULE = exact(PIECE)
 GAME_NODE_RULE = exact(

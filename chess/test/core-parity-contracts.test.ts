@@ -165,6 +165,22 @@ describe('TypeScript-native parity contracts', () => {
     expect(operations.get('ce')).toBe(value)
   })
 
+  test.each([
+    ['1١', 11],
+    ['1.١', 1.1],
+    ['1e١', 10],
+    ['1_१', 11],
+  ])(
+    'setEpd parses Python Unicode decimal digits in %s',
+    (token, value) => {
+      const operations = new chess.Board().setEpd(
+        `8/8/8/8/8/8/8/8 w - - ce ${token};`,
+      )
+
+      expect(operations.get('ce')).toBe(value)
+    },
+  )
+
   test.each(['1abc', '+', '.', '1e', '1_', '0x10'])(
     'setEpd rejects the complete malformed numeric token %s',
     token => {

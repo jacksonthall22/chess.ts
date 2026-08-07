@@ -256,9 +256,12 @@ def ordering_code(
     right: TargetShape,
     left_code: str,
     right_code: str,
+    *,
+    fresh_name: FreshName | None = None,
 ) -> str:
     """Lower one Python total-order operation without JS coercion."""
 
+    fresh = fresh_name or _local_name_allocator()
     symbols = {"lt": "<", "le": "<=", "gt": ">", "ge": ">="}
     symbol = symbols.get(operator)
     if symbol is None:
@@ -273,6 +276,7 @@ def ordering_code(
             required_right,
             left_code,
             right_code,
+            fresh_name=fresh,
         )
         return (
             "(() => { "
@@ -285,11 +289,36 @@ def ordering_code(
     numeric = {ShapeKind.NUMBER, ShapeKind.FLOAT}
     if left.kind in numeric and right.kind in numeric:
         return f"{left_code} {symbol} {right_code}"
-    if left.kind == right.kind and left.kind in {ShapeKind.BIGINT, ShapeKind.STRING}:
+    if left.kind == right.kind and left.kind is ShapeKind.BIGINT:
         return f"{left_code} {symbol} {right_code}"
     string_like = {ShapeKind.STRING, ShapeKind.WDL_MODEL}
     if left.kind in string_like and right.kind in string_like:
-        return f"{left_code} {symbol} {right_code}"
+        left_characters = fresh("__leftCharacters")
+        right_characters = fresh("__rightCharacters")
+        length = fresh("__length")
+        index = fresh("__index")
+        left_point = fresh("__leftPoint")
+        right_point = fresh("__rightPoint")
+        comparison = (
+            "(() => { "
+            f"const {left_characters} = Array.from({left_code}); "
+            f"const {right_characters} = Array.from({right_code}); "
+            f"const {length} = Math.min("
+            f"{left_characters}.length, {right_characters}.length); "
+            f"for (let {index} = 0; {index} < {length}; {index} += 1) {{ "
+            f"const {left_point} = {left_characters}[{index}].codePointAt(0); "
+            f"const {right_point} = {right_characters}[{index}].codePointAt(0); "
+            f"if ({left_point} === undefined || {right_point} === undefined) "
+            'throw new Error("a Unicode character must contain one code point"); '
+            f"if ({left_point} < {right_point}) return -1; "
+            f"if ({left_point} > {right_point}) return 1; "
+            "} "
+            f"if ({left_characters}.length < {right_characters}.length) return -1; "
+            f"if ({left_characters}.length > {right_characters}.length) return 1; "
+            "return 0; "
+            "})()"
+        )
+        return f"{comparison} {symbol} 0"
     if left.kind is ShapeKind.SCORE and right.kind is ShapeKind.SCORE:
         return f"{left_code}.{operator}({right_code})"
     raise NativeLoweringError(
