@@ -21,6 +21,23 @@ describe('TypeScript-native parity contracts', () => {
     expect(derivedWdl.equals(wdl)).toBe(false)
   })
 
+  test('Score ordering preserves Python unordered NaN comparisons', () => {
+    const pairs: [engine.Score, engine.Score][] = [
+      [new engine.Cp(Number.NaN), new engine.Cp(0)],
+      [new engine.Cp(0), new engine.Cp(Number.NaN)],
+      [new engine.Mate(Number.NaN), new engine.Mate(0)],
+      [new engine.Mate(0), new engine.Mate(Number.NaN)],
+    ]
+
+    for (const [left, right] of pairs) {
+      expect(left.equals(right)).toBe(false)
+      expect(left.lt(right)).toBe(false)
+      expect(left.le(right)).toBe(false)
+      expect(left.gt(right)).toBe(false)
+      expect(left.ge(right)).toBe(false)
+    }
+  })
+
   test('BaseBoard factories and copies preserve subclasses', () => {
     class DerivedBoard extends chess.BaseBoard {
       initializedWith: string | null
@@ -56,6 +73,16 @@ describe('TypeScript-native parity contracts', () => {
     expect(operations.get('ce')).toBe(55)
     expect(operations.get('id')).toBe('complete field')
     expect(board.fen()).toBe('8/8/8/8/8/8/8/8 w - - 0 1')
+  })
+
+  test('setEpd accepts Python numeric whitespace before later operations', () => {
+    const operations = new chess.Board().setEpd(
+      '8/8/8/8/8/8/8/8 w - - ce 55 ; acd 1.5\t; id "x";',
+    )
+
+    expect(operations.get('ce')).toBe(55)
+    expect(operations.get('acd')).toBe(1.5)
+    expect(operations.get('id')).toBe('x')
   })
 
   test('setEpd uses Python whitespace splitting for move operands', () => {

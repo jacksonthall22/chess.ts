@@ -43,11 +43,12 @@ const PYTHON_FLOAT =
 
 /** Direct equivalents of Python's strict `int()` and `float()` string parsing. */
 const parsePythonInt = (value: string): number => {
-  if (!PYTHON_INTEGER.test(value)) {
+  const normalized = value.trim()
+  if (!PYTHON_INTEGER.test(normalized)) {
     throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
   }
 
-  const parsed = Number(value.replaceAll('_', ''))
+  const parsed = Number(normalized.replaceAll('_', ''))
   if (!Number.isSafeInteger(parsed)) {
     throw new ValueError(`integer is outside the safe range: ${value}`)
   }
@@ -55,10 +56,11 @@ const parsePythonInt = (value: string): number => {
 }
 
 const parsePythonFloat = (value: string): number => {
-  if (!PYTHON_FLOAT.test(value)) {
+  const normalized = value.trim()
+  if (!PYTHON_FLOAT.test(normalized)) {
     throw new ValueError(`could not convert string to float: ${value}`)
   }
-  return Number(value.replaceAll('_', ''))
+  return Number(normalized.replaceAll('_', ''))
 }
 
 /** Direct equivalent of `str.split(None, maxsplit)`. */

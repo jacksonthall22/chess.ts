@@ -5,6 +5,10 @@ import { WHITE, BLACK, Color } from './index'
 
 type ScoreTuple = [boolean, boolean, boolean, number, number | null]
 
+/** Direct equivalent of `-(value or 0)` for Python numbers and `None`. */
+const negatedOrZero = (value: number | null): number =>
+  value === null || value === 0 ? 0 : -value
+
 const scoreTuplesEqual = (left: ScoreTuple, right: ScoreTuple): boolean =>
   left.every((value, index) => value === right[index])
 
@@ -26,7 +30,15 @@ const compareScoreTupleValues = (
 
   const normalizedLeft = typeof left === 'boolean' ? Number(left) : left
   const normalizedRight = typeof right === 'boolean' ? Number(right) : right
-  return normalizedLeft < normalizedRight ? -1 : 1
+  if (normalizedLeft < normalizedRight) {
+    return -1
+  } else if (normalizedLeft > normalizedRight) {
+    return 1
+  } else {
+    // Python leaves NaN unordered. Returning NaN keeps every comparison of
+    // the aggregate comparator with zero false as well.
+    return Number.NaN
+  }
 }
 
 const compareScoreTuples = (left: ScoreTuple, right: ScoreTuple): number => {
@@ -223,7 +235,7 @@ export abstract class Score {
       this instanceof MateGivenType,
       mate !== null && mate > 0,
       mate === null,
-      -(mate || 0),
+      negatedOrZero(mate),
       this.score(),
     ]
   }
