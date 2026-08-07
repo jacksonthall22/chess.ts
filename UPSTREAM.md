@@ -63,6 +63,12 @@ All 76 upstream method bodies are emitted into
 TypeScript test. The compiler also carries all 53 Python comments in those
 methods and all 406 upstream assertion calls into the generated file.
 
+The 13 hand-written runtime tests in this baseline are not translations:
+`python-assertion-oracle.test.ts` has five integrity tests for the finite oracle
+and `errors.test.ts` has eight contract tests for the target error taxonomy.
+They test translation infrastructure and the explicit TypeScript runtime
+boundary. This PR contains no chess.ts-only product characterization tests.
+
 The compiler is deliberately layered from small target-language facts outward:
 
 1. `source.py` parses the frozen file once into Python's AST, tokenizes it once,
