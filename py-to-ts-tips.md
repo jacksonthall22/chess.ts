@@ -50,11 +50,15 @@ needs evidence, not as an ordinary refactoring tool. Use this order:
 2. If a short composition of native TypeScript operations has the same
    semantics, keep it inline. Do not extract a one-use helper merely to give
    that expression a name.
-3. Reuse an established language adapter when one already exists. General
+3. Use the repository's established exact target representation before
+   rejecting an input or inventing an adapter. In particular, Python integers
+   outside JavaScript's safe `number` range become TypeScript `bigint`; a
+   narrower `number` API is not evidence that the Python value is invalid.
+4. Reuse an established language adapter when one already exists. General
    Python primitive bridges belong with the repository's existing helpers in
    `chess/utils.ts`; a file-local adapter should represent a gap specific to
    that translated value or source operation.
-4. Add a new adapter only after identifying a concrete valid input for which
+5. Add a new adapter only after identifying a concrete valid input for which
    the direct JavaScript operation differs from pinned Python. Document that
    mismatch and cover it with a parity test.
 

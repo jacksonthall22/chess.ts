@@ -41,7 +41,11 @@ export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
 export const colorIdx = (color: Color): 1 | 0 => boolToNumber(color)
 
-/** Retains Python's int/float distinction inside parsed EPD operations. */
+/**
+ * Retains Python's int/float distinction so `hmvc 1.0` cannot silently become
+ * the valid integer operation `hmvc 1` when JavaScript collapses both to
+ * `number`.
+ */
 class EpdOperations<T> extends Map<string, T> {
   private readonly pythonFloatOpcodes = new Set<string>()
 
@@ -60,7 +64,11 @@ class EpdOperations<T> extends Map<string, T> {
     if (this.pythonFloatOpcodes.has(opcode)) {
       throw new ValueError(`invalid ${opcode}: expected an integer`)
     }
-    return String(this.get(opcode))
+    const value = this.get(opcode)
+    if (typeof value === 'bigint') {
+      throw new ValueError(`invalid ${opcode}: integer is outside safe range`)
+    }
+    return String(value)
   }
 }
 
@@ -3511,7 +3519,10 @@ export class Board extends BaseBoard {
   }
 
   _epdOperations(
-    operations: Map<string, string | number | null | Move | Iterable<Move>>,
+    operations: Map<
+      string,
+      string | number | bigint | null | Move | Iterable<Move>
+    >,
   ): string {
     let epd: string[] = []
     let firstOp = true
@@ -3540,6 +3551,8 @@ export class Board extends BaseBoard {
         epd.push(' ')
         epd.push(this.san(operand))
         epd.push(';')
+      } else if (typeof operand === 'bigint') {
+        epd.push(` ${operand};`)
       } else if (typeof operand === 'number') {
         if (!isFinite(operand)) {
           throw new Error(
@@ -3622,7 +3635,7 @@ export class Board extends BaseBoard {
     } = {},
     operations: Map<
       string,
-      null | string | number | Move | IterableIterator<Move>
+      null | string | number | bigint | Move | IterableIterator<Move>
     > = new Map(),
   ): string {
     let epSquare: Square | null
@@ -3642,14 +3655,7 @@ export class Board extends BaseBoard {
     ]
 
     if (operations.size !== 0) {
-      epd.push(
-        this._epdOperations(
-          operations as Map<
-            string,
-            null | string | number | Move | IterableIterator<Move>
-          >,
-        ),
-      )
+      epd.push(this._epdOperations(operations))
     }
 
     return epd.join(' ')
@@ -3658,9 +3664,9 @@ export class Board extends BaseBoard {
   _parseEpdOps<T extends Board>(
     operationPart: string,
     makeBoard: () => T,
-  ): EpdOperations<string | number | null | Move | Move[]> {
+  ): EpdOperations<string | number | bigint | null | Move | Move[]> {
     let operations = new EpdOperations<
-      string | number | null | Move | Move[]
+      string | number | bigint | null | Move | Move[]
     >()
     let state = 'opcode'
     let opcode = ''
@@ -3825,7 +3831,9 @@ export class Board extends BaseBoard {
    *
    * :raises: :exc:`ValueError` if the EPD string is invalid.
    */
-  setEpd(epd: string): Map<string, string | number | null | Move | Move[]> {
+  setEpd(
+    epd: string,
+  ): Map<string, string | number | bigint | null | Move | Move[]> {
     const parts = splitWhitespace(
       stripPythonWhitespace(epd).replace(/;+$/, ''),
       4,
@@ -5179,7 +5187,7 @@ export class Board extends BaseBoard {
     { chess960 = false }: { chess960?: boolean } = {},
   ): [
     InstanceType<T>,
-    Map<string, null | string | number | Move | Array<Move>>,
+    Map<string, null | string | number | bigint | Move | Array<Move>>,
   ] {
     const board = this.empty({ chess960 })
     return [board, board.setEpd(epd)]

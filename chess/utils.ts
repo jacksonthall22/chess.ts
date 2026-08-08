@@ -63,17 +63,20 @@ const normalizePythonDecimalDigits = (value: string): string =>
   }).join('')
 
 /** Direct equivalents of Python's strict `int()` and `float()` string parsing. */
-export const parsePythonInt = (value: string): number => {
+export const parsePythonInt = (value: string): number | bigint => {
   const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
   if (!PYTHON_INTEGER.test(normalized)) {
     throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
   }
 
-  const parsed = Number(normalized.replaceAll('_', ''))
-  if (!Number.isSafeInteger(parsed)) {
-    throw new ValueError(`integer is outside the safe range: ${value}`)
+  const parsed = BigInt(normalized.replaceAll('_', ''))
+  if (
+    parsed <= BigInt(Number.MAX_SAFE_INTEGER) &&
+    parsed >= BigInt(Number.MIN_SAFE_INTEGER)
+  ) {
+    return Number(parsed)
   }
-  return Object.is(parsed, -0) ? 0 : parsed
+  return parsed
 }
 
 export const parsePythonFloat = (value: string): number => {

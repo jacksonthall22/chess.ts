@@ -182,6 +182,27 @@ describe('TypeScript-native parity contracts', () => {
     expect(operations.get('ce')).toBe(value)
   })
 
+  test('setEpd preserves arbitrary-size Python integers as bigint', () => {
+    const value = 9007199254740992n
+    const board = new chess.Board()
+    const operations = board.setEpd(
+      `8/8/8/8/8/8/8/8 w - - ce ${value};`,
+    )
+
+    expect(operations.get('ce')).toBe(value)
+    expect(board.epd({}, new Map([['ce', value]]))).toContain(
+      `ce ${value};`,
+    )
+  })
+
+  test('setEpd rejects floats that overflow to a non-finite value', () => {
+    expect(() =>
+      new chess.Board().setEpd(
+        '8/8/8/8/8/8/8/8 w - - ce 1e309;',
+      ),
+    ).toThrow(chess.ValueError)
+  })
+
   test.each([
     ['1١', 11],
     ['1.١', 1.1],

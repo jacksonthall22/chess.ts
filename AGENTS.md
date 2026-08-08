@@ -47,9 +47,11 @@ one, identify a valid input for which the closest direct JavaScript expression
 differs from pinned Python. Prefer an inline native TypeScript expression when
 it is exact, even if it is slightly longer; do not extract a one-use helper for
 readability or deduplication. Reuse the established primitive adapters in
-`chess/utils.ts` when applicable. Keep value-specific mechanics private to the
-smallest unavoidable adapter, and add a parity test for the semantic mismatch.
-See the adapter decision rule and comparison convention in
+`chess/utils.ts` when applicable. Use an existing exact target representation,
+such as `bigint` for a Python integer outside JavaScript's safe `number` range,
+instead of rejecting a valid source value. Keep value-specific mechanics
+private to the smallest unavoidable adapter, and add a parity test for the
+semantic mismatch. See the adapter decision rule and comparison convention in
 [`py-to-ts-tips.md`](py-to-ts-tips.md).
 
 Do not silently fix an upstream bug only in TypeScript. Preserve the pinned
