@@ -91,10 +91,21 @@ Default whitespace operations are one proved language boundary. Python
 `U+FEFF`; JavaScript `trim()` and `\s` do the opposite for those characters.
 JavaScript `value.split()` with no separator does not implement Python
 `value.split()`, and a JavaScript split limit discards the remainder whereas
-Python `split(None, maxsplit)` preserves it. Use the shared exact whitespace
-adapters for source calls with default whitespace semantics. Continue using
-native `split(separator)` when the Python source supplies that same explicit
-separator.
+Python `split(None, maxsplit)` preserves it.
+
+Translate the ordinary forms inline and unilaterally:
+
+| Python | TypeScript |
+| --- | --- |
+| `value.strip()` | `value.replace(PYTHON_LEADING_WHITESPACE, "").replace(PYTHON_TRAILING_WHITESPACE, "")` |
+| `value.rstrip()` | `value.replace(PYTHON_TRAILING_WHITESPACE, "")` |
+| `value.split()` | `value.split(PYTHON_WHITESPACE_RUN).filter(Boolean)` |
+| `value.split(separator)` | `value.split(separator)` |
+
+Only `split(None, maxsplit)` uses `splitWhitespaceWithMax()`: JavaScript's
+native limit drops the source's unsplit remainder, and inlining the required
+scan would obscure the surrounding source structure. Keep that adapter limited
+to the exceptional max-split form.
 
 ### Comparison methods
 

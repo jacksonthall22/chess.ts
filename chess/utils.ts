@@ -7,8 +7,15 @@ export const PYTHON_WHITESPACE_SOURCE =
 const PYTHON_WHITESPACE_ONLY = new RegExp(
   `^(?:${PYTHON_WHITESPACE_SOURCE})+$`,
 )
-const PYTHON_WHITESPACE = new RegExp(PYTHON_WHITESPACE_SOURCE)
-const PYTHON_WHITESPACE_RUN = new RegExp(`${PYTHON_WHITESPACE_SOURCE}+`)
+export const PYTHON_LEADING_WHITESPACE = new RegExp(
+  `^(?:${PYTHON_WHITESPACE_SOURCE})+`,
+)
+export const PYTHON_TRAILING_WHITESPACE = new RegExp(
+  `(?:${PYTHON_WHITESPACE_SOURCE})+$`,
+)
+export const PYTHON_WHITESPACE_RUN = new RegExp(
+  `${PYTHON_WHITESPACE_SOURCE}+`,
+)
 const PYTHON_WHITESPACE_RUNS = new RegExp(
   `${PYTHON_WHITESPACE_SOURCE}+`,
   'g',
@@ -35,28 +42,6 @@ const PYTHON_DECIMAL_ZERO_CODE_POINTS = [
   0x1e140, 0x1e2f0, 0x1e4f0, 0x1e950, 0x1fbf0,
 ] as const
 
-/** Direct equivalent of Python's `str.strip()` default whitespace behavior. */
-export const stripPythonWhitespace = (value: string): string => {
-  let start = 0
-  let end = value.length
-  while (start < end && PYTHON_WHITESPACE.test(value[start])) {
-    start += 1
-  }
-  while (end > start && PYTHON_WHITESPACE.test(value[end - 1])) {
-    end -= 1
-  }
-  return value.slice(start, end)
-}
-
-/** Direct equivalent of Python's `str.rstrip()` default whitespace behavior. */
-export const stripEndPythonWhitespace = (value: string): string => {
-  let end = value.length
-  while (end > 0 && PYTHON_WHITESPACE.test(value[end - 1])) {
-    end -= 1
-  }
-  return value.slice(0, end)
-}
-
 /** Direct equivalent of Python's acceptance of Unicode decimal digits. */
 const normalizePythonDecimalDigits = (value: string): string =>
   Array.from(value, character => {
@@ -73,7 +58,11 @@ const normalizePythonDecimalDigits = (value: string): string =>
 
 /** Direct equivalents of Python's strict `int()` and `float()` string parsing. */
 export const parsePythonInt = (value: string): number | bigint => {
-  const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
+  const normalized = normalizePythonDecimalDigits(
+    value
+      .replace(PYTHON_LEADING_WHITESPACE, '')
+      .replace(PYTHON_TRAILING_WHITESPACE, ''),
+  )
   if (!PYTHON_INTEGER.test(normalized)) {
     throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
   }
@@ -89,7 +78,11 @@ export const parsePythonInt = (value: string): number | bigint => {
 }
 
 export const parsePythonFloat = (value: string): number => {
-  const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
+  const normalized = normalizePythonDecimalDigits(
+    value
+      .replace(PYTHON_LEADING_WHITESPACE, '')
+      .replace(PYTHON_TRAILING_WHITESPACE, ''),
+  )
   if (!PYTHON_FLOAT.test(normalized)) {
     throw new ValueError(`could not convert string to float: ${value}`)
   }
@@ -97,15 +90,16 @@ export const parsePythonFloat = (value: string): number => {
 }
 
 /** Direct equivalent of `str.split(None, maxsplit)`. */
-export const splitWhitespace = (value: string, maxSplit?: number): string[] => {
-  const normalized = stripPythonWhitespace(value)
+export const splitWhitespaceWithMax = (
+  value: string,
+  maxSplit: number,
+): string[] => {
+  const normalized = value
+    .replace(PYTHON_LEADING_WHITESPACE, '')
+    .replace(PYTHON_TRAILING_WHITESPACE, '')
   if (!normalized) {
     return []
   }
-  if (maxSplit === undefined) {
-    return normalized.split(PYTHON_WHITESPACE_RUN)
-  }
-
   const parts: string[] = []
   let start = 0
   for (const match of normalized.matchAll(PYTHON_WHITESPACE_RUNS)) {

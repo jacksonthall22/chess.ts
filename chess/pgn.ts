@@ -1958,7 +1958,9 @@ export abstract class StringExporterMixin<
 
   flushCurrentLine(): void {
     if (this.currentLine) {
-      this.lines.push(utils.stripEndPythonWhitespace(this.currentLine))
+      this.lines.push(
+        this.currentLine.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+      )
     }
     this.currentLine = ''
   }
@@ -1976,7 +1978,7 @@ export abstract class StringExporterMixin<
 
   writeLine(line: string = ''): void {
     this.flushCurrentLine()
-    this.lines.push(utils.stripEndPythonWhitespace(line))
+    this.lines.push(line.replace(utils.PYTHON_TRAILING_WHITESPACE, ''))
   }
 
   endGame(): void {
@@ -2025,7 +2027,10 @@ export abstract class StringExporterMixin<
     if (this.comments && (this.variations || this.variationDepth === 0)) {
       this.writeToken(
         '{ ' +
-          utils.stripPythonWhitespace(comment.replaceAll('}', '')) +
+          comment
+            .replaceAll('}', '')
+            .replace(utils.PYTHON_LEADING_WHITESPACE, '')
+            .replace(utils.PYTHON_TRAILING_WHITESPACE, '') +
           ' } ',
       )
       this.forceMovenumber = true
@@ -2092,15 +2097,17 @@ export class StringExporter extends StringExporterMixin<string> {
 
   result(): string {
     if (this.currentLine) {
-      return utils.stripEndPythonWhitespace(
-        Array.from(
-          utils.iterChain(this.lines, [
-            utils.stripEndPythonWhitespace(this.currentLine),
-          ]),
-        ).join('\n'),
+      return Array.from(
+        utils.iterChain(this.lines, [
+          this.currentLine.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+        ]),
       )
+        .join('\n')
+        .replace(utils.PYTHON_TRAILING_WHITESPACE, '')
     } else {
-      return utils.stripEndPythonWhitespace(this.lines.join('\n'))
+      return this.lines
+        .join('\n')
+        .replace(utils.PYTHON_TRAILING_WHITESPACE, '')
     }
   }
 
@@ -2153,7 +2160,7 @@ export class FileExporter extends StringExporterMixin<number> {
   flushCurrentLine(): void {
     if (this.currentLine) {
       this.written += this.handle.write(
-        utils.stripEndPythonWhitespace(this.currentLine),
+        this.currentLine.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
       )
       this.written += this.handle.write('\n')
     }
@@ -2162,7 +2169,9 @@ export class FileExporter extends StringExporterMixin<number> {
 
   writeLine(line: string = ''): void {
     this.flushCurrentLine()
-    this.written += this.handle.write(utils.stripEndPythonWhitespace(line))
+    this.written += this.handle.write(
+      line.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+    )
     this.written += this.handle.write('\n')
   }
 

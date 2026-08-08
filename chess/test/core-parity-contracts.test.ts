@@ -5,23 +5,31 @@ import * as engine from '../engine'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
-  test('Python whitespace adapters preserve the exact source character set', () => {
-    expect(utils.stripPythonWhitespace('\u001cvalue\u001c')).toBe('value')
-    expect(utils.stripPythonWhitespace('\ufeffvalue\ufeff')).toBe(
-      '\ufeffvalue\ufeff',
+  test('inline Python whitespace translations preserve the exact source character set', () => {
+    expect(
+      '\u001cvalue\u001c'
+        .replace(utils.PYTHON_LEADING_WHITESPACE, '')
+        .replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+    ).toBe('value')
+    expect(
+      '\ufeffvalue\ufeff'
+        .replace(utils.PYTHON_LEADING_WHITESPACE, '')
+        .replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+    ).toBe('\ufeffvalue\ufeff')
+    expect('value\u001c'.replace(utils.PYTHON_TRAILING_WHITESPACE, '')).toBe(
+      'value',
     )
-    expect(utils.stripEndPythonWhitespace('value\u001c')).toBe('value')
-    expect(utils.stripEndPythonWhitespace('value\ufeff')).toBe(
+    expect('value\ufeff'.replace(utils.PYTHON_TRAILING_WHITESPACE, '')).toBe(
       'value\ufeff',
     )
-    expect(utils.splitWhitespace('first\u001csecond')).toEqual([
-      'first',
-      'second',
-    ])
-    expect(utils.splitWhitespace('first second third', 1)).toEqual([
-      'first',
-      'second third',
-    ])
+    expect(
+      'first\u001csecond'
+        .split(utils.PYTHON_WHITESPACE_RUN)
+        .filter(Boolean),
+    ).toEqual(['first', 'second'])
+    expect(utils.splitWhitespaceWithMax('first second third', 1)).toEqual(
+      ['first', 'second third'],
+    )
   })
 
   test('Piece representation uses the translated TypeScript API name', () => {

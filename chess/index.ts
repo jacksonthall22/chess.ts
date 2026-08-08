@@ -27,10 +27,12 @@ import {
   parseIntStrict,
   parsePythonFloat,
   parsePythonInt,
+  PYTHON_LEADING_WHITESPACE,
+  PYTHON_TRAILING_WHITESPACE,
+  PYTHON_WHITESPACE_RUN,
   range,
-  splitWhitespace,
+  splitWhitespaceWithMax,
   StopIteration,
-  stripPythonWhitespace,
 } from './utils'
 import { KeyError, ValueError } from './errors'
 
@@ -1415,7 +1417,9 @@ export class BaseBoard {
 
   _setBoardFen(fen: string): void {
     // Compatibility with setFen().
-    fen = stripPythonWhitespace(fen)
+    fen = fen
+      .replace(PYTHON_LEADING_WHITESPACE, '')
+      .replace(PYTHON_TRAILING_WHITESPACE, '')
     if (fen.includes(' ')) {
       throw new ValueError(
         `expected position part of fen, got multiple parts: ${fen}`,
@@ -3289,7 +3293,7 @@ export class Board extends BaseBoard {
    *     :func:`~chess.Board.isValid()` to detect invalid positions.
    */
   setFen(fen: string): void {
-    const parts = splitWhitespace(fen)
+    const parts = fen.split(PYTHON_WHITESPACE_RUN).filter(Boolean)
 
     // Board part.
     const boardPart = parts.shift()
@@ -3782,7 +3786,9 @@ export class Board extends BaseBoard {
 
             if (opcode === 'pv') {
               let variation: Move[] = []
-              for (let token of splitWhitespace(operand)) {
+              for (let token of operand
+                .split(PYTHON_WHITESPACE_RUN)
+                .filter(Boolean)) {
                 let move = position.parseXboard(token)
                 variation.push(move)
                 position.push(move)
@@ -3796,9 +3802,10 @@ export class Board extends BaseBoard {
             } else if (['bm', 'am'].includes(opcode)) {
               operations.set(
                 opcode,
-                splitWhitespace(operand).map(token =>
-                  (position as T).parseXboard(token),
-                ),
+                operand
+                  .split(PYTHON_WHITESPACE_RUN)
+                  .filter(Boolean)
+                  .map(token => (position as T).parseXboard(token)),
               )
             } else {
               operations.set(opcode, position.parseXboard(operand))
@@ -3834,8 +3841,11 @@ export class Board extends BaseBoard {
   setEpd(
     epd: string,
   ): Map<string, string | number | bigint | null | Move | Move[]> {
-    const parts = splitWhitespace(
-      stripPythonWhitespace(epd).replace(/;+$/, ''),
+    const parts = splitWhitespaceWithMax(
+      epd
+        .replace(PYTHON_LEADING_WHITESPACE, '')
+        .replace(PYTHON_TRAILING_WHITESPACE, '')
+        .replace(/;+$/, ''),
       4,
     )
 
