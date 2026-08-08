@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ast
 import json
+import math
 import textwrap
 from collections import Counter
 from dataclasses import dataclass, field
@@ -31,6 +32,7 @@ from .native import (
     contains_callback as native_contains_callback,
     equality_code as native_equality_code,
     native_set_method as lower_native_set_method,
+    ordering_code as native_ordering_code,
     piece_equality_code,
     piece_set_equality_code,
     truthy_code as native_truthy_code,
@@ -41,7 +43,9 @@ from .registry import (
     CallContractError,
     InvocationKind,
     KeywordStyle,
+    ShapeRule,
     TypeAssertion,
+    WDL_MODEL_VALUES,
     attribute_shape,
     callable_shape_contract,
     exception_has_ordinary_message,
@@ -62,6 +66,9 @@ from .target import (
     BOOLEAN,
     GAME,
     GAME_NODE,
+    FLOAT,
+    EXPORTER,
+    FILE_EXPORTER,
     HEADERS,
     LEGAL_MOVE_GENERATOR,
     MAINLINE_MOVE,
@@ -76,6 +83,7 @@ from .target import (
     STRING_EXPORTER,
     UNKNOWN,
     VOID,
+    WDL_MODEL,
     RepeatedAttributeFact,
     RuntimeTypeGuard,
     ShapeKind,
@@ -100,6 +108,7 @@ class Expression:
     code: str
     shape: TargetShape
     facts: ValueFacts = field(default_factory=ValueFacts)
+    oracle_value_code: str | None = None
 
 
 class UnsupportedSyntax(ValueError):
@@ -134,6 +143,7 @@ def typescript_type(shape: TargetShape) -> str:
     scalar_types = {
         ShapeKind.BOOLEAN: "boolean",
         ShapeKind.NUMBER: "number",
+        ShapeKind.FLOAT: "number",
         ShapeKind.BIGINT: "bigint",
         ShapeKind.STRING: "string",
         ShapeKind.ERROR: "Error",
@@ -143,7 +153,18 @@ def typescript_type(shape: TargetShape) -> str:
         ShapeKind.BOARD: "chess.Board",
         ShapeKind.BASE_BOARD: "chess.BaseBoard",
         ShapeKind.SQUARE_SET: "chess.SquareSet",
+        ShapeKind.GAME: "pgnModule.Game",
+        ShapeKind.GAME_NODE: "pgnModule.GameNode",
         ShapeKind.CHILD_GAME_NODE: "pgnModule.ChildNode",
+        ShapeKind.STRING_EXPORTER: "pgnModule.StringExporter",
+        ShapeKind.FILE_EXPORTER: "pgnModule.FileExporter",
+        ShapeKind.EXPORTER: "pgnModule.StringExporter | pgnModule.FileExporter",
+        ShapeKind.SCORE: "engineModule.Score",
+        ShapeKind.POV_SCORE: "engineModule.PovScore",
+        ShapeKind.WDL: "engineModule.Wdl",
+        ShapeKind.ARROW: "svgModule.Arrow",
+        ShapeKind.ARROW_INPUT: "svgModule.Arrow | [number, number]",
+        ShapeKind.WDL_MODEL: "engineModule.WdlModel",
     }
     rendered = scalar_types.get(shape.kind)
     if rendered is None and shape.kind is ShapeKind.LOCAL_OBJECT and shape.label:
@@ -607,6 +628,21 @@ class MethodCompiler:
             ),
         )
 
+    def require_non_null_code(self, expression: Expression) -> str:
+        """Preserve Python's failure when dereferencing an optional value."""
+
+        return self.bind_once(
+            (expression,),
+            ("__receiver",),
+            lambda names, _fresh: (
+                "{ "
+                f"if ({names[0]} === null) "
+                'throw new TypeError("cannot access an attribute of null"); '
+                f"return {names[0]}; "
+                "}"
+            ),
+        )
+
     @staticmethod
     def statement_expression(code: str) -> str:
         """Make an expression safe at a semicolon-free statement boundary."""
@@ -839,6 +875,38 @@ class MethodCompiler:
     def comment_text(comment: SourceComment) -> str:
         return "//" + comment.text[1:]
 
+    def loop_target(
+        self,
+        node: ast.expr,
+        shape: TargetShape,
+    ) -> tuple[str, tuple[tuple[str, str, TargetShape], ...]]:
+        """Lower one finite Python loop binding, including tuple unpacking."""
+
+        self.claim(node)
+        if isinstance(node, ast.Name):
+            target = py_identifier_to_ts(node.id)
+            return target, ((node.id, target, shape),)
+        if isinstance(node, ast.Tuple):
+            if shape.kind is not ShapeKind.TUPLE:
+                self.fail(node, "tuple loop target requires a proved tuple element")
+            if len(node.elts) != len(shape.members):
+                self.fail(node, "tuple loop target arity does not match its element")
+            rendered: list[str] = []
+            bindings: list[tuple[str, str, TargetShape]] = []
+            for target_node, member_shape in zip(
+                node.elts, shape.members, strict=True
+            ):
+                target, member_bindings = self.loop_target(
+                    target_node, member_shape
+                )
+                rendered.append(target)
+                bindings.extend(member_bindings)
+            names = [source for source, _target, _shape in bindings]
+            if len(names) != len(set(names)):
+                self.fail(node, "tuple loop target cannot bind a name twice")
+            return f"[{', '.join(rendered)}]", tuple(bindings)
+        self.fail(node, "for targets must be names or finite name tuples")
+
     def statement(
         self,
         node: ast.stmt,
@@ -874,6 +942,22 @@ class MethodCompiler:
                     previous_shape = self.symbol_shapes.get(target.id)
                     current_name = self.symbol_target_names.get(target.id, name)
                     if previous_shape is not None and previous_shape != value.shape:
+                        if previous_shape == GAME_NODE and value.shape.kind in {
+                            ShapeKind.GAME,
+                            ShapeKind.GAME_NODE,
+                            ShapeKind.CHILD_GAME_NODE,
+                        }:
+                            self.symbol_shapes[target.id] = GAME_NODE
+                            return [f"{prefix}{current_name} = {value.code}"]
+                        if {
+                            previous_shape.kind,
+                            value.shape.kind,
+                        } <= {
+                            ShapeKind.STRING_EXPORTER,
+                            ShapeKind.FILE_EXPORTER,
+                        }:
+                            self.symbol_shapes[target.id] = value.shape
+                            return [f"{prefix}{current_name} = {value.code}"]
                         if not self.can_rebind_with_new_shape(target.id):
                             self.fail(
                                 node,
@@ -895,10 +979,36 @@ class MethodCompiler:
                     return [f"{prefix}{current_name} = {value.code}"]
                 self.declared_names.add(target.id)
                 self.shape_rebind_scopes[-1].add(target.id)
-                self.symbol_shapes[target.id] = value.shape
+                declaration_shape = (
+                    GAME_NODE
+                    if self.assignment_counts[target.id] > 1
+                    and value.shape.kind
+                    in {
+                        ShapeKind.GAME,
+                        ShapeKind.GAME_NODE,
+                        ShapeKind.CHILD_GAME_NODE,
+                    }
+                    else EXPORTER
+                    if self.assignment_counts[target.id] > 1
+                    and value.shape.kind
+                    in {
+                        ShapeKind.STRING_EXPORTER,
+                        ShapeKind.FILE_EXPORTER,
+                    }
+                    else value.shape
+                )
+                current_shape = (
+                    GAME_NODE if declaration_shape == GAME_NODE else value.shape
+                )
+                self.symbol_shapes[target.id] = current_shape
                 self.symbol_target_names[target.id] = name
                 keyword = "let" if self.assignment_counts[target.id] > 1 else "const"
-                return [f"{prefix}{keyword} {name} = {value.code}"]
+                annotation = (
+                    f": {typescript_type(declaration_shape)}"
+                    if declaration_shape != value.shape
+                    else ""
+                )
+                return [f"{prefix}{keyword} {name}{annotation} = {value.code}"]
             if isinstance(target, (ast.Tuple, ast.List)):
                 self.claim(target)
                 names = []
@@ -975,28 +1085,29 @@ class MethodCompiler:
         if isinstance(node, ast.For):
             if node.orelse:
                 self.fail(node, "for/else is unsupported")
-            if not isinstance(node.target, ast.Name):
-                self.fail(node.target, "for targets must be single names")
-            if node.target.id in self.declared_names:
-                self.fail(
-                    node.target,
-                    "loop target rebinding of an outer Python local is unsupported",
-                )
-            self.claim(node.target)
-            target = py_identifier_to_ts(node.target.id)
             outer_shapes = self.symbol_shapes.copy()
             outer_facts = self.symbol_facts.copy()
             outer_target_names = self.symbol_target_names.copy()
             outer_declarations = self.declared_names.copy()
             outer_unavailable = self.unavailable_names.copy()
             outer_lazy_captures = self.lazy_captured_names.copy()
-            self.declared_names.add(node.target.id)
-            self.shape_rebind_scopes.append({node.target.id})
             iterable_expression = self.expression(node.iter)
             element_shape = self.iterated_shape(iterable_expression, node.iter)
-            self.symbol_shapes[node.target.id] = element_shape
-            self.symbol_facts[node.target.id] = ValueFacts()
-            self.symbol_target_names[node.target.id] = target
+            target, bindings = self.loop_target(node.target, element_shape)
+            rebound = {source for source, _target, _shape in bindings}
+            conflicts = rebound & self.declared_names
+            if conflicts:
+                self.fail(
+                    node.target,
+                    "loop target rebinding of an outer Python local is unsupported: "
+                    + ", ".join(sorted(conflicts)),
+                )
+            self.declared_names.update(rebound)
+            self.shape_rebind_scopes.append(rebound)
+            for source, target_name, target_shape in bindings:
+                self.symbol_shapes[source] = target_shape
+                self.symbol_facts[source] = ValueFacts()
+                self.symbol_target_names[source] = target_name
             iterable = self.iterable_code(iterable_expression, node.iter)
             try:
                 body_lines = self.block(
@@ -1010,6 +1121,48 @@ class MethodCompiler:
                 if self.symbol_facts.get(name) == facts
             }
             lines = [f"{prefix}for (let {target} of {iterable}) {{"]
+            lines.extend(body_lines)
+            lines.append(f"{prefix}}}")
+            self.symbol_shapes = outer_shapes
+            self.symbol_facts = surviving_facts
+            self.symbol_target_names = outer_target_names
+            self.declared_names = outer_declarations
+            self.unavailable_names = outer_unavailable
+            self.lazy_captured_names = outer_lazy_captures
+            return lines
+
+        if isinstance(node, ast.While):
+            if node.orelse:
+                self.fail(node, "while/else is unsupported")
+            condition_code = self.condition_code(
+                node.test, suppress_gap=suppress_gap
+            )
+            outer_shapes = self.symbol_shapes.copy()
+            outer_facts = self.symbol_facts.copy()
+            outer_target_names = self.symbol_target_names.copy()
+            outer_declarations = self.declared_names.copy()
+            outer_unavailable = self.unavailable_names.copy()
+            outer_lazy_captures = self.lazy_captured_names.copy()
+            self.shape_rebind_scopes.append(set())
+            try:
+                body_lines = self.block(
+                    node.body, indent + 1, suppress_gap=suppress_gap
+                )
+            finally:
+                self.shape_rebind_scopes.pop()
+            loop_locals = self.declared_names - outer_declarations
+            if loop_locals:
+                self.fail(
+                    node,
+                    "while-loop locals cannot preserve Python function scope: "
+                    + ", ".join(sorted(loop_locals)),
+                )
+            surviving_facts = {
+                name: facts
+                for name, facts in outer_facts.items()
+                if self.symbol_facts.get(name) == facts
+            }
+            lines = [f"{prefix}while ({condition_code}) {{"]
             lines.extend(body_lines)
             lines.append(f"{prefix}}}")
             self.symbol_shapes = outer_shapes
@@ -1406,6 +1559,21 @@ class MethodCompiler:
         first = shapes[0]
         if all(shape == first for shape in shapes[1:]):
             return first
+        if all(
+            shape.kind in {ShapeKind.STRING, ShapeKind.WDL_MODEL}
+            and not shape.nullable
+            for shape in shapes
+        ):
+            return STRING
+        if all(
+            shape.kind in {ShapeKind.ARROW, ShapeKind.TUPLE}
+            and (
+                shape.kind is ShapeKind.ARROW
+                or shape == tuple_of(NUMBER, NUMBER)
+            )
+            for shape in shapes
+        ):
+            return TargetShape(ShapeKind.ARROW_INPUT)
         self.fail(
             node,
             "collection elements have incompatible target shapes: "
@@ -1416,7 +1584,7 @@ class MethodCompiler:
         shape = expression.shape
         if shape.nullable:
             self.fail(node, f"cannot iterate nullable {shape.kind.value}")
-        if shape.kind is ShapeKind.STRING:
+        if shape.kind in {ShapeKind.STRING, ShapeKind.WDL_MODEL}:
             return STRING
         if shape.kind in {
             ShapeKind.ARRAY,
@@ -1441,6 +1609,7 @@ class MethodCompiler:
             )
         if kind in {
             ShapeKind.STRING,
+            ShapeKind.WDL_MODEL,
             ShapeKind.ARRAY,
             ShapeKind.ITERABLE,
             ShapeKind.PIECE_VALUE_SET,
@@ -1499,47 +1668,79 @@ class MethodCompiler:
         except CallContractError as error:
             self.fail(node, str(error))
 
+    def contextualize_contract_value(
+        self,
+        source: ast.expr,
+        value: Expression,
+        rule: ShapeRule,
+    ) -> Expression:
+        """Apply one syntax- and fact-proved shape supplied by call context."""
+
+        if (
+            value.shape == STRING
+            and value.facts.exact_string in rule.contextual_string_literals
+        ):
+            return Expression(value.code, rule.shapes[0], value.facts)
+
+        if (
+            value.shape.kind is ShapeKind.MAP
+            and isinstance(source, ast.Dict)
+            and not source.keys
+        ):
+            map_targets = tuple(
+                shape for shape in rule.shapes if shape.kind is ShapeKind.MAP
+            )
+            if len(map_targets) == 1:
+                return Expression(value.code, map_targets[0], value.facts)
+
+        if (
+            value.shape.kind is ShapeKind.ARRAY
+            and isinstance(source, ast.List)
+            and not source.elts
+        ):
+            array_targets = tuple(
+                shape for shape in rule.shapes if shape.kind is ShapeKind.ARRAY
+            )
+            if len(array_targets) == 1:
+                return Expression(value.code, array_targets[0], value.facts)
+
+        return value
+
     def contextualize_contract_arguments(
         self,
         node: ast.Call,
         contract: CallContract,
         arguments: list[Expression],
-    ) -> list[Expression]:
-        """Give empty literals the sole collection shape admitted by context."""
+        keyword_values: list[tuple[str, Expression]],
+    ) -> tuple[list[Expression], list[tuple[str, Expression]]]:
+        """Apply finite literal context to positional and keyword arguments."""
 
         rules = contract.required + contract.optional
-        converted = list(arguments)
+        converted_arguments = list(arguments)
         for index, (argument, rule) in enumerate(
             zip(arguments, rules, strict=False)
         ):
-            source_argument = node.args[index]
-            if (
-                argument.shape.kind is ShapeKind.MAP
-                and isinstance(source_argument, ast.Dict)
-                and not source_argument.keys
-            ):
-                map_targets = tuple(
-                    shape for shape in rule.shapes if shape.kind is ShapeKind.MAP
+            converted_arguments[index] = self.contextualize_contract_value(
+                node.args[index], argument, rule
+            )
+
+        keyword_rules = dict(contract.keywords)
+        converted_keywords = [
+            (
+                name,
+                self.contextualize_contract_value(
+                    source_keyword.value,
+                    value,
+                    keyword_rules[name],
                 )
-                if len(map_targets) == 1:
-                    converted[index] = Expression(
-                        argument.code, map_targets[0], argument.facts
-                    )
-                    continue
-            if (
-                argument.shape.kind is ShapeKind.ARRAY
-                and isinstance(source_argument, ast.List)
-                and not source_argument.elts
-            ):
-                array_targets = tuple(
-                    shape for shape in rule.shapes if shape.kind is ShapeKind.ARRAY
-                )
-                if len(array_targets) == 1:
-                    converted[index] = Expression(
-                        argument.code, array_targets[0], argument.facts
-                    )
-                    continue
-        return converted
+                if name in keyword_rules
+                else value,
+            )
+            for source_keyword, (name, value) in zip(
+                node.keywords, keyword_values, strict=True
+            )
+        ]
+        return converted_arguments, converted_keywords
 
     @staticmethod
     def type_assertion_code(code: str, assertion: TypeAssertion) -> str:
@@ -1633,7 +1834,7 @@ class MethodCompiler:
         shape = result_override or contract.result
         refinement = contract.result_refinement
         if refinement is None or result_override is not None:
-            return shape, ValueFacts(), None
+            return shape, ValueFacts(), contract.result_guard
         if refinement.argument_index >= len(arguments):
             return shape, ValueFacts(), None
         length = arguments[
@@ -1714,6 +1915,33 @@ class MethodCompiler:
             return native_truthy_code(expression.code, expression.shape)
         except NativeLoweringError as error:
             self.fail(node, str(error))
+
+    def condition_code(
+        self,
+        node: ast.expr,
+        *,
+        suppress_gap: GapCase | None = None,
+    ) -> str:
+        """Lower Python short-circuit truthiness in a condition context."""
+
+        if isinstance(node, ast.BoolOp):
+            if len(node.values) < 2:
+                self.fail(node, "boolean operations require at least two operands")
+            self.claim(node)
+            if isinstance(node.op, ast.And):
+                operator = "&&"
+            elif isinstance(node.op, ast.Or):
+                operator = "||"
+            else:
+                self.fail(node, f"unsupported boolean operator {type(node.op).__name__}")
+            values = [
+                self.condition_code(value, suppress_gap=suppress_gap)
+                for value in node.values
+            ]
+            return "(" + f" {operator} ".join(values) + ")"
+
+        expression = self.expression(node, suppress_gap=suppress_gap)
+        return self.truthy_code(expression, node)
 
     def binary_operator(
         self,
@@ -1905,6 +2133,34 @@ class MethodCompiler:
                 "} })",
                 iterable_of(NUMBER),
             )
+        if name == "enumerate":
+            if len(arguments) != 1:
+                self.fail(node, "enumerate() requires one argument")
+            argument = arguments[0]
+            element = self.iterated_shape(argument, node.args[0])
+            iterable = Expression(
+                self.iterable_code(argument, node.args[0]), argument.shape
+            )
+
+            def lower_enumerate(
+                names: tuple[str, ...], fresh: FreshName
+            ) -> str:
+                index = fresh("__index")
+                value = fresh("__value")
+                return (
+                    "(function* () { "
+                    f"let {index} = 0; "
+                    f"for (const {value} of {names[0]}) {{ "
+                    f"yield [{index}, {value}] satisfies "
+                    f"[number, typeof {value}]; "
+                    f"{index} += 1; "
+                    "} })()"
+                )
+
+            return Expression(
+                self.bind_once((iterable,), ("__iterable",), lower_enumerate),
+                iterable_of(tuple_of(NUMBER, element)),
+            )
         if len(arguments) != 1:
             self.fail(node, f"{name}() requires one argument in this compiler surface")
         argument = arguments[0]
@@ -2037,7 +2293,7 @@ class MethodCompiler:
         kind = argument.shape.kind
         if argument.shape.nullable:
             self.fail(node, f"str() does not support nullable {kind.value}")
-        if kind is ShapeKind.STRING:
+        if kind in {ShapeKind.STRING, ShapeKind.WDL_MODEL}:
             return argument
         if kind is ShapeKind.ERROR:
             if not exception_has_ordinary_message(argument.shape.label):
@@ -2055,6 +2311,7 @@ class MethodCompiler:
             ShapeKind.PSEUDO_LEGAL_MOVE_GENERATOR,
             ShapeKind.MAINLINE,
             ShapeKind.STRING_EXPORTER,
+            ShapeKind.FILE_EXPORTER,
         }:
             return Expression(f"{argument.code}.toString()", STRING)
         if kind is ShapeKind.LEGAL_MOVE_GENERATOR:
@@ -2067,8 +2324,17 @@ class MethodCompiler:
                 node,
                 f"repr() does not support nullable {argument.shape.kind.value}",
             )
-        if argument.shape.kind in {ShapeKind.PIECE, ShapeKind.MOVE, ShapeKind.SQUARE_SET}:
-            return Expression(f"{argument.code}.toRepr()", STRING)
+        if argument.shape.kind in {
+            ShapeKind.PIECE,
+            ShapeKind.MOVE,
+            ShapeKind.SQUARE_SET,
+            ShapeKind.SCORE,
+        }:
+            return Expression(
+                f"{argument.code}.toRepr()",
+                STRING,
+                oracle_value_code=argument.code,
+            )
         if argument.shape.kind is ShapeKind.LEGAL_MOVE_GENERATOR:
             return Expression(f"{argument.code}.toString()", STRING)
         if argument.shape.kind is ShapeKind.PSEUDO_LEGAL_MOVE_GENERATOR:
@@ -2554,10 +2820,12 @@ class MethodCompiler:
                 )
             receiver_shape = value_expression.shape
             if receiver_shape.nullable:
-                self.fail(
-                    node.value,
-                    "attribute access requires a proved non-null receiver, got "
-                    f"nullable {receiver_shape.kind.value}",
+                value = self.require_non_null_code(value_expression)
+                receiver_shape = receiver_shape.required()
+                value_expression = Expression(
+                    value,
+                    receiver_shape,
+                    value_expression.facts,
                 )
             if receiver_shape.kind is ShapeKind.ERROR:
                 self.fail(
@@ -2588,13 +2856,23 @@ class MethodCompiler:
             if node.value is False:
                 return Expression("false", BOOLEAN)
             if isinstance(node.value, str):
-                return Expression(json.dumps(node.value, ensure_ascii=False), STRING)
+                return Expression(
+                    json.dumps(node.value, ensure_ascii=False),
+                    STRING,
+                    ValueFacts(exact_string=node.value),
+                )
             if isinstance(node.value, int) and not isinstance(node.value, bool):
                 if abs(node.value) > 2**53 - 1:
                     source = ast.get_source_segment(self.source_unit.source, node)
                     literal = source.strip() if source else str(node.value)
                     return Expression(f"{literal}n", BIGINT)
                 return Expression(str(node.value), NUMBER)
+            if isinstance(node.value, float):
+                if not math.isfinite(node.value):
+                    self.fail(node, "non-finite float constants are unsupported")
+                # JSON's finite-number rendering is a shortest binary64
+                # round-trip representation accepted identically by JS.
+                return Expression(json.dumps(node.value, allow_nan=False), FLOAT)
             self.fail(node, f"unsupported constant {type(node.value).__name__}")
 
         if isinstance(node, (ast.List, ast.Tuple)):
@@ -2608,11 +2886,28 @@ class MethodCompiler:
                     f"[{values}]",
                     tuple_of(*(expression.shape for expression in expressions)),
                 )
-            element_shape = self.common_shape(
-                [expression.shape for expression in expressions], node
+            is_wdl_model_array = bool(expressions) and all(
+                expression.shape == WDL_MODEL
+                or (
+                    expression.shape == STRING
+                    and expression.facts.exact_string in WDL_MODEL_VALUES
+                )
+                for expression in expressions
             )
+            element_shape = (
+                WDL_MODEL
+                if is_wdl_model_array
+                else self.common_shape(
+                    [expression.shape for expression in expressions], node
+                )
+            )
+            array_code = f"[{values}]"
+            if element_shape == WDL_MODEL:
+                array_code = (
+                    f"({array_code} satisfies engineModule.WdlModel[])"
+                )
             return Expression(
-                f"[{values}]",
+                array_code,
                 array_of(element_shape),
                 ValueFacts(exact_sequence_length=len(expressions)),
             )
@@ -2659,6 +2954,18 @@ class MethodCompiler:
             operand = self.expression(node.operand, suppress_gap=suppress_gap)
             if isinstance(node.op, ast.Not):
                 return Expression(f"!({self.truthy_code(operand, node)})", BOOLEAN)
+            if isinstance(node.op, (ast.UAdd, ast.USub)):
+                if operand.shape not in {NUMBER, FLOAT, BIGINT}:
+                    self.fail(
+                        node,
+                        f"unary sign does not support {operand.shape.kind.value}",
+                    )
+                operator = "+" if isinstance(node.op, ast.UAdd) else "-"
+                if operand.shape is BIGINT and operator == "+":
+                    # JavaScript has no unary plus for bigint; identity is the
+                    # exact result of Python's positive bigint operation.
+                    return operand
+                return Expression(f"{operator}({operand.code})", operand.shape)
             if isinstance(node.op, ast.Invert):
                 if operand.shape == BIGINT:
                     return Expression(f"~({operand.code})", BIGINT)
@@ -2669,6 +2976,29 @@ class MethodCompiler:
 
         if isinstance(node, ast.Call):
             return self.call(node, suppress_gap=suppress_gap)
+
+        if isinstance(node, ast.BoolOp):
+            if len(node.values) < 2:
+                self.fail(node, "boolean operations require at least two operands")
+            values = [
+                self.expression(value, suppress_gap=suppress_gap)
+                for value in node.values
+            ]
+            if any(value.shape != BOOLEAN for value in values):
+                self.fail(
+                    node,
+                    "expression-valued and/or requires proved boolean operands",
+                )
+            if isinstance(node.op, ast.And):
+                operator = "&&"
+            elif isinstance(node.op, ast.Or):
+                operator = "||"
+            else:
+                self.fail(node, f"unsupported boolean operator {type(node.op).__name__}")
+            return Expression(
+                "(" + f" {operator} ".join(value.code for value in values) + ")",
+                BOOLEAN,
+            )
 
         if isinstance(node, ast.Compare):
             if len(node.ops) != 1 or len(node.comparators) != 1:
@@ -2705,6 +3035,51 @@ class MethodCompiler:
                     ),
                 )
                 return Expression(f"!({equality})", BOOLEAN)
+            if isinstance(node.ops[0], (ast.Is, ast.IsNot)):
+                if left.shape.kind is not ShapeKind.NULL and right.shape.kind is not ShapeKind.NULL:
+                    self.fail(node, "identity comparison is supported only with None")
+                equality = self.bind_once(
+                    (left, right),
+                    ("__left", "__right"),
+                    lambda names, fresh: self.equality_code(
+                        left.shape,
+                        right.shape,
+                        names[0],
+                        names[1],
+                        node,
+                        fresh_name=fresh,
+                    ),
+                )
+                return Expression(
+                    f"!({equality})"
+                    if isinstance(node.ops[0], ast.IsNot)
+                    else equality,
+                    BOOLEAN,
+                )
+            ordering_operators = {
+                ast.Lt: "lt",
+                ast.LtE: "le",
+                ast.Gt: "gt",
+                ast.GtE: "ge",
+            }
+            ordering = ordering_operators.get(type(node.ops[0]))
+            if ordering is not None:
+                try:
+                    code = self.bind_once(
+                        (left, right),
+                        ("__left", "__right"),
+                        lambda names, fresh: native_ordering_code(
+                            ordering,
+                            left.shape,
+                            right.shape,
+                            names[0],
+                            names[1],
+                            fresh_name=fresh,
+                        ),
+                    )
+                except NativeLoweringError as error:
+                    self.fail(node, str(error))
+                return Expression(code, BOOLEAN)
             self.fail(node, f"unsupported comparison {type(node.ops[0]).__name__}")
 
         if isinstance(node, ast.Subscript):
@@ -2848,6 +3223,7 @@ class MethodCompiler:
         if name in {
             "any",
             "bin",
+            "enumerate",
             "hash",
             "hex",
             "int",
@@ -2966,8 +3342,16 @@ class MethodCompiler:
             if isinstance(node.func, ast.Attribute)
             else None
         )
+        if receiver is not None and receiver.shape.nullable:
+            receiver = Expression(
+                self.require_non_null_code(receiver),
+                receiver.shape.required(),
+                receiver.facts,
+            )
         contract = self.resolve_call_contract(node, name, function, receiver)
-        arguments = self.contextualize_contract_arguments(node, contract, arguments)
+        arguments, keyword_values = self.contextualize_contract_arguments(
+            node, contract, arguments, keyword_values
+        )
         self.validate_contract(node, contract, arguments, keyword_values)
         arguments, result_override = self.adapt_contract_arguments(
             node,
@@ -3126,13 +3510,56 @@ class MethodCompiler:
             if len(arguments) == 3 and arguments[2].shape != STRING:
                 self.fail(node, f"{name} message requires string")
             actual, expected = arguments[:2]
-            comparator = self.equality_callback(actual.shape, expected.shape, node)
-            method = (
-                "this.assertEqualUsing"
-                if name == "self.assertEqual"
-                else "this.assertNotEqualUsing"
+            if (
+                actual.shape.kind is ShapeKind.ARRAY
+                and expected.shape.kind is ShapeKind.ARRAY
+                and 0
+                in {
+                    actual.facts.exact_sequence_length,
+                    expected.facts.exact_sequence_length,
+                }
+            ):
+                # Equality with a statically empty sequence depends only on
+                # length, so no fictitious element type or equality rule is
+                # needed for the empty literal.
+                comparator = (
+                    "(__actual, __expected) => "
+                    "__actual.length === 0 && __expected.length === 0"
+                )
+            else:
+                comparator = self.equality_callback(
+                    actual.shape, expected.shape, node
+                )
+            representation_values = (
+                actual.oracle_value_code,
+                expected.oracle_value_code,
             )
-            rendered = [actual.code, expected.code, comparator]
+            if any(value is not None for value in representation_values):
+                if not all(value is not None for value in representation_values):
+                    self.fail(
+                        node,
+                        "comparison between repr() and a non-repr value requires "
+                        "an explicit cross-runtime representation rule",
+                    )
+                method = (
+                    "this.assertEqualRepresentationsUsing"
+                    if name == "self.assertEqual"
+                    else "this.assertNotEqualRepresentationsUsing"
+                )
+                rendered = [
+                    actual.code,
+                    expected.code,
+                    comparator,
+                    representation_values[0],
+                    representation_values[1],
+                ]
+            else:
+                method = (
+                    "this.assertEqualUsing"
+                    if name == "self.assertEqual"
+                    else "this.assertNotEqualUsing"
+                )
+                rendered = [actual.code, expected.code, comparator]
             if len(arguments) == 3:
                 rendered.append(arguments[2].code)
             return Expression(f"{method}({', '.join(rendered)})", VOID)

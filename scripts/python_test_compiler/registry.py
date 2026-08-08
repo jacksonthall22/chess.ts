@@ -12,6 +12,8 @@ from enum import Enum
 from transpilation_helper import py_identifier_to_ts
 
 from .target import (
+    ARROW,
+    ARROW_INPUT,
     BASE_BOARD,
     BIGINT,
     BITBOARD_TRANSFORM,
@@ -20,6 +22,8 @@ from .target import (
     BOOLEAN,
     GAME,
     GAME_NODE,
+    FLOAT,
+    FILE_EXPORTER,
     HEADERS,
     LEGAL_MOVE_GENERATOR,
     LEGAL_MOVE_ITERATOR,
@@ -28,13 +32,17 @@ from .target import (
     NULL,
     NUMBER,
     PIECE,
+    POV_SCORE,
     PSEUDO_LEGAL_MOVE_GENERATOR,
     SQUARE_SET,
+    SCORE,
     STRING,
     STRING_EXPORTER,
     STRING_IO,
     UNKNOWN,
     VOID,
+    WDL,
+    WDL_MODEL,
     RuntimeTypeGuard,
     ShapeKind,
     TargetShape,
@@ -60,7 +68,14 @@ class ShapeRule:
     shapes: tuple[TargetShape, ...] = ()
     kinds: tuple[ShapeKind, ...] = ()
     structural: tuple[TargetShape, ...] = ()
+    contextual_string_literals: frozenset[str] = frozenset()
     description: str = "proved value"
+
+    def __post_init__(self) -> None:
+        if self.contextual_string_literals and len(self.shapes) != 1:
+            raise ValueError(
+                "contextual string literals require exactly one target shape"
+            )
 
     def accepts(self, shape: TargetShape) -> bool:
         if shape.kind in {ShapeKind.UNKNOWN, ShapeKind.VOID}:
@@ -199,6 +214,7 @@ class CallContract:
     positional_options: tuple[tuple[int, str], ...] = ()
     argument_adapters: tuple[ArgumentAdapter, ...] = ()
     result_refinement: NonEmptySequenceResult | None = None
+    result_guard: RuntimeTypeGuard | None = None
     result_assertion: TypeAssertion | None = None
     missing_constructor: MissingConstructor | None = None
 
@@ -273,12 +289,31 @@ class CallContract:
                 raise ValueError(
                     "a non-empty-sequence result requires an array argument rule"
                 )
+        if self.result_refinement is not None and self.result_guard is not None:
+            raise ValueError(
+                "a call contract cannot declare both a fixed result guard and "
+                "an argument-dependent refinement"
+            )
 
 
 def exact(*shapes: TargetShape, description: str | None = None) -> ShapeRule:
     return ShapeRule(
         shapes=shapes,
         description=description or " or ".join(shape.kind.value for shape in shapes),
+    )
+
+
+def finite_string_literals(
+    result: TargetShape,
+    *values: str,
+    description: str | None = None,
+) -> ShapeRule:
+    """Admit ordinary source strings only when their exact value is finite."""
+
+    return ShapeRule(
+        shapes=(result,),
+        contextual_string_literals=frozenset(values),
+        description=description or result.kind.value,
     )
 
 
@@ -303,6 +338,7 @@ def call_contract(
     positional_options: tuple[tuple[int, str], ...] = (),
     argument_adapters: tuple[ArgumentAdapter, ...] = (),
     result_refinement: NonEmptySequenceResult | None = None,
+    result_guard: RuntimeTypeGuard | None = None,
     result_assertion: TypeAssertion | None = None,
     missing_constructor: MissingConstructor | None = None,
 ) -> CallContract:
@@ -317,6 +353,7 @@ def call_contract(
         positional_options=positional_options,
         argument_adapters=argument_adapters,
         result_refinement=result_refinement,
+        result_guard=result_guard,
         result_assertion=result_assertion,
         missing_constructor=missing_constructor,
     )
@@ -489,6 +526,8 @@ def qualified_name_shape(name: str) -> TargetShape:
         return array_of(NUMBER)
     if name == "chess.BB_SQUARES":
         return array_of(BIGINT)
+    if name == "chess.engine.MateGiven":
+        return SCORE
     if name in REGISTERED_SCALAR_BITBOARDS:
         return BIGINT
 
@@ -515,6 +554,16 @@ def target_qualified_name(name: str) -> str | None:
     if name.startswith("chess.pgn."):
         suffix = name.removeprefix("chess.pgn.")
         return f"pgnModule.{py_identifier_to_ts(suffix)}"
+    if name == "chess.engine":
+        return "engineModule"
+    if name.startswith("chess.engine."):
+        suffix = name.removeprefix("chess.engine.")
+        return f"engineModule.{py_identifier_to_ts(suffix)}"
+    if name == "chess.svg":
+        return "svgModule"
+    if name.startswith("chess.svg."):
+        suffix = name.removeprefix("chess.svg.")
+        return f"svgModule.{py_identifier_to_ts(suffix)}"
     if name == "io.StringIO":
         return "pgnModule.StringIO"
     return None
@@ -574,9 +623,14 @@ def attribute_shape(attribute: str, receiver: TargetShape) -> TargetShape:
             return MOVE.optional()
         if attribute in {"comment", "starting_comment"}:
             return STRING
+    if kind is ShapeKind.ARROW and attribute == "color":
+        return STRING
     if kind is ShapeKind.GAME and attribute == "headers":
         return HEADERS
-    if kind is ShapeKind.STRING_EXPORTER and attribute == "columns":
+    if kind in {
+        ShapeKind.STRING_EXPORTER,
+        ShapeKind.FILE_EXPORTER,
+    } and attribute == "columns":
         return NUMBER.optional()
     return UNKNOWN
 
@@ -607,7 +661,10 @@ def writable_attribute_shape(
             "comment": STRING,
             "starting_comment": STRING,
         }.get(attribute)
-    if receiver.kind is ShapeKind.STRING_EXPORTER and attribute == "columns":
+    if receiver.kind in {
+        ShapeKind.STRING_EXPORTER,
+        ShapeKind.FILE_EXPORTER,
+    } and attribute == "columns":
         return NUMBER.optional()
     return None
 
@@ -615,7 +672,21 @@ def writable_attribute_shape(
 NUMBER_RULE = exact(NUMBER)
 BIGINT_RULE = exact(BIGINT)
 BOOLEAN_RULE = exact(BOOLEAN)
-STRING_RULE = exact(STRING)
+STRING_RULE = exact(STRING, WDL_MODEL, description="string")
+WDL_MODEL_VALUES = (
+    "sf",
+    "sf16",
+    "sf15.1",
+    "sf15",
+    "sf14",
+    "sf12",
+    "lichess",
+)
+WDL_MODEL_RULE = finite_string_literals(
+    WDL_MODEL,
+    *WDL_MODEL_VALUES,
+    description="registered WDL model",
+)
 MOVE_RULE = exact(MOVE)
 PIECE_RULE = exact(PIECE)
 GAME_NODE_RULE = exact(
@@ -623,11 +694,18 @@ GAME_NODE_RULE = exact(
     CHILD_GAME_NODE,
     description="GameNode or ChildNode",
 )
-STRING_EXPORTER_RULE = exact(STRING_EXPORTER)
+EXPORTER_RULE = exact(
+    STRING_EXPORTER,
+    FILE_EXPORTER,
+    description="StringExporter or FileExporter",
+)
 STRING_IO_RULE = exact(STRING_IO)
 ARRAY_NUMBER_RULE = exact(array_of(NUMBER))
 ARRAY_MOVE_RULE = exact(array_of(MOVE))
 TWO_NUMBER_TUPLE_RULE = exact(tuple_of(NUMBER, NUMBER))
+SCORE_RULE = exact(SCORE)
+POV_SCORE_OR_NULL_RULE = exact(POV_SCORE, NULL, description="PovScore or null")
+ARROW_INPUT_ARRAY_RULE = exact(array_of(ARROW_INPUT))
 MAP_PIECE_RULE = exact(map_of(NUMBER, PIECE))
 PIECE_OR_NULL_RULE = exact(PIECE, NULL, description="piece or null")
 BITBOARD_INPUT_RULE = exact(
@@ -658,23 +736,6 @@ LOCAL_BOARD_RULE = ShapeRule(
     description="Board or local generate-legal-moves protocol",
 )
 
-SQUARE_SET_GAP_ASSERTION = TypeAssertion(
-    target_type="chess.IntoSquareSet",
-    marker="parity-gap: square-set-value-semantics",
-    required_gap_root="square-set-value-semantics",
-    via_unknown=True,
-)
-SQUARE_SET_METHOD_GAP_ASSERTION = TypeAssertion(
-    target_type="never",
-    marker="parity-gap: square-set-value-semantics",
-    required_gap_root="square-set-value-semantics",
-)
-SQUARE_SET_RESULT_GAP_ASSERTION = TypeAssertion(
-    target_type="chess.SquareSet",
-    marker="parity-gap: square-set-value-semantics",
-    required_gap_root="square-set-value-semantics",
-    via_unknown=True,
-)
 LOCAL_BOARD_ASSERTION = TypeAssertion(
     target_type="chess.Board",
     marker="protocol-adapter: legal-move-generator-board",
@@ -687,8 +748,10 @@ CHILD_NODE_GUARD = RuntimeTypeGuard(
         "but did not return ChildNode"
     ),
 )
-
-
+GAME_RESULT_GUARD = RuntimeTypeGuard(
+    constructor="pgnModule.Game",
+    failure="pgn.read_game() returned no Game for a selected valid PGN fixture",
+)
 def named_call_contract(name: str | None) -> CallContract | None:
     """Return the complete contract for one registered named call."""
 
@@ -729,13 +792,6 @@ def named_call_contract(name: str | None) -> CallContract | None:
                     kind=ArgumentAdapterKind.TO_BIGINT,
                     result=BIGINT,
                 ),
-                ArgumentAdapter(
-                    index=0,
-                    source=exact(SQUARE_SET),
-                    kind=ArgumentAdapterKind.TYPE_ASSERTION,
-                    result=SQUARE_SET,
-                    assertion=SQUARE_SET_GAP_ASSERTION,
-                ),
             ),
         ),
         "chess.LegalMoveGenerator": call_contract(
@@ -769,20 +825,50 @@ def named_call_contract(name: str | None) -> CallContract | None:
             keyword_style=KeywordStyle.OPTIONS_OBJECT,
         ),
         "chess.pgn.FileExporter": call_contract(
-            STRING_EXPORTER,
+            FILE_EXPORTER,
             STRING_IO_RULE,
-            invocation=InvocationKind.MISSING_CONSTRUCTOR,
-            missing_constructor=MissingConstructor(
-                namespace="pgnModule",
-                name="FileExporter",
-                result_type="pgnModule.StringExporter",
-                marker="missing-capability: pgn-file-exporter",
-                required_gap_root="pgn-file-exporter",
-            ),
+            invocation=InvocationKind.CONSTRUCT,
         ),
         "io.StringIO": call_contract(
             STRING_IO,
+            optional=(STRING_RULE,),
             invocation=InvocationKind.CONSTRUCT,
+        ),
+        "chess.pgn.read_game": call_contract(
+            GAME,
+            STRING_IO_RULE,
+            result_guard=GAME_RESULT_GUARD,
+        ),
+        "chess.engine.Cp": call_contract(
+            SCORE,
+            NUMBER_RULE,
+            invocation=InvocationKind.CONSTRUCT,
+        ),
+        "chess.engine.Mate": call_contract(
+            SCORE,
+            NUMBER_RULE,
+            invocation=InvocationKind.CONSTRUCT,
+        ),
+        "chess.engine.PovScore": call_contract(
+            POV_SCORE,
+            SCORE_RULE,
+            BOOLEAN_RULE,
+            invocation=InvocationKind.CONSTRUCT,
+        ),
+        "chess.engine.Wdl": call_contract(
+            WDL,
+            NUMBER_RULE,
+            NUMBER_RULE,
+            NUMBER_RULE,
+            invocation=InvocationKind.CONSTRUCT,
+        ),
+        "chess.svg.Arrow": call_contract(
+            ARROW,
+            NUMBER_RULE,
+            NUMBER_RULE,
+            keywords=(("color", STRING_RULE),),
+            invocation=InvocationKind.CONSTRUCT,
+            keyword_style=KeywordStyle.OPTIONS_OBJECT,
         ),
         "chess.Board.empty": call_contract(BOARD),
         "chess.BaseBoard.empty": call_contract(BASE_BOARD),
@@ -959,38 +1045,9 @@ def method_call_contract(
         if method in no_arg:
             return call_contract(no_arg[method])
         if method in {"isdisjoint", "issubset", "issuperset"}:
-            return call_contract(
-                BOOLEAN,
-                exact(SQUARE_SET),
-                argument_adapters=(
-                    ArgumentAdapter(
-                        index=0,
-                        source=exact(SQUARE_SET),
-                        kind=ArgumentAdapterKind.TYPE_ASSERTION,
-                        result=SQUARE_SET,
-                        assertion=SQUARE_SET_METHOD_GAP_ASSERTION,
-                    ),
-                ),
-            )
+            return call_contract(BOOLEAN, exact(SQUARE_SET))
         if method in {"union", "intersection", "difference", "symmetric_difference"}:
-            return call_contract(
-                SQUARE_SET,
-                exact(SQUARE_SET),
-                argument_adapters=(
-                    ArgumentAdapter(
-                        index=0,
-                        source=exact(SQUARE_SET),
-                        kind=ArgumentAdapterKind.TYPE_ASSERTION,
-                        result=SQUARE_SET,
-                        assertion=SQUARE_SET_METHOD_GAP_ASSERTION,
-                    ),
-                ),
-                result_assertion=(
-                    SQUARE_SET_RESULT_GAP_ASSERTION
-                    if method == "symmetric_difference"
-                    else None
-                ),
-            )
+            return call_contract(SQUARE_SET, exact(SQUARE_SET))
         if method in {
             "update",
             "intersection_update",
@@ -1021,6 +1078,31 @@ def method_call_contract(
             ShapeKind.CHILD_GAME_NODE,
         } and method == "is_main_variation":
             return call_contract(BOOLEAN)
+        if kind is ShapeKind.CHILD_GAME_NODE and method in {"san", "uci"}:
+            return call_contract(STRING)
+        if method == "has_variation":
+            return call_contract(BOOLEAN, MOVE_RULE)
+        if method in {"clock", "emt"}:
+            return call_contract(FLOAT.optional())
+        if method == "eval_depth":
+            return call_contract(NUMBER.optional())
+        if method in {"set_clock", "set_emt"}:
+            return call_contract(
+                VOID,
+                exact(NUMBER, FLOAT, NULL, description="number or null"),
+            )
+        if method == "eval":
+            return call_contract(POV_SCORE.optional())
+        if method == "set_eval":
+            return call_contract(
+                VOID,
+                POV_SCORE_OR_NULL_RULE,
+                optional=(exact(NUMBER, NULL, description="number or null"),),
+            )
+        if method == "arrows":
+            return call_contract(array_of(ARROW))
+        if method == "set_arrows":
+            return call_contract(VOID, ARROW_INPUT_ARRAY_RULE)
         if method in {"root", "end"}:
             return call_contract(GAME_NODE)
         if method in {"add_variation", "add_main_variation"}:
@@ -1048,11 +1130,43 @@ def method_call_contract(
             if method == "mainline_moves":
                 return call_contract(MAINLINE_MOVE)
             if method == "accept":
-                return call_contract(VOID, STRING_EXPORTER_RULE)
+                return call_contract(VOID, EXPORTER_RULE)
             if method in {"promote", "demote"}:
                 return call_contract(VOID, GAME_NODE_RULE)
             if method == "promote_to_main":
                 return call_contract(VOID, MOVE_RULE)
+
+    if kind is ShapeKind.POV_SCORE:
+        if method in {"white", "black"}:
+            return call_contract(SCORE)
+
+    if kind is ShapeKind.SCORE:
+        if method in {"score", "mate"}:
+            if method == "score":
+                return call_contract(
+                    NUMBER.optional(),
+                    keywords=(("mate_score", NUMBER_RULE),),
+                    keyword_style=KeywordStyle.OPTIONS_OBJECT,
+                )
+            return call_contract(NUMBER.optional())
+        if method == "wdl":
+            return call_contract(
+                WDL,
+                keywords=(
+                    ("model", WDL_MODEL_RULE),
+                    ("ply", NUMBER_RULE),
+                ),
+                keyword_style=KeywordStyle.OPTIONS_OBJECT,
+            )
+
+    if kind is ShapeKind.WDL:
+        if method in {
+            "expectation",
+            "winning_chance",
+            "drawing_chance",
+            "losing_chance",
+        }:
+            return call_contract(FLOAT)
 
     if kind is ShapeKind.STRING_IO and method in {"getvalue", "read"}:
         return call_contract(

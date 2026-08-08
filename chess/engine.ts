@@ -1,6 +1,115 @@
 import { bool as utilsBool } from './utils'
 import { WHITE, BLACK, Color } from './index'
 
+/** ========== Custom declarations (no mirror in python-chess) ========== */
+
+type ScoreTupleValues = readonly [
+  boolean,
+  boolean,
+  boolean,
+  number,
+  number | null,
+]
+
+/**
+ * The fixed-shape Python tuple returned by :meth:`Score._score_tuple()`.
+ *
+ * JavaScript arrays have reference equality and coercive ordering rather than
+ * Python's element-wise equality and lexicographic ordering. Keep that
+ * language-boundary behavior on the tuple value so translated comparison
+ * expressions retain the repository's established ``equals()``, ``lt()``,
+ * ``le()``, ``gt()``, and ``ge()`` shape.
+ */
+class ScoreTuple {
+  constructor(
+    private readonly source: Score,
+    private readonly values: ScoreTupleValues,
+  ) {}
+
+  private storedCpIsIdentical(other: ScoreTuple): boolean {
+    return this.source instanceof Cp && this.source === other.source
+  }
+
+  private valuesEqual(other: ScoreTuple, index: number): boolean {
+    const left = this.values[index]
+    const right = other.values[index]
+    return (
+      left === right ||
+      (index === 4 &&
+        this.storedCpIsIdentical(other) &&
+        typeof left === 'number' &&
+        typeof right === 'number' &&
+        Number.isNaN(left) &&
+        Number.isNaN(right))
+    )
+  }
+
+  equals(other: ScoreTuple): boolean {
+    if (other === this) {
+      return true
+    }
+
+    return this.values.every((_value, index) =>
+      this.valuesEqual(other, index),
+    )
+  }
+
+  private compare(other: ScoreTuple): number {
+    if (other === this) {
+      return 0
+    }
+
+    for (let index = 0; index < this.values.length; index += 1) {
+      if (this.valuesEqual(other, index)) {
+        continue
+      }
+
+      const left = this.values[index]
+      const right = other.values[index]
+
+      // Valid Score tuples only compare null with null: the preceding tuple
+      // fields distinguish centipawn scores from mate scores. Preserve
+      // Python's failure for an invalid tuple that reaches an ordering
+      // comparison between None and a number.
+      if (left === null || right === null) {
+        throw new TypeError('cannot order a null score value')
+      }
+
+      const normalizedLeft = typeof left === 'boolean' ? Number(left) : left
+      const normalizedRight = typeof right === 'boolean' ? Number(right) : right
+      if (normalizedLeft < normalizedRight) {
+        return -1
+      } else if (normalizedLeft > normalizedRight) {
+        return 1
+      } else {
+        // Python leaves NaN unordered. Returning NaN keeps every comparison
+        // of the aggregate comparator with zero false as well.
+        return Number.NaN
+      }
+    }
+
+    return 0
+  }
+
+  lt(other: ScoreTuple): boolean {
+    return this.compare(other) < 0
+  }
+
+  le(other: ScoreTuple): boolean {
+    return this.compare(other) <= 0
+  }
+
+  gt(other: ScoreTuple): boolean {
+    return this.compare(other) > 0
+  }
+
+  ge(other: ScoreTuple): boolean {
+    return this.compare(other) >= 0
+  }
+}
+
+/** ========== Direct transpilation ========== */
+
 // prettier-ignore
 export type WdlModel = "sf" | "sf16" | "sf15.1" | "sf15" | "sf14" | "sf12" | "lichess"
 
@@ -67,7 +176,7 @@ export class PovScore {
 
   equals(other: object): boolean {
     if (other instanceof PovScore) {
-      return this.white() === other.white()
+      return this.white().equals(other.white())
     } else {
       return false
     }
@@ -176,21 +285,21 @@ export abstract class Score {
 
   abstract abs(): Score
 
-  _scoreTuple(): [boolean, boolean, boolean, number, number | null] {
+  _scoreTuple(): ScoreTuple {
     const mate = this.mate()
-    return [
+    return new ScoreTuple(this, [
       this instanceof MateGivenType,
       mate !== null && mate > 0,
       mate === null,
-      -(mate || 0),
+      mate === null || mate === 0 ? 0 : -mate,
       this.score(),
-    ]
+    ])
   }
 
   // __eq__()
   equals(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() === other._scoreTuple()
+      return this._scoreTuple().equals(other._scoreTuple())
     } else {
       return false
     }
@@ -199,7 +308,7 @@ export abstract class Score {
   // __lt__()
   lt(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() < other._scoreTuple()
+      return this._scoreTuple().lt(other._scoreTuple())
     } else {
       return false
     }
@@ -208,7 +317,7 @@ export abstract class Score {
   // __le__()
   le(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() <= other._scoreTuple()
+      return this._scoreTuple().le(other._scoreTuple())
     } else {
       return false
     }
@@ -217,7 +326,7 @@ export abstract class Score {
   // __gt__()
   gt(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() > other._scoreTuple()
+      return this._scoreTuple().gt(other._scoreTuple())
     } else {
       return false
     }
@@ -226,7 +335,7 @@ export abstract class Score {
   // __ge__()
   ge(other: object): boolean {
     if (other instanceof Score) {
-      return this._scoreTuple() >= other._scoreTuple()
+      return this._scoreTuple().ge(other._scoreTuple())
     } else {
       return false
     }
@@ -572,7 +681,7 @@ export class PovWdl {
   // __eq__()
   equals(other: object): boolean {
     if (other instanceof PovWdl) {
-      return this.white() === other.white()
+      return this.white().equals(other.white())
     } else if (other instanceof Array) {
       return (
         other.length === 3 &&
@@ -640,6 +749,19 @@ export class Wdl {
    */
   expectation(): number {
     return (this.wins + 0.5 * this.draws) / this.total()
+  }
+
+  equals(other: object): boolean {
+    if (other === this) {
+      return true
+    }
+    return (
+      other instanceof Wdl &&
+      other.constructor === this.constructor &&
+      this.wins === other.wins &&
+      this.draws === other.draws &&
+      this.losses === other.losses
+    )
   }
 
   // __bool__()

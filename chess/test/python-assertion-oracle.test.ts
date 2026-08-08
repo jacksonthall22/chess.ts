@@ -47,6 +47,18 @@ describe('Python assertion oracle', () => {
     expect(() => values.value(Number.MAX_SAFE_INTEGER + 1)).toThrow(
       'requires a safe integer',
     )
+    expect(values.value(Number.NaN)).toEqual([
+      'number',
+      '7ff8000000000000',
+    ])
+    expect(values.value(Number.POSITIVE_INFINITY)).toEqual([
+      'number',
+      '7ff0000000000000',
+    ])
+    expect(values.value(Number.NEGATIVE_INFINITY)).toEqual([
+      'number',
+      'fff0000000000000',
+    ])
   })
 
   test('assigns deterministic per-test identities to PGN nodes', () => {

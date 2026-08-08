@@ -91,6 +91,38 @@ export abstract class TestCase {
     this.#assertionOracle?.notEqual(actual, expected)
   }
 
+  assertEqualRepresentationsUsing<
+    ActualRepresentation,
+    ExpectedRepresentation,
+  >(
+    actualRepresentation: ActualRepresentation,
+    expectedRepresentation: ExpectedRepresentation,
+    equals: Equality<ActualRepresentation, ExpectedRepresentation>,
+    actual: unknown,
+    expected: unknown,
+    message?: string,
+  ): void {
+    const equal = equals(actualRepresentation, expectedRepresentation)
+    expect(equal, message).toBe(true)
+    this.#assertionOracle?.equal(actual, expected)
+  }
+
+  assertNotEqualRepresentationsUsing<
+    ActualRepresentation,
+    ExpectedRepresentation,
+  >(
+    actualRepresentation: ActualRepresentation,
+    expectedRepresentation: ExpectedRepresentation,
+    equals: Equality<ActualRepresentation, ExpectedRepresentation>,
+    actual: unknown,
+    expected: unknown,
+    message?: string,
+  ): void {
+    const equal = equals(actualRepresentation, expectedRepresentation)
+    expect(equal, message).toBe(false)
+    this.#assertionOracle?.notEqual(actual, expected)
+  }
+
   assertTrue(value: boolean, message?: string): void {
     expect(value, message).toBe(true)
     this.#assertionOracle?.truth(value)

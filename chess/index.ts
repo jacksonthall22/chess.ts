@@ -25,7 +25,13 @@ import {
   iterMap,
   iterNext,
   parseIntStrict,
+  parsePythonFloat,
+  parsePythonInt,
+  PYTHON_LEADING_WHITESPACE,
+  PYTHON_TRAILING_WHITESPACE,
+  PYTHON_WHITESPACE_RUN,
   range,
+  splitWhitespaceWithMax,
   StopIteration,
 } from './utils'
 import { KeyError, ValueError } from './errors'
@@ -36,6 +42,37 @@ export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
 export const colorIdx = (color: Color): 1 | 0 => boolToNumber(color)
+
+/**
+ * Retains Python's int/float distinction so `hmvc 1.0` cannot silently become
+ * the valid integer operation `hmvc 1` when JavaScript collapses both to
+ * `number`.
+ */
+class EpdOperations<T> extends Map<string, T> {
+  private readonly pythonFloatOpcodes = new Set<string>()
+
+  set(opcode: string, value: T): this {
+    this.pythonFloatOpcodes.delete(opcode)
+    return super.set(opcode, value)
+  }
+
+  setPythonFloat(opcode: string, value: T): this {
+    super.set(opcode, value)
+    this.pythonFloatOpcodes.add(opcode)
+    return this
+  }
+
+  stringifyCounter(opcode: string): string {
+    if (this.pythonFloatOpcodes.has(opcode)) {
+      throw new ValueError(`invalid ${opcode}: expected an integer`)
+    }
+    const value = this.get(opcode)
+    if (typeof value === 'bigint') {
+      throw new ValueError(`invalid ${opcode}: integer is outside safe range`)
+    }
+    return String(value)
+  }
+}
 
 /** ========== Direct transpilation ========== */
 
@@ -710,12 +747,21 @@ export class Piece {
     return this.pieceType + (this.color ? -1 : 5)
   }
 
+  equals(other: unknown): boolean {
+    return (
+      other instanceof Piece &&
+      other.constructor === this.constructor &&
+      this.pieceType === other.pieceType &&
+      this.color === other.color
+    )
+  }
+
   toString(): string {
     return this.symbol()
   }
 
   toRepr(): string {
-    return `Piece.fromSymbol(${this.symbol()})`
+    return `Piece.fromSymbol('${this.symbol()}')`
   }
 
   _reprSvg_(): string {
@@ -912,7 +958,7 @@ export class BaseBoard {
   kings: Bitboard
   promoted: Bitboard
 
-  constructor(boardFen: string | null = null) {
+  constructor(boardFen: string | null = STARTING_BOARD_FEN) {
     this.occupiedCo = [BB_EMPTY, BB_EMPTY]
 
     // NOTE: We have to initialize these to avoid TS errors.
@@ -1371,7 +1417,9 @@ export class BaseBoard {
 
   _setBoardFen(fen: string): void {
     // Compatibility with setFen().
-    fen = fen.trim()
+    fen = fen
+      .replace(PYTHON_LEADING_WHITESPACE, '')
+      .replace(PYTHON_TRAILING_WHITESPACE, '')
     if (fen.includes(' ')) {
       throw new ValueError(
         `expected position part of fen, got multiple parts: ${fen}`,
@@ -1489,7 +1537,7 @@ export class BaseBoard {
   _setChess960Pos(scharnagl: number): void {
     if (!(0 <= scharnagl && scharnagl <= 959)) {
       throw new ValueError(
-        `chess960 position index not 0 <= {scharnagl} <= 959`,
+        `chess960 position index not 0 <= ${scharnagl} <= 959`,
       )
     }
 
@@ -1544,7 +1592,7 @@ export class BaseBoard {
       }
     }
     for (const i of range(1, 8)) {
-      if (~used.includes(i)) {
+      if (!used.includes(i)) {
         this.kings = BB_FILES[i] & BB_BACKRANKS
         used.push(i)
         break
@@ -1859,7 +1907,9 @@ export class BaseBoard {
    * Creates a copy of the board.
    */
   copy(): this {
-    const board = new (this.constructor as new () => this)()
+    const board = new (this.constructor as new (
+      boardFen: string | null,
+    ) => this)(null)
 
     board.pawns = this.pawns
     board.knights = this.knights
@@ -1884,8 +1934,8 @@ export class BaseBoard {
    * Creates a new empty board. Also see
    * :func:`~chess.BaseBoard.clearBoard()`.
    */
-  static empty() {
-    return new BaseBoard(null)
+  static empty<T extends typeof BaseBoard>(this: T): InstanceType<T> {
+    return new this(null) as InstanceType<T>
   }
 
   /**
@@ -1896,10 +1946,13 @@ export class BaseBoard {
    *      >>>
    *      >>> board = chess.Board.fromChess960Pos(random.randint(0, 959))
    */
-  static fromChess960Pos(scharnagl: number): BaseBoard {
+  static fromChess960Pos<T extends typeof BaseBoard>(
+    this: T,
+    scharnagl: number,
+  ): InstanceType<T> {
     const board = this.empty()
     board.setChess960Pos(scharnagl)
-    return board
+    return board as InstanceType<T>
   }
 }
 
@@ -3240,7 +3293,7 @@ export class Board extends BaseBoard {
    *     :func:`~chess.Board.isValid()` to detect invalid positions.
    */
   setFen(fen: string): void {
-    const parts = fen.split(' ')
+    const parts = fen.split(PYTHON_WHITESPACE_RUN).filter(Boolean)
 
     // Board part.
     const boardPart = parts.shift()
@@ -3470,7 +3523,10 @@ export class Board extends BaseBoard {
   }
 
   _epdOperations(
-    operations: Map<string, string | number | null | Move | Iterable<Move>>,
+    operations: Map<
+      string,
+      string | number | bigint | null | Move | Iterable<Move>
+    >,
   ): string {
     let epd: string[] = []
     let firstOp = true
@@ -3499,6 +3555,8 @@ export class Board extends BaseBoard {
         epd.push(' ')
         epd.push(this.san(operand))
         epd.push(';')
+      } else if (typeof operand === 'bigint') {
+        epd.push(` ${operand};`)
       } else if (typeof operand === 'number') {
         if (!isFinite(operand)) {
           throw new Error(
@@ -3581,7 +3639,7 @@ export class Board extends BaseBoard {
     } = {},
     operations: Map<
       string,
-      null | string | number | Move | IterableIterator<Move>
+      null | string | number | bigint | Move | IterableIterator<Move>
     > = new Map(),
   ): string {
     let epSquare: Square | null
@@ -3601,14 +3659,7 @@ export class Board extends BaseBoard {
     ]
 
     if (operations.size !== 0) {
-      epd.push(
-        this._epdOperations(
-          operations as Map<
-            string,
-            null | string | number | Move | IterableIterator<Move>
-          >,
-        ),
-      )
+      epd.push(this._epdOperations(operations))
     }
 
     return epd.join(' ')
@@ -3617,9 +3668,10 @@ export class Board extends BaseBoard {
   _parseEpdOps<T extends Board>(
     operationPart: string,
     makeBoard: () => T,
-  ): Map<string, string | number | null | Move | Move[]> {
-    let operations: Map<string, string | number | null | Move | Move[]> =
-      new Map()
+  ): EpdOperations<string | number | bigint | null | Move | Move[]> {
+    let operations = new EpdOperations<
+      string | number | bigint | null | Move | Move[]
+    >()
     let state = 'opcode'
     let opcode = ''
     let operand = ''
@@ -3672,22 +3724,21 @@ export class Board extends BaseBoard {
           break
         case 'numeric':
           if (ch === null || ch === ';') {
-            let parsed: number
             if (
               operand.includes('.') ||
               operand.includes('e') ||
               operand.includes('E')
             ) {
-              parsed = parseFloat(operand)
-              if (!isFinite(parsed)) {
+              const parsed = parsePythonFloat(operand)
+              if (!Number.isFinite(parsed)) {
                 throw new ValueError(
-                  `Invalid numeric operand for epd operation ${opcode}: ${operand}`,
+                  `invalid numeric operand for epd operation ${JSON.stringify(opcode)}: ${JSON.stringify(operand)}`,
                 )
               }
+              operations.setPythonFloat(opcode, parsed)
             } else {
-              parsed = parseInt(operand)
+              operations.set(opcode, parsePythonInt(operand))
             }
-            operations.set(opcode, parsed)
             opcode = ''
             operand = ''
             state = 'opcode'
@@ -3735,7 +3786,9 @@ export class Board extends BaseBoard {
 
             if (opcode === 'pv') {
               let variation: Move[] = []
-              for (let token of operand.split(' ')) {
+              for (let token of operand
+                .split(PYTHON_WHITESPACE_RUN)
+                .filter(Boolean)) {
                 let move = position.parseXboard(token)
                 variation.push(move)
                 position.push(move)
@@ -3750,7 +3803,8 @@ export class Board extends BaseBoard {
               operations.set(
                 opcode,
                 operand
-                  .split(' ')
+                  .split(PYTHON_WHITESPACE_RUN)
+                  .filter(Boolean)
                   .map(token => (position as T).parseXboard(token)),
               )
             } else {
@@ -3784,8 +3838,16 @@ export class Board extends BaseBoard {
    *
    * :raises: :exc:`ValueError` if the EPD string is invalid.
    */
-  setEpd(epd: string): Map<string, string | number | null | Move | Move[]> {
-    let parts = epd.trim().split(/\s+/).slice(0, 4)
+  setEpd(
+    epd: string,
+  ): Map<string, string | number | bigint | null | Move | Move[]> {
+    const parts = splitWhitespaceWithMax(
+      epd
+        .replace(PYTHON_LEADING_WHITESPACE, '')
+        .replace(PYTHON_TRAILING_WHITESPACE, '')
+        .replace(/;+$/, ''),
+      4,
+    )
 
     // Parse ops.
     if (parts.length > 4) {
@@ -3796,8 +3858,16 @@ export class Board extends BaseBoard {
             parts.join(' ') + ' 0 1',
           ),
       )
-      parts.push(operations.has('hmvc') ? String(operations.get('hmvc')) : '0')
-      parts.push(operations.has('fmvn') ? String(operations.get('fmvn')) : '1')
+      parts.push(
+        operations.has('hmvc')
+          ? operations.stringifyCounter('hmvc')
+          : '0',
+      )
+      parts.push(
+        operations.has('fmvn')
+          ? operations.stringifyCounter('fmvn')
+          : '1',
+      )
       this.setFen(parts.join(' '))
       return operations
     } else {
@@ -4342,7 +4412,7 @@ export class Board extends BaseBoard {
    * :data:`~chess.Board.castlingRights`.
    */
   cleanCastlingRights(): Bitboard {
-    if (this._stack) {
+    if (this._stack.length !== 0) {
       // No new castling rights are assigned in a game, so we can assume
       // they were filtered already.
       return this.castlingRights
@@ -5105,11 +5175,14 @@ export class Board extends BaseBoard {
   /**
    * Creates a new empty board. Also see :func:`~chess.Board.clear()`.
    */
-  static empty<T extends typeof Board>(
+  static empty<T extends typeof BaseBoard>(
     this: T,
     { chess960 = false }: { chess960?: boolean } = {},
   ): InstanceType<T> {
-    return new this(null, { chess960 }) as InstanceType<T>
+    return new (this as unknown as new (
+      fen: string | null,
+      options: { chess960?: boolean },
+    ) => InstanceType<T>)(null, { chess960 })
   }
 
   /**
@@ -5124,17 +5197,21 @@ export class Board extends BaseBoard {
     { chess960 = false }: { chess960?: boolean } = {},
   ): [
     InstanceType<T>,
-    Map<string, null | string | number | Move | Array<Move>>,
+    Map<string, null | string | number | bigint | Move | Array<Move>>,
   ] {
     const board = this.empty({ chess960 })
     return [board, board.setEpd(epd)]
   }
 
-  static fromChess960Pos<T extends typeof Board>(
+  static fromChess960Pos<T extends typeof BaseBoard>(
     this: T,
     scharnagl: number,
   ): InstanceType<T> {
-    const board = this.empty({ chess960: true })
+    const board = (
+      this as unknown as {
+        empty(options: { chess960?: boolean }): InstanceType<T>
+      }
+    ).empty({ chess960: true })
     board.setChess960Pos(scharnagl)
     return board
   }
@@ -5156,7 +5233,7 @@ export class PseudoLegalMoveGenerator {
     return Array.from(this).length
   }
 
-  *[Symbol.iterator](): IterableIterator<Move> {
+  [Symbol.iterator](): IterableIterator<Move> {
     return this.board.generatePseudoLegalMoves()
   }
 
@@ -5196,7 +5273,7 @@ export class LegalMoveGenerator {
     return Array.from(this).length
   }
 
-  *[Symbol.iterator](): IterableIterator<Move> {
+  [Symbol.iterator](): IterableIterator<Move> {
     return this.board.generateLegalMoves()
   }
 
@@ -5321,6 +5398,10 @@ export class SquareSet {
     return scanForward(this.mask)
   }
 
+  [Symbol.iterator](): IterableIterator<Square> {
+    return this.iter()
+  }
+
   reversed() {
     return scanReversed(this.mask)
   }
@@ -5393,7 +5474,7 @@ export class SquareSet {
   }
 
   symmetricDifference(other: IntoSquareSet) {
-    return this.mask ^ new SquareSet(other).mask
+    return this.xor(other)
   }
 
   xor(other: IntoSquareSet) {

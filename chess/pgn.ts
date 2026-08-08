@@ -9,19 +9,76 @@ import { KeyError, ValueError } from './errors'
 
 import * as utils from './utils'
 
-/**
- * A minimal implementation of Python's `typing.TextIO` class interface.
- * Only the methods used internally by `pgn.ts` are implemented.
- */
-export class StringIO {
+/** Replace Python's Unicode `\\s` atom before compiling a JavaScript regex. */
+const pythonWhitespaceRegex = (source: string, flags?: string): RegExp =>
+  new RegExp(
+    source.replaceAll('\\s', utils.PYTHON_WHITESPACE_SOURCE),
+    flags,
+  )
+
+/** Direct equivalent of Python's ordered `max()`, including NaN behavior. */
+const max = (first: number, second: number): number =>
+  second > first ? second : first
+
+/** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
+const formatFixed = (value: number, fractionDigits: number): string => {
+  if (!Number.isFinite(value)) {
+    throw new ValueError('cannot convert float NaN to integer')
+  }
+
+  const negative = value < 0
+  const buffer = new ArrayBuffer(8)
+  const view = new DataView(buffer)
+  view.setFloat64(0, Math.abs(value), false)
+  const bits = view.getBigUint64(0, false)
+  const exponentBits = Number((bits >> 52n) & 0x7ffn)
+  const fractionBits = bits & ((1n << 52n) - 1n)
+  const significand =
+    exponentBits === 0 ? fractionBits : (1n << 52n) | fractionBits
+  const binaryExponent =
+    (exponentBits === 0 ? 1 - 1023 : exponentBits - 1023) - 52
+  const decimalScale = 10n ** BigInt(fractionDigits)
+
+  let numerator = significand * decimalScale
+  let denominator = 1n
+  if (binaryExponent >= 0) {
+    numerator <<= BigInt(binaryExponent)
+  } else {
+    denominator <<= BigInt(-binaryExponent)
+  }
+
+  let rounded = numerator / denominator
+  const remainder = numerator % denominator
+  if (
+    remainder * 2n > denominator ||
+    (remainder * 2n === denominator && rounded % 2n !== 0n)
+  ) {
+    rounded += 1n
+  }
+
+  const whole = rounded / decimalScale
+  const fraction = (rounded % decimalScale)
+    .toString()
+    .padStart(fractionDigits, '0')
+  return `${negative ? '-' : ''}${whole}.${fraction}`
+}
+
+/** The writable portion of Python's `typing.TextIO` used by `FileExporter`. */
+export interface TextIO {
+  write(str: string): number
+}
+
+/** A minimal in-memory text stream used by the PGN reader and writer. */
+export class StringIO implements TextIO {
   private buffer: string = ''
 
   constructor(s: string = '') {
     this.buffer = s
   }
 
-  write(str: string): void {
+  write(str: string): number {
     this.buffer += str
+    return Array.from(str).length
   }
 
   read(): string {
@@ -99,8 +156,9 @@ export const NAG_BLACK_SEVERE_TIME_PRESSURE = 139
 
 export const NAG_NOVELTY = 146
 
-export const TAG_REGEX =
-  /^\[([A-Za-z0-9][A-Za-z0-9_+#=:-]*)\s+\"([^\r]*)\"\]\s*$/
+export const TAG_REGEX = pythonWhitespaceRegex(
+  '^\\[([A-Za-z0-9][A-Za-z0-9_+#=:-]*)\\s+"([^\\r]*)"\\]\\s*$',
+)
 
 export const TAG_NAME_REGEX = /^[A-Za-z0-9][A-Za-z0-9_+#=:-]*$/ // NOTE: `\Z` -> `$`
 
@@ -121,18 +179,20 @@ export const MOVETEXT_REGEX = new RegExp(
     '|(\\()' +
     '|(\\))' +
     '|(\\*|1-0|0-1|1\\/2-1\\/2)' +
-    '|([\\?!]{1,2})' +
-    's', // `s` is equivalent to Python's `re.DOTALL`
+    '|([\\?!]{1,2})',
+  's', // `s` is equivalent to Python's `re.DOTALL`
 )
 
 export const SKIP_MOVETEXT_REGEX = /;|\{|\}/
 
-export const CLOCK_REGEX =
-  /(?<prefix>\s?)\[%clk\s(?<hours>\d+):(?<minutes>\d+):(?<seconds>\d+(?:\.\d*)?)\](?<suffix>\s?)/
-export const EMT_REGEX =
-  /(?<prefix>\s?)\[%emt\s(?<hours>\d+):(?<minutes>\d+):(?<seconds>\d+(?:\.\d*)?)\](?<suffix>\s?)/
+export const CLOCK_REGEX = pythonWhitespaceRegex(
+  '(?<prefix>\\s?)\\[%clk\\s(?<hours>\\d+):(?<minutes>\\d+):(?<seconds>\\d+(?:\\.\\d*)?)\\](?<suffix>\\s?)',
+)
+export const EMT_REGEX = pythonWhitespaceRegex(
+  '(?<prefix>\\s?)\\[%emt\\s(?<hours>\\d+):(?<minutes>\\d+):(?<seconds>\\d+(?:\\.\\d*)?)\\](?<suffix>\\s?)',
+)
 
-export const EVAL_REGEX = new RegExp(
+export const EVAL_REGEX = pythonWhitespaceRegex(
   '(?<prefix>\\s?)' +
     '\\[%eval\\s(?:' +
     '\\#(?<mate>[+-]?\\d+)' +
@@ -143,8 +203,8 @@ export const EVAL_REGEX = new RegExp(
     '(?<suffix>\\s?)',
 )
 
-export const ARROWS_REGEX = new RegExp(
-  '(?<prefix>s?)' +
+export const ARROWS_REGEX = pythonWhitespaceRegex(
+  '(?<prefix>\\s?)' +
     '\\[%(?:csl|cal)\\s(?<arrows>' +
     '[RGYB][a-h][1-8](?:[a-h][1-8])?' +
     '(?:,[RGYB][a-h][1-8](?:[a-h][1-8])?)*' +
@@ -154,30 +214,13 @@ export const ARROWS_REGEX = new RegExp(
 
 export const _condenseAffix = (
   infix: string,
-): ((substring: string, ...args: any[]) => string) => {
-  return (match: string, ...groups: any[]) => {
-    /*
-    ChatGPT says:
-    In TypeScript (and JavaScript), when you use string.replace() with a regular expression
-    that contains capturing groups, and you pass a function as the replacer, this function
-    receives the following arguments:
-
-    1. The entire matched substring.
-    2. The captured group values, one argument for each group.
-    3. The zero-based index of the match in the whole string.
-    4. The whole string being examined.
-    */
-    let fullMatch: string
-    ;[fullMatch, ...groups] = groups
-    if (groups.length < 4) {
-      throw new Error(`Not enough groups in the match array. groups: ${groups}`)
-    }
-    const prefix = groups[0]
-    const suffix = groups[-3]
+): ((substring: string, ...args: unknown[]) => string) => {
+  return (_match: string, ...args: unknown[]) => {
+    const match = args.at(-1) as Record<'prefix' | 'suffix', string>
     if (infix) {
-      return prefix + infix + suffix
+      return match.prefix + infix + match.suffix
     } else {
-      return prefix && suffix
+      return match.prefix && match.suffix
     }
   }
 }
@@ -505,9 +548,10 @@ export abstract class GameNode {
     const variation = this.getitem(move)
     const i = this.variations.indexOf(variation)
     if (i < this.variations.length - 1) {
-      this.variations[i + 1],
-        (this.variations[i] = this.variations[i]),
-        this.variations[i + 1]
+      ;[this.variations[i + 1], this.variations[i]] = [
+        this.variations[i],
+        this.variations[i + 1],
+      ]
     }
   }
 
@@ -737,7 +781,7 @@ export abstract class GameNode {
       prefix &&
       this.comment &&
       !this.comment.startsWith(' ') &&
-      this.comment.startsWith('\n')
+      !this.comment.startsWith('\n')
     ) {
       this.comment = prefix + ' ' + this.comment
     } else {
@@ -771,16 +815,15 @@ export abstract class GameNode {
   setClock(seconds: number | null): void {
     let clk = ''
     if (seconds !== null) {
-      seconds = Math.max(0, seconds)
+      seconds = max(0, seconds)
       const hours = Math.floor(seconds / 3600)
       const minutes = Math.floor((seconds % 3600) / 60)
       seconds = (seconds % 3600) % 60
-      const secondsPart = seconds
-        .toFixed(3)
+      const secondsPart = formatFixed(seconds, 3)
         .padStart(6, '0')
         .replace(/0+$/, '')
         .replace(/\.$/, '')
-      clk = `[%clk ${hours}:${minutes.toFixed(2).padStart(2, '0')}:${secondsPart}]`
+      clk = `[%clk ${hours}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
     }
 
     let found: number
@@ -829,16 +872,15 @@ export abstract class GameNode {
   setEmt(seconds: number | null): void {
     let emt = ''
     if (seconds !== null) {
-      seconds = Math.max(0, seconds)
+      seconds = max(0, seconds)
       const hours = Math.floor(seconds / 3600)
       const minutes = Math.floor((seconds % 3600) / 60)
       seconds = (seconds % 3600) % 60
-      const secondsPart = seconds
-        .toFixed(3)
+      const secondsPart = formatFixed(seconds, 3)
         .padStart(6, '0')
         .replace(/0+$/, '')
         .replace(/\.$/, '')
-      emt = `[%emt ${hours}:${minutes.toFixed(2).padStart(2, '0')}:${secondsPart}]`
+      emt = `[%emt ${hours}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
     }
 
     let found: number
@@ -1916,7 +1958,9 @@ export abstract class StringExporterMixin<
 
   flushCurrentLine(): void {
     if (this.currentLine) {
-      this.lines.push(this.currentLine.trimEnd())
+      this.lines.push(
+        this.currentLine.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+      )
     }
     this.currentLine = ''
   }
@@ -1924,7 +1968,8 @@ export abstract class StringExporterMixin<
   writeToken(token: string): void {
     if (
       this.columns !== null &&
-      this.columns - this.currentLine.length < token.length
+      this.columns - Array.from(this.currentLine).length <
+        Array.from(token).length
     ) {
       this.flushCurrentLine()
     }
@@ -1933,7 +1978,7 @@ export abstract class StringExporterMixin<
 
   writeLine(line: string = ''): void {
     this.flushCurrentLine()
-    this.lines.push(line.trimEnd())
+    this.lines.push(line.replace(utils.PYTHON_TRAILING_WHITESPACE, ''))
   }
 
   endGame(): void {
@@ -1980,7 +2025,14 @@ export abstract class StringExporterMixin<
 
   visitComment(comment: string): void {
     if (this.comments && (this.variations || this.variationDepth === 0)) {
-      this.writeToken('{ ' + comment.replace('}', '').trim() + ' } ')
+      this.writeToken(
+        '{ ' +
+          comment
+            .replaceAll('}', '')
+            .replace(utils.PYTHON_LEADING_WHITESPACE, '')
+            .replace(utils.PYTHON_TRAILING_WHITESPACE, '') +
+          ' } ',
+      )
       this.forceMovenumber = true
     }
   }
@@ -2046,12 +2098,16 @@ export class StringExporter extends StringExporterMixin<string> {
   result(): string {
     if (this.currentLine) {
       return Array.from(
-        utils.iterChain(this.lines, [this.currentLine.trimEnd()]),
+        utils.iterChain(this.lines, [
+          this.currentLine.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+        ]),
       )
         .join('\n')
-        .trimEnd()
+        .replace(utils.PYTHON_TRAILING_WHITESPACE, '')
     } else {
-      return this.lines.join('\n').trimEnd()
+      return this.lines
+        .join('\n')
+        .replace(utils.PYTHON_TRAILING_WHITESPACE, '')
     }
   }
 
@@ -2060,62 +2116,77 @@ export class StringExporter extends StringExporterMixin<string> {
   }
 }
 
-// TODO: Support `FileExporter` if running in a Node environment
-// /**
-//  * Acts like a :class:`~pgn.StringExporter`, but games are written
-//  * directly into a text file.
-//  *
-//  * There will always be a blank line after each game. Handling encodings is up
-//  * to the caller.
-//  *
-//  * >>> import pgn
-//  * >>>
-//  * >>> game = pgn.Game()
-//  * >>>
-//  * >>> newPgn = open("/dev/null", "w", encoding="utf-8")
-//  * >>> exporter = pgn.FileExporter(newPgn)
-//  * >>> game.accept(exporter)
-//  */
-// export class FileExporter extends StringExporterMixin<number> {
-//   handle: StringIO;
-//   written: number;
+/**
+ * Acts like a :class:`~pgn.StringExporter`, but games are written
+ * directly into a text file.
+ *
+ * There will always be a blank line after each game. Handling encodings is up
+ * to the caller.
+ *
+ * >>> import pgn
+ * >>>
+ * >>> game = pgn.Game()
+ * >>> virtualFile = new pgn.StringIO()
+ * >>> exporter = new pgn.FileExporter(virtualFile)
+ * >>> game.accept(exporter)
+ */
+export class FileExporter extends StringExporterMixin<number> {
+  handle: TextIO
+  written!: number
 
-//   constructor(handle: StringIO, { columns = 80, headers = true, comments = true, variations = true }: { columns?: number | null, headers?: boolean, comments?: boolean, variations?: boolean } = {}) {
-//     super({ columns, headers, comments, variations })
-//     this.handle = handle
-//   }
+  constructor(
+    handle: TextIO,
+    {
+      columns = 80,
+      headers = true,
+      comments = true,
+      variations = true,
+    }: {
+      columns?: number | null
+      headers?: boolean
+      comments?: boolean
+      variations?: boolean
+    } = {},
+  ) {
+    super({ columns, headers, comments, variations })
+    this.handle = handle
+  }
 
-//   beginGame(): void {
-//     this.written = 0
-//     super.beginGame()
-//   }
+  beginGame(): void {
+    this.written = 0
+    super.beginGame()
+  }
 
-//   flushCurrentLine(): void {
-//     if (this.currentLine) {
-//       this.written += this.handle.write(this.currentLine.trimEnd())
-//       this.written += this.handle.write("\n")
-//     }
-//     this.currentLine = ""
-//   }
+  flushCurrentLine(): void {
+    if (this.currentLine) {
+      this.written += this.handle.write(
+        this.currentLine.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+      )
+      this.written += this.handle.write('\n')
+    }
+    this.currentLine = ''
+  }
 
-//   writeLine(line: string = ""): void {
-//     this.flushCurrentLine()
-//     this.written += this.handle.write(line.trimEnd())
-//     this.written += this.handle.write("\n")
-//   }
+  writeLine(line: string = ''): void {
+    this.flushCurrentLine()
+    this.written += this.handle.write(
+      line.replace(utils.PYTHON_TRAILING_WHITESPACE, ''),
+    )
+    this.written += this.handle.write('\n')
+  }
 
-//   result(): number {
-//     return this.written
-//   }
+  result(): number {
+    return this.written
+  }
 
-//   toRepr(): string {
-//     return "<FileExporter>"
-//   }
+  toRepr(): string {
+    return '<FileExporter>'
+  }
 
-//   toString(): string {
-//     return this.toRepr()
-//   }
-// }
+  toString(): string {
+    return this.toRepr()
+  }
+}
 
 export function readGame(handle: StringIO): Game | null
 export function readGame<ResultT>(
@@ -2611,7 +2682,7 @@ export default {
   SkipVisitor,
   StringExporterMixin,
   StringExporter,
-  // FileExporter,
+  FileExporter,
   readGame,
   readHeaders,
   skipGame,
