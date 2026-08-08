@@ -25,9 +25,12 @@ import {
   iterMap,
   iterNext,
   parseIntStrict,
-  PYTHON_WHITESPACE_SOURCE,
+  parsePythonFloat,
+  parsePythonInt,
   range,
+  splitWhitespace,
   StopIteration,
+  stripPythonWhitespace,
 } from './utils'
 import { KeyError, ValueError } from './errors'
 
@@ -38,133 +41,27 @@ export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 /** Allow the truthy/falsy indexing trick, like `this.occupiedCo[colorIdx(WHITE)]` */
 export const colorIdx = (color: Color): 1 | 0 => boolToNumber(color)
 
-const PYTHON_WHITESPACE = new RegExp(PYTHON_WHITESPACE_SOURCE)
-const PYTHON_WHITESPACE_RUN = new RegExp(`${PYTHON_WHITESPACE_SOURCE}+`)
-const PYTHON_WHITESPACE_RUNS = new RegExp(`${PYTHON_WHITESPACE_SOURCE}+`, 'g')
+/** Retains Python's int/float distinction inside parsed EPD operations. */
+class EpdOperations<T> extends Map<string, T> {
+  private readonly pythonFloatOpcodes = new Set<string>()
 
-const PYTHON_INTEGER = /^[+-]?[0-9](?:_?[0-9])*$/
-const PYTHON_FLOAT =
-  /^[+-]?(?:(?:[0-9](?:_?[0-9])*(?:\.[0-9](?:_?[0-9])*)?)|(?:[0-9](?:_?[0-9])*\.)|(?:\.[0-9](?:_?[0-9])*))(?:[eE][+-]?[0-9](?:_?[0-9])*)?$/
-
-/**
- * Decimal-zero code points from Unicode 15.0, the character database used by
- * the Python 3.12 reference runtime in CI. Each zero begins one contiguous
- * ten-character decimal digit set.
- */
-const PYTHON_DECIMAL_ZERO_CODE_POINTS = [
-  0x30, 0x660, 0x6f0, 0x7c0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xbe6,
-  0xc66, 0xce6, 0xd66, 0xde6, 0xe50, 0xed0, 0xf20, 0x1040, 0x1090,
-  0x17e0, 0x1810, 0x1946, 0x19d0, 0x1a80, 0x1a90, 0x1b50, 0x1bb0,
-  0x1c40, 0x1c50, 0xa620, 0xa8d0, 0xa900, 0xa9d0, 0xa9f0, 0xaa50,
-  0xabf0, 0xff10, 0x104a0, 0x10d30, 0x11066, 0x110f0, 0x11136,
-  0x111d0, 0x112f0, 0x11450, 0x114d0, 0x11650, 0x116c0, 0x11730,
-  0x118e0, 0x11950, 0x11c50, 0x11d50, 0x11da0, 0x11f50, 0x16a60,
-  0x16ac0, 0x16b50, 0x1d7ce, 0x1d7d8, 0x1d7e2, 0x1d7ec, 0x1d7f6,
-  0x1e140, 0x1e2f0, 0x1e4f0, 0x1e950, 0x1fbf0,
-] as const
-
-/** Direct equivalent of Python's `str.strip()` default whitespace behavior. */
-const stripPythonWhitespace = (value: string): string => {
-  let start = 0
-  let end = value.length
-  while (start < end && PYTHON_WHITESPACE.test(value[start])) {
-    start += 1
+  set(opcode: string, value: T): this {
+    this.pythonFloatOpcodes.delete(opcode)
+    return super.set(opcode, value)
   }
-  while (end > start && PYTHON_WHITESPACE.test(value[end - 1])) {
-    end -= 1
-  }
-  return value.slice(start, end)
-}
 
-/** Direct equivalent of Python's acceptance of Unicode decimal digits. */
-const normalizePythonDecimalDigits = (value: string): string =>
-  Array.from(value, character => {
-    const codePoint = character.codePointAt(0)
-    if (codePoint === undefined) {
-      throw new Error('a Unicode character must contain one code point')
+  setPythonFloat(opcode: string, value: T): this {
+    super.set(opcode, value)
+    this.pythonFloatOpcodes.add(opcode)
+    return this
+  }
+
+  stringifyCounter(opcode: string): string {
+    if (this.pythonFloatOpcodes.has(opcode)) {
+      throw new ValueError(`invalid ${opcode}: expected an integer`)
     }
-
-    const zero = PYTHON_DECIMAL_ZERO_CODE_POINTS.find(
-      candidate => candidate <= codePoint && codePoint < candidate + 10,
-    )
-    return zero === undefined ? character : String(codePoint - zero)
-  }).join('')
-
-/** Direct equivalents of Python's strict `int()` and `float()` string parsing. */
-const parsePythonInt = (value: string): number => {
-  const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
-  if (!PYTHON_INTEGER.test(normalized)) {
-    throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
+    return String(this.get(opcode))
   }
-
-  const parsed = Number(normalized.replaceAll('_', ''))
-  if (!Number.isSafeInteger(parsed)) {
-    throw new ValueError(`integer is outside the safe range: ${value}`)
-  }
-  return Object.is(parsed, -0) ? 0 : parsed
-}
-
-const parsePythonFloat = (value: string): number => {
-  const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
-  if (!PYTHON_FLOAT.test(normalized)) {
-    throw new ValueError(`could not convert string to float: ${value}`)
-  }
-  return Number(normalized.replaceAll('_', ''))
-}
-
-/** Direct equivalent of `str.split(None, maxsplit)`. */
-const splitWhitespace = (value: string, maxSplit?: number): string[] => {
-  const normalized = stripPythonWhitespace(value)
-  if (!normalized) {
-    return []
-  }
-  if (maxSplit === undefined) {
-    return normalized.split(PYTHON_WHITESPACE_RUN)
-  }
-
-  const parts: string[] = []
-  let start = 0
-  for (const match of normalized.matchAll(PYTHON_WHITESPACE_RUNS)) {
-    if (parts.length === maxSplit) {
-      break
-    }
-    parts.push(normalized.slice(start, match.index))
-    start = match.index + match[0].length
-  }
-  parts.push(normalized.slice(start))
-  return parts
-}
-
-/** Retains Python's numeric type when JavaScript collapses int and float. */
-const EPD_FLOAT_OPERATIONS = new WeakMap<object, Set<string>>()
-
-const setEpdOperation = <T>(
-  operations: Map<string, T>,
-  opcode: string,
-  value: T,
-  { pythonFloat = false }: { pythonFloat?: boolean } = {},
-): void => {
-  operations.set(opcode, value)
-  let floatOpcodes = EPD_FLOAT_OPERATIONS.get(operations)
-  if (pythonFloat) {
-    if (floatOpcodes === undefined) {
-      floatOpcodes = new Set()
-      EPD_FLOAT_OPERATIONS.set(operations, floatOpcodes)
-    }
-    floatOpcodes.add(opcode)
-  } else {
-    floatOpcodes?.delete(opcode)
-  }
-}
-
-const stringifyEpdCounter = <T>(
-  operations: Map<string, T>,
-  opcode: string,
-): string => {
-  if (EPD_FLOAT_OPERATIONS.get(operations)?.has(opcode)) {
-    throw new ValueError(`invalid ${opcode}: expected an integer`)
-  }
-  return String(operations.get(opcode))
 }
 
 /** ========== Direct transpilation ========== */
@@ -3761,9 +3658,10 @@ export class Board extends BaseBoard {
   _parseEpdOps<T extends Board>(
     operationPart: string,
     makeBoard: () => T,
-  ): Map<string, string | number | null | Move | Move[]> {
-    let operations: Map<string, string | number | null | Move | Move[]> =
-      new Map()
+  ): EpdOperations<string | number | null | Move | Move[]> {
+    let operations = new EpdOperations<
+      string | number | null | Move | Move[]
+    >()
     let state = 'opcode'
     let opcode = ''
     let operand = ''
@@ -3782,8 +3680,7 @@ export class Board extends BaseBoard {
             if (opcode === '-') {
               opcode = ''
             } else if (opcode) {
-              setEpdOperation(
-                operations,
+              operations.set(
                 opcode,
                 ['pv', 'am', 'bm'].includes(opcode) ? [] : null,
               )
@@ -3800,8 +3697,7 @@ export class Board extends BaseBoard {
             state = 'string'
           } else if (ch === null || ch === ';') {
             if (opcode) {
-              setEpdOperation(
-                operations,
+              operations.set(
                 opcode,
                 ['pv', 'am', 'bm'].includes(opcode) ? [] : null,
               )
@@ -3829,11 +3725,9 @@ export class Board extends BaseBoard {
                   `invalid numeric operand for epd operation ${JSON.stringify(opcode)}: ${JSON.stringify(operand)}`,
                 )
               }
-              setEpdOperation(operations, opcode, parsed, {
-                pythonFloat: true,
-              })
+              operations.setPythonFloat(opcode, parsed)
             } else {
-              setEpdOperation(operations, opcode, parsePythonInt(operand))
+              operations.set(opcode, parsePythonInt(operand))
             }
             opcode = ''
             operand = ''
@@ -3844,7 +3738,7 @@ export class Board extends BaseBoard {
           break
         case 'string':
           if (ch === null || ch === '"') {
-            setEpdOperation(operations, opcode, operand)
+            operations.set(opcode, operand)
             opcode = ''
             operand = ''
             state = 'opcode'
@@ -3856,7 +3750,7 @@ export class Board extends BaseBoard {
           break
         case 'string_escape':
           if (ch === null) {
-            setEpdOperation(operations, opcode, operand)
+            operations.set(opcode, operand)
             opcode = ''
             operand = ''
             state = 'opcode'
@@ -3892,21 +3786,16 @@ export class Board extends BaseBoard {
                 position.pop()
               }
 
-              setEpdOperation(operations, opcode, variation)
+              operations.set(opcode, variation)
             } else if (['bm', 'am'].includes(opcode)) {
-              setEpdOperation(
-                operations,
+              operations.set(
                 opcode,
                 splitWhitespace(operand).map(token =>
                   (position as T).parseXboard(token),
                 ),
               )
             } else {
-              setEpdOperation(
-                operations,
-                opcode,
-                position.parseXboard(operand),
-              )
+              operations.set(opcode, position.parseXboard(operand))
             }
 
             opcode = ''
@@ -3953,12 +3842,12 @@ export class Board extends BaseBoard {
       )
       parts.push(
         operations.has('hmvc')
-          ? stringifyEpdCounter(operations, 'hmvc')
+          ? operations.stringifyCounter('hmvc')
           : '0',
       )
       parts.push(
         operations.has('fmvn')
-          ? stringifyEpdCounter(operations, 'fmvn')
+          ? operations.stringifyCounter('fmvn')
           : '1',
       )
       this.setFen(parts.join(' '))
@@ -5272,11 +5161,10 @@ export class Board extends BaseBoard {
     this: T,
     { chess960 = false }: { chess960?: boolean } = {},
   ): InstanceType<T> {
-    const BoardConstructor = this as unknown as new (
+    return new (this as unknown as new (
       fen: string | null,
       options: { chess960?: boolean },
-    ) => InstanceType<T>
-    return new BoardConstructor(null, { chess960 })
+    ) => InstanceType<T>)(null, { chess960 })
   }
 
   /**

@@ -42,6 +42,16 @@ policy. Keep the translated method body source-shaped and call the adapter at
 the exact point where Python uses the unavailable primitive. Document the
 semantic mismatch the adapter bridges.
 
+Target-only declarations are an exception budget. Before adding or retaining
+one, identify a valid input for which the closest direct JavaScript expression
+differs from pinned Python. Prefer an inline native TypeScript expression when
+it is exact, even if it is slightly longer; do not extract a one-use helper for
+readability or deduplication. Reuse the established primitive adapters in
+`chess/utils.ts` when applicable. Keep value-specific mechanics private to the
+smallest unavoidable adapter, and add a parity test for the semantic mismatch.
+See the adapter decision rule and comparison convention in
+[`py-to-ts-tips.md`](py-to-ts-tips.md).
+
 Do not silently fix an upstream bug only in TypeScript. Preserve the pinned
 behavior in synchronization work. Pursue the fix upstream first, or make any
 intentional divergence a separate, explicitly approved and documented change.

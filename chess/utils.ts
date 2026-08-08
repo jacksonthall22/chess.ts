@@ -7,6 +7,105 @@ export const PYTHON_WHITESPACE_SOURCE =
 const PYTHON_WHITESPACE_ONLY = new RegExp(
   `^(?:${PYTHON_WHITESPACE_SOURCE})+$`,
 )
+const PYTHON_WHITESPACE = new RegExp(PYTHON_WHITESPACE_SOURCE)
+const PYTHON_WHITESPACE_RUN = new RegExp(`${PYTHON_WHITESPACE_SOURCE}+`)
+const PYTHON_WHITESPACE_RUNS = new RegExp(
+  `${PYTHON_WHITESPACE_SOURCE}+`,
+  'g',
+)
+
+const PYTHON_INTEGER = /^[+-]?[0-9](?:_?[0-9])*$/
+const PYTHON_FLOAT =
+  /^[+-]?(?:(?:[0-9](?:_?[0-9])*(?:\.[0-9](?:_?[0-9])*)?)|(?:[0-9](?:_?[0-9])*\.)|(?:\.[0-9](?:_?[0-9])*))(?:[eE][+-]?[0-9](?:_?[0-9])*)?$/
+
+/**
+ * Decimal-zero code points from Unicode 15.0, the character database used by
+ * the Python 3.12 reference runtime in CI. Each zero begins one contiguous
+ * ten-character decimal digit set.
+ */
+const PYTHON_DECIMAL_ZERO_CODE_POINTS = [
+  0x30, 0x660, 0x6f0, 0x7c0, 0x966, 0x9e6, 0xa66, 0xae6, 0xb66, 0xbe6,
+  0xc66, 0xce6, 0xd66, 0xde6, 0xe50, 0xed0, 0xf20, 0x1040, 0x1090,
+  0x17e0, 0x1810, 0x1946, 0x19d0, 0x1a80, 0x1a90, 0x1b50, 0x1bb0,
+  0x1c40, 0x1c50, 0xa620, 0xa8d0, 0xa900, 0xa9d0, 0xa9f0, 0xaa50,
+  0xabf0, 0xff10, 0x104a0, 0x10d30, 0x11066, 0x110f0, 0x11136,
+  0x111d0, 0x112f0, 0x11450, 0x114d0, 0x11650, 0x116c0, 0x11730,
+  0x118e0, 0x11950, 0x11c50, 0x11d50, 0x11da0, 0x11f50, 0x16a60,
+  0x16ac0, 0x16b50, 0x1d7ce, 0x1d7d8, 0x1d7e2, 0x1d7ec, 0x1d7f6,
+  0x1e140, 0x1e2f0, 0x1e4f0, 0x1e950, 0x1fbf0,
+] as const
+
+/** Direct equivalent of Python's `str.strip()` default whitespace behavior. */
+export const stripPythonWhitespace = (value: string): string => {
+  let start = 0
+  let end = value.length
+  while (start < end && PYTHON_WHITESPACE.test(value[start])) {
+    start += 1
+  }
+  while (end > start && PYTHON_WHITESPACE.test(value[end - 1])) {
+    end -= 1
+  }
+  return value.slice(start, end)
+}
+
+/** Direct equivalent of Python's acceptance of Unicode decimal digits. */
+const normalizePythonDecimalDigits = (value: string): string =>
+  Array.from(value, character => {
+    const codePoint = character.codePointAt(0)
+    if (codePoint === undefined) {
+      throw new Error('a Unicode character must contain one code point')
+    }
+
+    const zero = PYTHON_DECIMAL_ZERO_CODE_POINTS.find(
+      candidate => candidate <= codePoint && codePoint < candidate + 10,
+    )
+    return zero === undefined ? character : String(codePoint - zero)
+  }).join('')
+
+/** Direct equivalents of Python's strict `int()` and `float()` string parsing. */
+export const parsePythonInt = (value: string): number => {
+  const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
+  if (!PYTHON_INTEGER.test(normalized)) {
+    throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
+  }
+
+  const parsed = Number(normalized.replaceAll('_', ''))
+  if (!Number.isSafeInteger(parsed)) {
+    throw new ValueError(`integer is outside the safe range: ${value}`)
+  }
+  return Object.is(parsed, -0) ? 0 : parsed
+}
+
+export const parsePythonFloat = (value: string): number => {
+  const normalized = normalizePythonDecimalDigits(stripPythonWhitespace(value))
+  if (!PYTHON_FLOAT.test(normalized)) {
+    throw new ValueError(`could not convert string to float: ${value}`)
+  }
+  return Number(normalized.replaceAll('_', ''))
+}
+
+/** Direct equivalent of `str.split(None, maxsplit)`. */
+export const splitWhitespace = (value: string, maxSplit?: number): string[] => {
+  const normalized = stripPythonWhitespace(value)
+  if (!normalized) {
+    return []
+  }
+  if (maxSplit === undefined) {
+    return normalized.split(PYTHON_WHITESPACE_RUN)
+  }
+
+  const parts: string[] = []
+  let start = 0
+  for (const match of normalized.matchAll(PYTHON_WHITESPACE_RUNS)) {
+    if (parts.length === maxSplit) {
+      break
+    }
+    parts.push(normalized.slice(start, match.index))
+    start = match.index + match[0].length
+  }
+  parts.push(normalized.slice(start))
+  return parts
+}
 
 /**
  * A mirror of Python's `collections.Counter` class.

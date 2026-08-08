@@ -3,7 +3,6 @@ import { WHITE, BLACK, Color } from './index'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
-type ScoreTupleValue = boolean | number | null
 type ScoreTupleValues = readonly [
   boolean,
   boolean,
@@ -11,55 +10,6 @@ type ScoreTupleValues = readonly [
   number,
   number | null,
 ]
-
-/** Direct equivalent of `-(value or 0)` for Python numbers and `None`. */
-const negatedOrZero = (value: number | null): number =>
-  value === null || value === 0 ? 0 : -value
-
-const scoreTupleValuesEqual = (
-  left: ScoreTupleValue,
-  right: ScoreTupleValue,
-  index: number,
-  storedCpIsIdentical: boolean,
-): boolean =>
-  left === right ||
-  (index === 4 &&
-    storedCpIsIdentical &&
-    typeof left === 'number' &&
-    typeof right === 'number' &&
-    Number.isNaN(left) &&
-    Number.isNaN(right))
-
-const compareScoreTupleValues = (
-  left: ScoreTupleValue,
-  right: ScoreTupleValue,
-  index: number,
-  storedCpIsIdentical: boolean,
-): number => {
-  if (scoreTupleValuesEqual(left, right, index, storedCpIsIdentical)) {
-    return 0
-  }
-
-  // Valid Score tuples only compare null with null: the preceding tuple
-  // fields distinguish centipawn scores from mate scores. Preserve Python's
-  // failure for an invalid tuple that reaches an ordering comparison between
-  // None and a number.
-  if (left === null || right === null) {
-    throw new TypeError('cannot order a null score value')
-  }
-
-  const normalizedLeft = typeof left === 'boolean' ? Number(left) : left
-  const normalizedRight = typeof right === 'boolean' ? Number(right) : right
-  if (normalizedLeft < normalizedRight) {
-    return -1
-  } else if (normalizedLeft > normalizedRight) {
-    return 1
-  } else {
-    // Python leaves NaN unordered. Returning NaN keeps every comparison of
-    // the aggregate comparator with zero false as well.
-    return Number.NaN
-  }
-}
 
 /**
  * The fixed-shape Python tuple returned by :meth:`Score._score_tuple()`.
@@ -80,19 +30,27 @@ class ScoreTuple {
     return this.source instanceof Cp && this.source === other.source
   }
 
+  private valuesEqual(other: ScoreTuple, index: number): boolean {
+    const left = this.values[index]
+    const right = other.values[index]
+    return (
+      left === right ||
+      (index === 4 &&
+        this.storedCpIsIdentical(other) &&
+        typeof left === 'number' &&
+        typeof right === 'number' &&
+        Number.isNaN(left) &&
+        Number.isNaN(right))
+    )
+  }
+
   equals(other: ScoreTuple): boolean {
     if (other === this) {
       return true
     }
 
-    const sameStoredCp = this.storedCpIsIdentical(other)
-    return this.values.every((value, index) =>
-      scoreTupleValuesEqual(
-        value,
-        other.values[index],
-        index,
-        sameStoredCp,
-      ),
+    return this.values.every((_value, index) =>
+      this.valuesEqual(other, index),
     )
   }
 
@@ -101,16 +59,32 @@ class ScoreTuple {
       return 0
     }
 
-    const sameStoredCp = this.storedCpIsIdentical(other)
     for (let index = 0; index < this.values.length; index += 1) {
-      const comparison = compareScoreTupleValues(
-        this.values[index],
-        other.values[index],
-        index,
-        sameStoredCp,
-      )
-      if (comparison !== 0) {
-        return comparison
+      if (this.valuesEqual(other, index)) {
+        continue
+      }
+
+      const left = this.values[index]
+      const right = other.values[index]
+
+      // Valid Score tuples only compare null with null: the preceding tuple
+      // fields distinguish centipawn scores from mate scores. Preserve
+      // Python's failure for an invalid tuple that reaches an ordering
+      // comparison between None and a number.
+      if (left === null || right === null) {
+        throw new TypeError('cannot order a null score value')
+      }
+
+      const normalizedLeft = typeof left === 'boolean' ? Number(left) : left
+      const normalizedRight = typeof right === 'boolean' ? Number(right) : right
+      if (normalizedLeft < normalizedRight) {
+        return -1
+      } else if (normalizedLeft > normalizedRight) {
+        return 1
+      } else {
+        // Python leaves NaN unordered. Returning NaN keeps every comparison
+        // of the aggregate comparator with zero false as well.
+        return Number.NaN
       }
     }
 
@@ -202,7 +176,7 @@ export class PovScore {
 
   equals(other: object): boolean {
     if (other instanceof PovScore) {
-      return this.white() === other.white()
+      return this.white().equals(other.white())
     } else {
       return false
     }
@@ -317,7 +291,7 @@ export abstract class Score {
       this instanceof MateGivenType,
       mate !== null && mate > 0,
       mate === null,
-      negatedOrZero(mate),
+      mate === null || mate === 0 ? 0 : -mate,
       this.score(),
     ])
   }
@@ -707,7 +681,7 @@ export class PovWdl {
   // __eq__()
   equals(other: object): boolean {
     if (other instanceof PovWdl) {
-      return this.white() === other.white()
+      return this.white().equals(other.white())
     } else if (other instanceof Array) {
       return (
         other.length === 3 &&

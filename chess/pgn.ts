@@ -16,11 +16,9 @@ const pythonWhitespaceRegex = (source: string, flags?: string): RegExp =>
     flags,
   )
 
-const codePointLength = (value: string): number => Array.from(value).length
-
 /** Direct equivalent of Python's ordered `max()`, including NaN behavior. */
-const max = (first: number, ...rest: number[]): number =>
-  rest.reduce((current, value) => (value > current ? value : current), first)
+const max = (first: number, second: number): number =>
+  second > first ? second : first
 
 /** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
 const formatFixed = (value: number, fractionDigits: number): string => {
@@ -80,7 +78,7 @@ export class StringIO implements TextIO {
 
   write(str: string): number {
     this.buffer += str
-    return codePointLength(str)
+    return Array.from(str).length
   }
 
   read(): string {
@@ -99,11 +97,6 @@ export class StringIO implements TextIO {
     return line
   }
 }
-
-type ReplacementGroups = Record<string, string>
-
-const replacementGroups = (args: unknown[]): ReplacementGroups =>
-  args.at(-1) as ReplacementGroups
 
 /** ========== Direct transpilation ========== */
 
@@ -223,7 +216,7 @@ export const _condenseAffix = (
   infix: string,
 ): ((substring: string, ...args: unknown[]) => string) => {
   return (_match: string, ...args: unknown[]) => {
-    const match = replacementGroups(args)
+    const match = args.at(-1) as Record<'prefix' | 'suffix', string>
     if (infix) {
       return match.prefix + infix + match.suffix
     } else {
@@ -1973,7 +1966,8 @@ export abstract class StringExporterMixin<
   writeToken(token: string): void {
     if (
       this.columns !== null &&
-      this.columns - codePointLength(this.currentLine) < codePointLength(token)
+      this.columns - Array.from(this.currentLine).length <
+        Array.from(token).length
     ) {
       this.flushCurrentLine()
     }

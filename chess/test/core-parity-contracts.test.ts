@@ -54,6 +54,19 @@ describe('TypeScript-native parity contracts', () => {
     expect(mate.ge(mate)).toBe(false)
   })
 
+  test('point-of-view equality delegates to translated value equality', () => {
+    expect(
+      new engine.PovScore(new engine.Cp(25), chess.WHITE).equals(
+        new engine.PovScore(new engine.Cp(25), chess.WHITE),
+      ),
+    ).toBe(true)
+    expect(
+      new engine.PovWdl(new engine.Wdl(1, 2, 3), chess.BLACK).equals(
+        new engine.PovWdl(new engine.Wdl(1, 2, 3), chess.BLACK),
+      ),
+    ).toBe(true)
+  })
+
   test('BaseBoard factories and copies preserve subclasses', () => {
     class DerivedBoard extends chess.BaseBoard {
       initializedWith: string | null

@@ -40,6 +40,48 @@ method should retain the Python shape and invoke that adapter exactly where the
 Python invokes its builtin or operator. The adapter is a language boundary; it
 must not absorb or rearrange chess-domain logic.
 
+### Spend target-only code only on proved language gaps
+
+Treat every declaration with no `python-chess` mirror as an exception that
+needs evidence, not as an ordinary refactoring tool. Use this order:
+
+1. Start with the closest direct TypeScript expression at the exact Python
+   expression site.
+2. If a short composition of native TypeScript operations has the same
+   semantics, keep it inline. Do not extract a one-use helper merely to give
+   that expression a name.
+3. Reuse an established language adapter when one already exists. General
+   Python primitive bridges belong with the repository's existing helpers in
+   `chess/utils.ts`; a file-local adapter should represent a gap specific to
+   that translated value or source operation.
+4. Add a new adapter only after identifying a concrete valid input for which
+   the direct JavaScript operation differs from pinned Python. Document that
+   mismatch and cover it with a parity test.
+
+For example, JavaScript and Python disagree about the truthiness of `NaN`, but
+the fixed `Score._score_tuple()` expression does not need a separate
+`negatedOrZero()` declaration:
+
+```py
+-(mate or 0)
+```
+
+```ts
+mate === null || mate === 0 ? 0 : -mate
+```
+
+The inline target syntax is longer, but it still performs the source's one
+numeric selection and negation in place. By contrast, Python tuple comparison
+needs an adapter: JavaScript array equality is reference equality and its
+ordering operators coerce arrays to strings. That is a proved semantic gap,
+not a readability preference.
+
+Do not move chess decisions, branches, state transitions, or fallback policy
+into an adapter. Do not introduce a wrapper solely to make primitives expose a
+preferred method name. A `number`, `boolean`, or `null` remains a native
+primitive when its native operation is faithful; exceptional element behavior
+belongs inside the smallest containing value adapter that actually needs it.
+
 ### Comparison methods
 
 The existing production convention for comparisons of translated object
