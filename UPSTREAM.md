@@ -103,6 +103,57 @@ The other Vitest files are explicitly not translations:
 No file other than `python-generated.test.ts` may register an upstream test
 identity. The compiler test suite enforces that rule.
 
+## What "generated" and "oracle" mean
+
+The automatic translation in this repository applies to the selected upstream
+**test bodies**, not to the production TypeScript implementation. The test
+system creates two artifacts through separate paths:
+
+```text
+python-chess/test.py syntax
+        │
+        └──AST compiler──> chess/test/python-generated.test.ts
+
+python-chess/test.py executing against pinned Python
+        │
+        └──tracing TestCase──> chess/test/python-assertion-oracle.generated.ts
+                                      │
+generated TypeScript test executing against chess.ts
+        └──runtime assertion event────┘ exact ordered comparison
+```
+
+The first path checks source translation. It reads the frozen Python syntax
+tree and emits a TypeScript test body without running that body. The second
+path checks runtime behavior. It runs the original Python method against the
+pinned Python implementation and records each passing assertion as a portable
+event. That known-good event stream is the **assertion oracle**, also called a
+golden assertion trace.
+
+During Vitest execution, each translated assertion first performs its normal
+TypeScript assertion against `chess.ts`. The harness then records the assertion
+kind and its operands and requires them to match the next Python event. Checking
+both layers matters: a compiler bug could mistranslate an expected expression
+and still emit a TypeScript assertion that passes. The oracle detects that its
+operands or execution order differ from the original Python run. It also
+detects missing, extra, or reordered assertions when a loop or branch is
+translated incorrectly.
+
+Oracle values cross the language boundary only through an explicit canonical
+form. For example, moves use UCI, boards use FEN, integers use exact decimal
+strings, and non-integral numbers use their IEEE-754 bits. Unsupported values
+fail generation rather than falling back to object internals or display text.
+
+There are 465 assertion calls in the 84 selected source methods but 5,060
+runtime oracle events because many calls execute repeatedly inside loops. These
+figures describe one test selection at the pinned commit; they are integrity
+counts, not separate tests written by hand.
+
+The three generated artifacts are
+`chess/test/python-generated.test.ts`,
+`chess/test/python-generated.provenance.json`, and
+`chess/test/python-assertion-oracle.generated.ts`. Regenerate them with
+`python3 scripts/sync_python_chess_tests.py`; do not edit them directly.
+
 ## Deterministic compiler architecture
 
 The compiler is deliberately built from small, composable rules:
@@ -127,10 +178,10 @@ The compiler is deliberately built from small, composable rules:
 6. `gaps.py` owns the source-addressed expected-divergence mechanism. Its
    current manifest is empty: all 84 selected methods execute normally. It
    contains no replacement TypeScript or copied assertion operands.
-7. `assertion_oracle.py` executes every selected method against the frozen
-   Python implementation and records its runtime assertions. The TypeScript
-   harness consumes those observations in exact order using a finite,
-   fail-closed value vocabulary.
+7. `assertion_oracle.py` produces the golden assertion trace described above:
+   it executes every selected method against the frozen Python implementation
+   and records its runtime assertions. The TypeScript harness consumes those
+   observations in exact order using a finite, fail-closed value vocabulary.
 8. `suite.py` renders the generated test and
    `chess/test/python-generated.provenance.json`, including exact source spans,
    source hashes, normalized AST hashes, comments, assertion counts, and gap
@@ -139,9 +190,8 @@ The compiler is deliberately built from small, composable rules:
 Generated tests use native TypeScript operations such as `.length`,
 `Array.from()`, `Set`, bigint operators, and production `.equals()` methods.
 They do not import a Python-semantics runtime or emit `py.*` compatibility
-calls. A generated runtime oracle independently compares all 5,060 assertion
-observations from all 84 selected methods with the frozen Python run;
-`excludedMethods` is empty.
+calls. The assertion oracle compares all 5,060 runtime observations from all
+84 selected methods with the frozen Python run; `excludedMethods` is empty.
 
 Integral oracle values compare by exact mathematical value across TypeScript
 `number`, TypeScript `bigint`, and Python `int`. Non-integral binary64 values

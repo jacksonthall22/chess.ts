@@ -58,6 +58,33 @@ Do not silently fix an upstream bug only in TypeScript. Preserve the pinned
 behavior in synchronization work. Pursue the fix upstream first, or make any
 intentional divergence a separate, explicitly approved and documented change.
 
+## Generated tests and the assertion oracle
+
+Automatic translation applies only to selected upstream test bodies, not to
+the production modules under `chess/`. Keep these two verification paths
+distinct:
+
+- The syntax path compiles the pinned `python-chess/test.py` AST into
+  `chess/test/python-generated.test.ts`.
+- The runtime path executes the original test against pinned Python and records
+  a golden assertion trace in
+  `chess/test/python-assertion-oracle.generated.ts`. The TypeScript harness
+  calls this trace the assertion oracle and compares events in exact order.
+
+Each generated TypeScript assertion must pass normally and match the Python
+event's assertion kind and operands. The oracle is not another implementation
+of chess behavior. It catches a mistranslated expected expression, different
+branch or loop execution, and missing, extra, or reordered assertions.
+
+Never edit `python-generated.test.ts`,
+`python-generated.provenance.json`, or
+`python-assertion-oracle.generated.ts` by hand. Fix the production translation
+or the compiler rule that caused a mismatch, then regenerate with
+`python3 scripts/sync_python_chess_tests.py`. If a new assertion value needs to
+cross runtimes, add an explicit canonicalization rule on both the Python and
+TypeScript sides and focused tests for that rule. Do not weaken, delete, or
+rewrite oracle output merely to make a failing test pass.
+
 ## Required workflow for core changes
 
 1. Confirm the exact `python-chess` gitlink and open the pinned Python block
@@ -67,7 +94,8 @@ intentional divergence a separate, explicitly approved and documented change.
 3. If a hunk cannot be explained by that mapping, remove it or stop and obtain
    an explicit decision before keeping a divergence.
 4. Preserve comments and make the smallest source-shaped correction.
-5. Run the translated upstream suite and the deterministic assertion oracle.
+5. Regenerate the upstream test artifacts when their inputs change, then run
+   `npm --prefix chess test` to check the translated suite and assertion oracle.
 
 For the first-parent upstream synchronization process, read
 [`UPSTREAM.md`](UPSTREAM.md). For established syntax mappings and exceptional
