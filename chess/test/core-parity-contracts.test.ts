@@ -4,6 +4,12 @@ import * as chess from '../index'
 import * as engine from '../engine'
 
 describe('TypeScript-native parity contracts', () => {
+  test('Piece representation uses the translated TypeScript API name', () => {
+    expect(chess.Piece.fromSymbol('N').toRepr()).toBe(
+      "Piece.fromSymbol('N')",
+    )
+  })
+
   test('dataclass equality requires the same concrete class', () => {
     class DerivedPiece extends chess.Piece {}
     class DerivedWdl extends engine.Wdl {}

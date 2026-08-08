@@ -168,7 +168,7 @@ class PieceTestCase extends TestCase {
     this.assertEqualUsing(d1, a, (__actual, __expected) => (__actual).equals(__expected))
     this.assertEqualUsing(d1, d2, (__actual, __expected) => (__actual).equals(__expected))
 
-    this.assertEqualUsing(a.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected)
+    this.assertEqualRepresentationsUsing(a.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected, a, d1)
 
     this.assertNotEqualUsing(a, b, (__actual, __expected) => (__actual).equals(__expected))
     this.assertNotEqualUsing(b, c, (__actual, __expected) => (__actual).equals(__expected))
@@ -176,10 +176,10 @@ class PieceTestCase extends TestCase {
     this.assertNotEqualUsing(a, c, (__actual, __expected) => (__actual).equals(__expected))
     this.assertFalse(!(((__left, __right) => (__left).equals(__right))(d1, d2)))
 
-    this.assertNotEqualUsing(a.toRepr(), b.toRepr(), (__actual, __expected) => __actual === __expected)
-    this.assertNotEqualUsing(b.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected)
-    this.assertNotEqualUsing(b.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected)
-    this.assertNotEqualUsing(a.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected)
+    this.assertNotEqualRepresentationsUsing(a.toRepr(), b.toRepr(), (__actual, __expected) => __actual === __expected, a, b)
+    this.assertNotEqualRepresentationsUsing(b.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected, b, c)
+    this.assertNotEqualRepresentationsUsing(b.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected, b, d1)
+    this.assertNotEqualRepresentationsUsing(a.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected, a, c)
   }
 
   testFromSymbol(): void {

@@ -108,6 +108,7 @@ class Expression:
     code: str
     shape: TargetShape
     facts: ValueFacts = field(default_factory=ValueFacts)
+    oracle_value_code: str | None = None
 
 
 class UnsupportedSyntax(ValueError):
@@ -2329,7 +2330,11 @@ class MethodCompiler:
             ShapeKind.SQUARE_SET,
             ShapeKind.SCORE,
         }:
-            return Expression(f"{argument.code}.toRepr()", STRING)
+            return Expression(
+                f"{argument.code}.toRepr()",
+                STRING,
+                oracle_value_code=argument.code,
+            )
         if argument.shape.kind is ShapeKind.LEGAL_MOVE_GENERATOR:
             return Expression(f"{argument.code}.toString()", STRING)
         if argument.shape.kind is ShapeKind.PSEUDO_LEGAL_MOVE_GENERATOR:
@@ -3525,12 +3530,36 @@ class MethodCompiler:
                 comparator = self.equality_callback(
                     actual.shape, expected.shape, node
                 )
-            method = (
-                "this.assertEqualUsing"
-                if name == "self.assertEqual"
-                else "this.assertNotEqualUsing"
+            representation_values = (
+                actual.oracle_value_code,
+                expected.oracle_value_code,
             )
-            rendered = [actual.code, expected.code, comparator]
+            if any(value is not None for value in representation_values):
+                if not all(value is not None for value in representation_values):
+                    self.fail(
+                        node,
+                        "comparison between repr() and a non-repr value requires "
+                        "an explicit cross-runtime representation rule",
+                    )
+                method = (
+                    "this.assertEqualRepresentationsUsing"
+                    if name == "self.assertEqual"
+                    else "this.assertNotEqualRepresentationsUsing"
+                )
+                rendered = [
+                    actual.code,
+                    expected.code,
+                    comparator,
+                    representation_values[0],
+                    representation_values[1],
+                ]
+            else:
+                method = (
+                    "this.assertEqualUsing"
+                    if name == "self.assertEqual"
+                    else "this.assertNotEqualUsing"
+                )
+                rendered = [actual.code, expected.code, comparator]
             if len(arguments) == 3:
                 rendered.append(arguments[2].code)
             return Expression(f"{method}({', '.join(rendered)})", VOID)

@@ -13,6 +13,7 @@ rule instead of silently falling back to ``repr()`` or object internals.
 
 from __future__ import annotations
 
+import builtins
 import importlib.util
 import json
 import os
@@ -47,6 +48,17 @@ _FROZEN_TEST_MODULE = "_chess_ts_frozen_test_assertion_oracle"
 
 class AssertionOracleError(RuntimeError):
     """The frozen suite cannot produce the finite assertion oracle."""
+
+
+class _TracedRepresentation(str):
+    """A source repr string that retains the represented value for the oracle."""
+
+    value: object
+
+    def __new__(cls, value: object) -> _TracedRepresentation:
+        instance = super().__new__(cls, builtins.repr(value))
+        instance.value = value
+        return instance
 
 
 JsonValue = type(None) | bool | int | str | list["JsonValue"] | dict[str, "JsonValue"]
@@ -122,6 +134,7 @@ def _loaded_frozen_suite() -> Iterator[tuple[types.ModuleType, types.ModuleType]
         test_module = importlib.util.module_from_spec(test_spec)
         sys.modules[_FROZEN_TEST_MODULE] = test_module
         test_spec.loader.exec_module(test_module)
+        test_module.repr = _TracedRepresentation
         yield chess_module, test_module
     finally:
         for name in tuple(sys.modules):
@@ -149,6 +162,8 @@ class _TraceSession:
     def value(self, value: object) -> JsonValue:
         chess = self.chess
         pgn = chess.pgn
+        if isinstance(value, _TracedRepresentation):
+            return self.value(value.value)
         if value is None:
             return ["none"]
         if isinstance(value, bool):

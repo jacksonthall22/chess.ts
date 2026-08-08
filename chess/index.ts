@@ -759,7 +759,7 @@ export class Piece {
   }
 
   toRepr(): string {
-    return `Piece.from_symbol('${this.symbol()}')`
+    return `Piece.fromSymbol('${this.symbol()}')`
   }
 
   _reprSvg_(): string {

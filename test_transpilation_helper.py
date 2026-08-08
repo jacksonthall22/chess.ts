@@ -365,6 +365,20 @@ class RecursiveLoweringTest(unittest.TestCase):
         )
         self.assertNotIn(" as ", generated)
 
+    def test_repr_assertions_compare_target_strings_and_oracle_source_values(self) -> None:
+        generated = compile_fixture(
+            "left = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "right = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "self.assertEqual(repr(left), repr(right))"
+        )
+
+        self.assertIn(
+            "this.assertEqualRepresentationsUsing(left.toRepr(), "
+            "right.toRepr(), (__actual, __expected) => "
+            "__actual === __expected, left, right)",
+            generated,
+        )
+
     def test_composes_assignments_loops_calls_and_operators(self) -> None:
         generated = compile_fixture(
             """values = [chess.BB_A1, chess.BB_A2]

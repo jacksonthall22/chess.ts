@@ -135,7 +135,12 @@ See [`AGENTS.md`](AGENTS.md) for the mandatory review rules and
 [`UPSTREAM.md`](UPSTREAM.md) for the commit-by-commit update process.
 
 ## Style, comments, and docstrings
-Unfortunately the TS norm is `camelCase` for variables and functions \:'(. 
+Unfortunately the TS norm is `camelCase` for variables and functions \:'(.
+Translate Python `snake_case` identifiers to that established target spelling
+wherever they name the TypeScript API, including method names embedded in a
+representation string. Faithful structure does not mean emitting a Python
+identifier that does not exist in TypeScript: `Piece.from_symbol(...)` becomes
+`Piece.fromSymbol(...)`.
 
 Constants should be in `CAPITAL_SNAKE_CASE`.
 
@@ -144,7 +149,7 @@ This is widely accepted by now, but you should only ever use `const` or
 ```ts
 // TS
 const FOO_BAR = 42;     // ✅
-let foo_bar = 42;       // ✅
+let fooBar = 42;        // ✅
 var bad_foo_bar = 42;   // ❌
 ```
 
