@@ -2,8 +2,28 @@ import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
 import * as engine from '../engine'
+import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('Python whitespace adapters preserve the exact source character set', () => {
+    expect(utils.stripPythonWhitespace('\u001cvalue\u001c')).toBe('value')
+    expect(utils.stripPythonWhitespace('\ufeffvalue\ufeff')).toBe(
+      '\ufeffvalue\ufeff',
+    )
+    expect(utils.stripEndPythonWhitespace('value\u001c')).toBe('value')
+    expect(utils.stripEndPythonWhitespace('value\ufeff')).toBe(
+      'value\ufeff',
+    )
+    expect(utils.splitWhitespace('first\u001csecond')).toEqual([
+      'first',
+      'second',
+    ])
+    expect(utils.splitWhitespace('first second third', 1)).toEqual([
+      'first',
+      'second third',
+    ])
+  })
+
   test('Piece representation uses the translated TypeScript API name', () => {
     expect(chess.Piece.fromSymbol('N').toRepr()).toBe(
       "Piece.fromSymbol('N')",

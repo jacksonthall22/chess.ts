@@ -86,6 +86,16 @@ preferred method name. A `number`, `boolean`, or `null` remains a native
 primitive when its native operation is faithful; exceptional element behavior
 belongs inside the smallest containing value adapter that actually needs it.
 
+Default whitespace operations are one proved language boundary. Python
+`str.strip()` and whitespace `str.split()` include `U+001C` but exclude
+`U+FEFF`; JavaScript `trim()` and `\s` do the opposite for those characters.
+JavaScript `value.split()` with no separator does not implement Python
+`value.split()`, and a JavaScript split limit discards the remainder whereas
+Python `split(None, maxsplit)` preserves it. Use the shared exact whitespace
+adapters for source calls with default whitespace semantics. Continue using
+native `split(separator)` when the Python source supplies that same explicit
+separator.
+
 ### Comparison methods
 
 The existing production convention for comparisons of translated object

@@ -48,6 +48,15 @@ export const stripPythonWhitespace = (value: string): string => {
   return value.slice(start, end)
 }
 
+/** Direct equivalent of Python's `str.rstrip()` default whitespace behavior. */
+export const stripEndPythonWhitespace = (value: string): string => {
+  let end = value.length
+  while (end > 0 && PYTHON_WHITESPACE.test(value[end - 1])) {
+    end -= 1
+  }
+  return value.slice(0, end)
+}
+
 /** Direct equivalent of Python's acceptance of Unicode decimal digits. */
 const normalizePythonDecimalDigits = (value: string): string =>
   Array.from(value, character => {
