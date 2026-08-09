@@ -3783,6 +3783,12 @@ class MethodCompiler:
             if len(arguments) == 3 and arguments[2].shape != STRING:
                 self.fail(node, f"{name} message requires string")
             member, container = arguments[:2]
+            if member.oracle_representation_pair_code is not None:
+                self.fail(
+                    node,
+                    "containment assertions with repr() members require "
+                    "unsupported assertion-oracle provenance",
+                )
             callback = self.contains_callback(container.shape, member.shape, node)
             method = (
                 "this.assertContainsUsing"

@@ -72,6 +72,7 @@ export class AssertionValueCanonicalizer {
     if (value instanceof chess.SquareSet) return ['int', value.int().toString()]
     if (typeof value === 'bigint') return ['int', value.toString()]
     if (typeof value === 'number') {
+      if (Object.is(value, -0)) return ['number', '8000000000000000']
       if (Number.isSafeInteger(value)) return ['int', value.toString()]
       if (Number.isInteger(value))
         throw new TypeError(

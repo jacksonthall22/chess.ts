@@ -25,6 +25,8 @@ const max = (first: number, second: number): number =>
 /** Direct equivalent of CPython's float `divmod()`. */
 const floatDivmod = (dividend: number, divisor: number): [number, number] => {
   if (!Number.isFinite(dividend) || !Number.isFinite(divisor)) {
+    // Pinned set_clock()/set_emt() pass the non-finite result through int(),
+    // which raises this ValueError before an annotation can be written.
     throw new ValueError('cannot convert float NaN to integer')
   }
 

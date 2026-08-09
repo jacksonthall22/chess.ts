@@ -174,13 +174,16 @@ class _TraceSession:
         if isinstance(value, int):
             return ["int", str(value)]
         if isinstance(value, float):
+            binary64 = struct.pack(">d", value).hex()
+            if binary64 == "8000000000000000":
+                return ["number", binary64]
             if value.is_integer():
                 if -(2**53 - 1) <= value <= 2**53 - 1:
                     return ["int", str(int(value))]
                 raise AssertionOracleError(
                     "integral Python float exceeds TypeScript's safe range"
                 )
-            return ["number", struct.pack(">d", value).hex()]
+            return ["number", binary64]
         if isinstance(value, str):
             return ["str", value]
         if isinstance(value, chess.Move):

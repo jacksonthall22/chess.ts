@@ -540,6 +540,15 @@ class RecursiveLoweringTest(unittest.TestCase):
                 "self.assertEqual([repr(piece)], [repr(piece)])"
             )
 
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            r"containment assertions with repr\(\) members",
+        ):
+            compile_fixture(
+                "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+                'self.assertIn(repr(piece), "x" + repr(piece))'
+            )
+
     def test_composes_assignments_loops_calls_and_operators(self) -> None:
         generated = compile_fixture(
             """values = [chess.BB_A1, chess.BB_A2]

@@ -17,9 +17,13 @@ from transpilation_helper import py_identifier_to_ts
 
 
 class AssertionOracleTest(unittest.TestCase):
-    def test_trace_preserves_non_finite_binary64_values(self):
+    def test_trace_preserves_special_binary64_values(self):
         with _loaded_frozen_suite() as (chess_module, _test_module):
             values = _TraceSession(chess_module)
+            self.assertEqual(
+                values.value(-0.0),
+                ["number", "8000000000000000"],
+            )
             self.assertEqual(
                 values.value(float("nan")),
                 ["number", "7ff8000000000000"],

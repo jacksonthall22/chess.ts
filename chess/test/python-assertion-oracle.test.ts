@@ -21,6 +21,8 @@ describe('Python assertion oracle', () => {
     expect(values.value(true)).toEqual(['bool', true])
     expect(values.value(42)).toEqual(['int', '42'])
     expect(values.value(42n)).toEqual(['int', '42'])
+    expect(values.value(0)).toEqual(['int', '0'])
+    expect(values.value(-0)).toEqual(['number', '8000000000000000'])
     expect(values.value('x')).toEqual(['str', 'x'])
     expect(values.value(move)).toEqual(['move', 'e2e4'])
     expect(values.value(chess.Piece.fromSymbol('N'))).toEqual(['piece', 'N'])
