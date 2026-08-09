@@ -148,14 +148,38 @@ and reviewed as source code.
 The test system follows two paths from the same pinned `python-chess/test.py`:
 
 ```text
-SYNTAX PATH
-pinned test.py -> compile AST -> generated TypeScript tests -> run on chess.ts -> actual TypeScript assertion events
-
-RUNTIME PATH
-pinned test.py -> run on pinned python-chess -> expected Python assertion events (the golden trace)
-
-COMPARISON
-actual TypeScript assertion events -> exact event-by-event match in execution order -> expected Python assertion events
+                              ┌─────────────────────────────┐
+                              │ pinned python-chess/test.py │
+                              └──────────────┬──────────────┘
+                                             │
+                   ┌─────────────────────────┴─────────────────────────┐
+                   │                                                   │
+       ┌───────────▼───────────┐                           ┌───────────▼───────────┐
+       │      SYNTAX PATH      │                           │     RUNTIME PATH      │
+       │ Parse and compile AST │                           │ Execute original test│
+       └───────────┬───────────┘                           │ against pinned Python│
+                   │                                       └───────────┬───────────┘
+       ┌───────────▼──────────────┐                        ┌───────────▼──────────────┐
+       │ python-generated.test.ts │                        │ python-assertion-oracle │
+       └───────────┬──────────────┘                        │ .generated.ts           │
+                   │                                       │ expected Python events │
+       ┌───────────▼──────────────┐                        └───────────┬──────────────┘
+       │ Run against chess.ts     │                                    │
+       │ + normal Vitest checks   │                                    │
+       └───────────┬──────────────┘                                    │
+                   │                                                   │
+       ┌───────────▼──────────────┐                                    │
+       │ actual TypeScript events │                                    │
+       └───────────┬──────────────┘                                    │
+                   │                                                   │
+                   └────────────────────────┬──────────────────────────┘
+                                            ▼
+                              ┌──────────────────────────┐
+                              │ Exact event-by-event     │
+                              │ comparison, in order     │
+                              └────────────┬─────────────┘
+                                           ▼
+                                    test passes or fails
 ```
 
 The code calls that golden trace the **assertion oracle**. For each runtime

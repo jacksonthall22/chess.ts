@@ -110,14 +110,38 @@ The automatic translation in this repository applies to the selected upstream
 system creates two artifacts through separate paths:
 
 ```text
-SYNTAX PATH
-python-chess/test.py -> AST compiler -> python-generated.test.ts -> run against chess.ts -> actual TypeScript assertion events
-
-RUNTIME PATH
-python-chess/test.py -> tracing TestCase against pinned Python -> python-assertion-oracle.generated.ts (expected Python assertion events)
-
-COMPARISON
-actual TypeScript event 1..n -> exact ordered match -> expected Python event 1..n
+                              ┌─────────────────────────────┐
+                              │ pinned python-chess/test.py │
+                              └──────────────┬──────────────┘
+                                             │
+                   ┌─────────────────────────┴─────────────────────────┐
+                   │                                                   │
+       ┌───────────▼───────────┐                           ┌───────────▼───────────┐
+       │      SYNTAX PATH      │                           │     RUNTIME PATH      │
+       │ Parse and compile AST │                           │ Execute original test│
+       └───────────┬───────────┘                           │ against pinned Python│
+                   │                                       └───────────┬───────────┘
+       ┌───────────▼──────────────┐                        ┌───────────▼──────────────┐
+       │ python-generated.test.ts │                        │ python-assertion-oracle │
+       └───────────┬──────────────┘                        │ .generated.ts           │
+                   │                                       │ expected Python events │
+       ┌───────────▼──────────────┐                        └───────────┬──────────────┘
+       │ Run against chess.ts     │                                    │
+       │ + normal Vitest checks   │                                    │
+       └───────────┬──────────────┘                                    │
+                   │                                                   │
+       ┌───────────▼──────────────┐                                    │
+       │ actual TypeScript events │                                    │
+       └───────────┬──────────────┘                                    │
+                   │                                                   │
+                   └────────────────────────┬──────────────────────────┘
+                                            ▼
+                              ┌──────────────────────────┐
+                              │ Exact event-by-event     │
+                              │ comparison, in order     │
+                              └────────────┬─────────────┘
+                                           ▼
+                                    test passes or fails
 ```
 
 The first path checks source translation. It reads the frozen Python syntax
