@@ -670,6 +670,7 @@ def writable_attribute_shape(
 
 
 NUMBER_RULE = exact(NUMBER)
+NUMBER_OR_NULL_RULE = exact(NUMBER, NULL, description="number or null")
 BIGINT_RULE = exact(BIGINT)
 BOOLEAN_RULE = exact(BOOLEAN)
 STRING_RULE = exact(STRING, WDL_MODEL, description="string")
@@ -689,10 +690,13 @@ WDL_MODEL_RULE = finite_string_literals(
 )
 MOVE_RULE = exact(MOVE)
 PIECE_RULE = exact(PIECE)
-GAME_NODE_RULE = exact(
+VARIATION_SELECTOR_RULE = exact(
+    NUMBER,
+    MOVE,
+    GAME,
     GAME_NODE,
     CHILD_GAME_NODE,
-    description="GameNode or ChildNode",
+    description="variation index, Move, or GameNode",
 )
 EXPORTER_RULE = exact(
     STRING_EXPORTER,
@@ -710,6 +714,12 @@ ARROW_INPUT_ARRAY_RULE = exact(
     array_of(ARROW),
     array_of(tuple_of(NUMBER, NUMBER)),
     description="array of Arrow objects or square pairs",
+)
+EXPORTER_KEYWORDS = (
+    ("columns", NUMBER_OR_NULL_RULE),
+    ("headers", BOOLEAN_RULE),
+    ("comments", BOOLEAN_RULE),
+    ("variations", BOOLEAN_RULE),
 )
 MAP_PIECE_RULE = exact(map_of(NUMBER, PIECE))
 PIECE_OR_NULL_RULE = exact(PIECE, NULL, description="piece or null")
@@ -818,19 +828,16 @@ def named_call_contract(name: str | None) -> CallContract | None:
         ),
         "chess.pgn.StringExporter": call_contract(
             STRING_EXPORTER,
-            keywords=(
-                ("columns", exact(NUMBER, NULL, description="number or null")),
-                ("headers", BOOLEAN_RULE),
-                ("comments", BOOLEAN_RULE),
-                ("variations", BOOLEAN_RULE),
-            ),
+            keywords=EXPORTER_KEYWORDS,
             invocation=InvocationKind.CONSTRUCT,
             keyword_style=KeywordStyle.OPTIONS_OBJECT,
         ),
         "chess.pgn.FileExporter": call_contract(
             FILE_EXPORTER,
             STRING_IO_RULE,
+            keywords=EXPORTER_KEYWORDS,
             invocation=InvocationKind.CONSTRUCT,
+            keyword_style=KeywordStyle.OPTIONS_OBJECT,
         ),
         "io.StringIO": call_contract(
             STRING_IO,
@@ -1083,7 +1090,16 @@ def method_call_contract(
         if kind is ShapeKind.CHILD_GAME_NODE and method in {"san", "uci"}:
             return call_contract(STRING)
         if method == "has_variation":
-            return call_contract(BOOLEAN, MOVE_RULE)
+            return call_contract(BOOLEAN, VARIATION_SELECTOR_RULE)
+        if method == "variation":
+            return call_contract(CHILD_GAME_NODE, VARIATION_SELECTOR_RULE)
+        if method in {
+            "promote_to_main",
+            "promote",
+            "demote",
+            "remove_variation",
+        }:
+            return call_contract(VOID, VARIATION_SELECTOR_RULE)
         if method in {"clock", "emt"}:
             return call_contract(FLOAT.optional())
         if method == "eval_depth":
@@ -1099,7 +1115,7 @@ def method_call_contract(
             return call_contract(
                 VOID,
                 POV_SCORE_OR_NULL_RULE,
-                optional=(exact(NUMBER, NULL, description="number or null"),),
+                optional=(NUMBER_OR_NULL_RULE,),
             )
         if method == "arrows":
             return call_contract(array_of(ARROW))
@@ -1133,10 +1149,6 @@ def method_call_contract(
                 return call_contract(MAINLINE_MOVE)
             if method == "accept":
                 return call_contract(VOID, EXPORTER_RULE)
-            if method in {"promote", "demote"}:
-                return call_contract(VOID, GAME_NODE_RULE)
-            if method == "promote_to_main":
-                return call_contract(VOID, MOVE_RULE)
 
     if kind is ShapeKind.POV_SCORE:
         if method in {"white", "black"}:
@@ -1147,7 +1159,7 @@ def method_call_contract(
             if method == "score":
                 return call_contract(
                     NUMBER.optional(),
-                    keywords=(("mate_score", NUMBER_RULE),),
+                    keywords=(("mate_score", NUMBER_OR_NULL_RULE),),
                     keyword_style=KeywordStyle.OPTIONS_OBJECT,
                 )
             return call_contract(NUMBER.optional())

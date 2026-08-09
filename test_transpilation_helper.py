@@ -354,6 +354,11 @@ class RecursiveLoweringTest(unittest.TestCase):
             'aliases[0] = "sf14"\n'
             'for model in models:\n'
             '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12"]\n'
+            'aliases, other = (models, ["x"])\n'
+            'aliases[0] = "sf14"\n'
+            'for model in models:\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
         ):
             with self.assertRaises(UnsupportedSyntax):
                 compile_fixture(mutable_models)
@@ -368,9 +373,47 @@ class RecursiveLoweringTest(unittest.TestCase):
             '    aliases = models\n'
             '    aliases[1] = "sf14"\n'
             '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12", "sf12"]\n'
+            'for model in models:\n'
+            '    aliases, other = (models, ["x"])\n'
+            '    aliases[1] = "sf14"\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
         ):
             with self.assertRaises(UnsupportedSyntax):
                 compile_fixture(loop_mutation)
+
+    def test_registered_contracts_preserve_supported_optional_forms(self) -> None:
+        generated = compile_fixture(
+            "virtual_file = io.StringIO()\n"
+            "exporter = chess.pgn.FileExporter(\n"
+            "    virtual_file, columns=None, headers=False,\n"
+            "    comments=False, variations=False)\n"
+            "game = chess.pgn.Game()\n"
+            'move = chess.Move.from_uci("e2e4")\n'
+            "child = game.add_variation(move)\n"
+            "self.assertTrue(game.has_variation(0))\n"
+            "self.assertTrue(game.has_variation(child))\n"
+            "self.assertEqual(game.variation(move), child)\n"
+            "game.promote_to_main(0)\n"
+            "game.promote(child)\n"
+            "game.demote(move)\n"
+            "game.remove_variation(child)\n"
+            "self.assertTrue(chess.engine.Mate(1).score(mate_score=None) is None)"
+        )
+
+        self.assertIn(
+            "new pgnModule.FileExporter(virtualFile, { columns: null, "
+            "headers: false, comments: false, variations: false })",
+            generated,
+        )
+        self.assertIn("game.hasVariation(0)", generated)
+        self.assertIn("game.hasVariation(child)", generated)
+        self.assertIn("game.variation(move)", generated)
+        self.assertIn("game.promoteToMain(0)", generated)
+        self.assertIn("game.promote(child)", generated)
+        self.assertIn("game.demote(move)", generated)
+        self.assertIn("game.removeVariation(child)", generated)
+        self.assertIn("new engineModule.Mate(1).score({ mateScore: null })", generated)
 
     def test_string_ordering_compares_unicode_code_points(self) -> None:
         generated = compile_fixture('self.assertFalse("𐀀" < "\\ue000")')

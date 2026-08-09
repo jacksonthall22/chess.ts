@@ -656,7 +656,7 @@ class MethodCompiler:
         source: ast.expr,
         value: Expression,
     ) -> ValueFacts:
-        """Preserve proved facts while invalidating aliased mutable lengths."""
+        """Preserve proved facts while invalidating aliased mutable sequences."""
 
         facts = value.facts
         if isinstance(source, ast.Name) and value.shape.kind is ShapeKind.ARRAY:
@@ -677,6 +677,30 @@ class MethodCompiler:
         return name in self.shape_rebind_scopes[-1]
 
     @staticmethod
+    def assignment_name_aliases(
+        target: ast.expr, value: ast.expr
+    ) -> tuple[tuple[str, str], ...]:
+        """Return name-to-name aliases introduced by one supported assignment."""
+
+        if isinstance(target, ast.Name) and isinstance(value, ast.Name):
+            return ((target.id, value.id),)
+        if (
+            isinstance(target, (ast.Tuple, ast.List))
+            and isinstance(value, (ast.Tuple, ast.List))
+            and len(target.elts) == len(value.elts)
+        ):
+            return tuple(
+                pair
+                for target_element, value_element in zip(
+                    target.elts, value.elts, strict=True
+                )
+                for pair in MethodCompiler.assignment_name_aliases(
+                    target_element, value_element
+                )
+            )
+        return ()
+
+    @staticmethod
     def sequence_is_mutated_in_block(
         statements: list[ast.stmt], source_name: str
     ) -> bool:
@@ -690,15 +714,12 @@ class MethodCompiler:
             for child in nodes:
                 if not isinstance(child, ast.Assign) or len(child.targets) != 1:
                     continue
-                target = child.targets[0]
-                if (
-                    isinstance(target, ast.Name)
-                    and isinstance(child.value, ast.Name)
-                    and child.value.id in aliases
-                    and target.id not in aliases
+                for target_name, value_name in MethodCompiler.assignment_name_aliases(
+                    child.targets[0], child.value
                 ):
-                    aliases.add(target.id)
-                    changed = True
+                    if value_name in aliases and target_name not in aliases:
+                        aliases.add(target_name)
+                        changed = True
 
         return any(
             (
@@ -1087,6 +1108,16 @@ class MethodCompiler:
                     or len(value.shape.members) != len(target.elts)
                 ):
                     self.fail(node.value, "destructuring requires an exact tuple shape")
+                for _target_name, source_name in self.assignment_name_aliases(
+                    target, node.value
+                ):
+                    if self.shape_for_name(source_name).kind is ShapeKind.ARRAY:
+                        source_facts = self.symbol_facts.get(
+                            source_name, ValueFacts()
+                        )
+                        self.symbol_facts[source_name] = (
+                            source_facts.without_mutable_sequence_facts()
+                        )
                 for element, member_shape in zip(
                     target.elts, value.shape.members, strict=True
                 ):
