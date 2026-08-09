@@ -33,6 +33,22 @@ class AssertionOracleTest(unittest.TestCase):
                 ["number", "fff0000000000000"],
             )
 
+    def test_trace_canonicalizes_scores(self):
+        with _loaded_frozen_suite() as (chess_module, _test_module):
+            values = _TraceSession(chess_module)
+            self.assertEqual(
+                values.value(chess_module.engine.Cp(12)),
+                ["score", "cp", ["int", "12"]],
+            )
+            self.assertEqual(
+                values.value(chess_module.engine.Mate(-3)),
+                ["score", "mate", ["int", "-3"]],
+            )
+            self.assertEqual(
+                values.value(chess_module.engine.MateGiven),
+                ["score", "mate-given"],
+            )
+
     def test_trace_is_deterministic_and_partitions_the_selection(self):
         first = compile_assertion_oracle()
         second = compile_assertion_oracle()

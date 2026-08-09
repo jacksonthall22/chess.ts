@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
+import * as engine from '../engine'
 import * as pgn from '../pgn'
 
 import {
@@ -23,6 +24,20 @@ describe('Python assertion oracle', () => {
     expect(values.value('x')).toEqual(['str', 'x'])
     expect(values.value(move)).toEqual(['move', 'e2e4'])
     expect(values.value(chess.Piece.fromSymbol('N'))).toEqual(['piece', 'N'])
+    expect(values.value(new engine.Cp(12))).toEqual([
+      'score',
+      'cp',
+      ['int', '12'],
+    ])
+    expect(values.value(new engine.Mate(-3))).toEqual([
+      'score',
+      'mate',
+      ['int', '-3'],
+    ])
+    expect(values.value(engine.MateGiven)).toEqual([
+      'score',
+      'mate-given',
+    ])
     expect(values.value(new chess.SquareSet(chess.BB_E4))).toEqual([
       'int',
       chess.BB_E4.toString(),

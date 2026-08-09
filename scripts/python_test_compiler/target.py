@@ -127,6 +127,7 @@ class ValueFacts:
 
     exact_sequence_length: int | None = None
     exact_string: str | None = None
+    finite_string_values: frozenset[str] = frozenset()
     repeated_attributes: tuple[RepeatedAttributeFact, ...] = ()
 
     def __post_init__(self) -> None:
@@ -136,6 +137,7 @@ class ValueFacts:
     def without_sequence_length(self) -> ValueFacts:
         return ValueFacts(
             exact_string=self.exact_string,
+            finite_string_values=self.finite_string_values,
             repeated_attributes=self.repeated_attributes,
         )
 

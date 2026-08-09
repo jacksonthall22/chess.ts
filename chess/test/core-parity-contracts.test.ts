@@ -237,6 +237,17 @@ describe('TypeScript-native parity contracts', () => {
     ).toThrow(chess.ValueError)
   })
 
+  test('setEpd preserves Python float kind when operations are re-emitted', () => {
+    const board = new chess.Board()
+    const operations = board.setEpd(
+      '8/8/8/8/8/8/8/8 w - - ce 1.00; acd -0.0; acs 1e-7;',
+    )
+
+    expect(board.epd({}, operations)).toBe(
+      '8/8/8/8/8/8/8/8 w - - ce 1.0; acd -0.0; acs 1e-07;',
+    )
+  })
+
   test.each([
     ['1١', 11],
     ['1.١', 1.1],

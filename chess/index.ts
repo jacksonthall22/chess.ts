@@ -18,6 +18,7 @@ import {
   Counter,
   divmod,
   enumerate,
+  formatPythonFloat,
   iterAny,
   iterAll,
   iterFilter,
@@ -60,6 +61,10 @@ class EpdOperations<T> extends Map<string, T> {
     super.set(opcode, value)
     this.pythonFloatOpcodes.add(opcode)
     return this
+  }
+
+  isPythonFloat(opcode: string): boolean {
+    return this.pythonFloatOpcodes.has(opcode)
   }
 
   stringifyCounter(opcode: string): string {
@@ -3563,7 +3568,9 @@ export class Board extends BaseBoard {
             `expected numeric epd operand to be finite, got: ${operand}`,
           )
         }
-        epd.push(` ${operand};`)
+        epd.push(
+          ` ${operations instanceof EpdOperations && operations.isPythonFloat(opcode) ? formatPythonFloat(operand) : operand};`,
+        )
       } else if (
         opcode === 'pv' &&
         typeof operand !== 'string' &&
@@ -3639,7 +3646,7 @@ export class Board extends BaseBoard {
     } = {},
     operations: Map<
       string,
-      null | string | number | bigint | Move | IterableIterator<Move>
+      null | string | number | bigint | Move | Iterable<Move>
     > = new Map(),
   ): string {
     let epSquare: Square | null

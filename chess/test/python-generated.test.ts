@@ -168,7 +168,7 @@ class PieceTestCase extends TestCase {
     this.assertEqualUsing(d1, a, (__actual, __expected) => (__actual).equals(__expected))
     this.assertEqualUsing(d1, d2, (__actual, __expected) => (__actual).equals(__expected))
 
-    this.assertEqualRepresentationsUsing(a.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected, a, d1)
+    ;((__actualRepresentation, __expectedRepresentation) => this.assertEqualRepresentationsUsing(__actualRepresentation.representation, __expectedRepresentation.representation, (__actual, __expected) => __actual === __expected, __actualRepresentation.value, __expectedRepresentation.value))(((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(a), ((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(d1))
 
     this.assertNotEqualUsing(a, b, (__actual, __expected) => (__actual).equals(__expected))
     this.assertNotEqualUsing(b, c, (__actual, __expected) => (__actual).equals(__expected))
@@ -176,10 +176,10 @@ class PieceTestCase extends TestCase {
     this.assertNotEqualUsing(a, c, (__actual, __expected) => (__actual).equals(__expected))
     this.assertFalse(!(((__left, __right) => (__left).equals(__right))(d1, d2)))
 
-    this.assertNotEqualRepresentationsUsing(a.toRepr(), b.toRepr(), (__actual, __expected) => __actual === __expected, a, b)
-    this.assertNotEqualRepresentationsUsing(b.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected, b, c)
-    this.assertNotEqualRepresentationsUsing(b.toRepr(), d1.toRepr(), (__actual, __expected) => __actual === __expected, b, d1)
-    this.assertNotEqualRepresentationsUsing(a.toRepr(), c.toRepr(), (__actual, __expected) => __actual === __expected, a, c)
+    ;((__actualRepresentation, __expectedRepresentation) => this.assertNotEqualRepresentationsUsing(__actualRepresentation.representation, __expectedRepresentation.representation, (__actual, __expected) => __actual === __expected, __actualRepresentation.value, __expectedRepresentation.value))(((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(a), ((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(b))
+    ;((__actualRepresentation, __expectedRepresentation) => this.assertNotEqualRepresentationsUsing(__actualRepresentation.representation, __expectedRepresentation.representation, (__actual, __expected) => __actual === __expected, __actualRepresentation.value, __expectedRepresentation.value))(((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(b), ((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(c))
+    ;((__actualRepresentation, __expectedRepresentation) => this.assertNotEqualRepresentationsUsing(__actualRepresentation.representation, __expectedRepresentation.representation, (__actual, __expected) => __actual === __expected, __actualRepresentation.value, __expectedRepresentation.value))(((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(b), ((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(d1))
+    ;((__actualRepresentation, __expectedRepresentation) => this.assertNotEqualRepresentationsUsing(__actualRepresentation.representation, __expectedRepresentation.representation, (__actual, __expected) => __actual === __expected, __actualRepresentation.value, __expectedRepresentation.value))(((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(a), ((__representedValue) => ({ representation: __representedValue.toRepr(), value: __representedValue }))(c))
   }
 
   testFromSymbol(): void {
@@ -1350,7 +1350,7 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(game.evalDepth(), 5, (__actual, __expected) => __actual !== null && (__actual === __expected))
 
     this.assertEqualUsing(game.arrows(), [], (__actual, __expected) => __actual.length === 0 && __expected.length === 0)
-    game.setArrows([[chess.A1, chess.A1], new svgModule.Arrow(chess.A1, chess.H1, { color: "red" }), new svgModule.Arrow(chess.B1, chess.B8)])
+    game.setArrows(([[chess.A1, chess.A1], new svgModule.Arrow(chess.A1, chess.H1, { color: "red" }), new svgModule.Arrow(chess.B1, chess.B8)] satisfies (svgModule.Arrow | [number, number])[]))
     this.assertEqualUsing(game.comment, "[%csl Ga1][%cal Ra1h1,Gb1b8] foo [%bar] baz [%clk 3:25:45] [%eval #1,5]", (__actual, __expected) => __actual === __expected)
     const arrows = game.arrows()
     this.assertEqualUsing(arrows.length, 3, (__actual, __expected) => __actual === __expected)
@@ -1436,10 +1436,10 @@ class EngineTestCase extends TestCase {
         this.assertEqualUsing(((__left, __right) => __left >= __right)(i, j), ((__left, __right) => __left.ge(__right))(a, b), (__actual, __expected) => __actual === __expected)
         this.assertEqualUsing(((__left, __right) => __left < __right)(i, j), ((__left, __right) => (() => { if (__left === null || __right === null) throw new TypeError("cannot order null and a value"); return __left < __right; })())(a.score({ mateScore: 100000 }), b.score({ mateScore: 100000 })), (__actual, __expected) => __actual === __expected)
 
-        for (let model of (["sf12", "sf14", "sf15", "sf15.1", "sf16"] satisfies engineModule.WdlModel[])) {
-          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left <= __right)(a.wdl({ model: model }).expectation(), b.wdl({ model: model }).expectation())))
-          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left <= __right)(a.wdl({ model: model }).winningChance(), b.wdl({ model: model }).winningChance())))
-          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left >= __right)(a.wdl({ model: model }).losingChance(), b.wdl({ model: model }).losingChance())))
+        for (let model of ["sf12", "sf14", "sf15", "sf15.1", "sf16"]) {
+          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left <= __right)(a.wdl({ model: ((__finiteString) => { switch (__finiteString) { case "sf12": case "sf14": case "sf15": case "sf15.1": case "sf16": return __finiteString; default: throw new Error("compiler invariant failed: finite string value " + JSON.stringify(__finiteString) + " escaped its proved set"); } })(model) }).expectation(), b.wdl({ model: ((__finiteString) => { switch (__finiteString) { case "sf12": case "sf14": case "sf15": case "sf15.1": case "sf16": return __finiteString; default: throw new Error("compiler invariant failed: finite string value " + JSON.stringify(__finiteString) + " escaped its proved set"); } })(model) }).expectation())))
+          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left <= __right)(a.wdl({ model: ((__finiteString) => { switch (__finiteString) { case "sf12": case "sf14": case "sf15": case "sf15.1": case "sf16": return __finiteString; default: throw new Error("compiler invariant failed: finite string value " + JSON.stringify(__finiteString) + " escaped its proved set"); } })(model) }).winningChance(), b.wdl({ model: ((__finiteString) => { switch (__finiteString) { case "sf12": case "sf14": case "sf15": case "sf15.1": case "sf16": return __finiteString; default: throw new Error("compiler invariant failed: finite string value " + JSON.stringify(__finiteString) + " escaped its proved set"); } })(model) }).winningChance())))
+          this.assertTrue((!(((__left, __right) => __left < __right)(i, j)) || ((__left, __right) => __left >= __right)(a.wdl({ model: ((__finiteString) => { switch (__finiteString) { case "sf12": case "sf14": case "sf15": case "sf15.1": case "sf16": return __finiteString; default: throw new Error("compiler invariant failed: finite string value " + JSON.stringify(__finiteString) + " escaped its proved set"); } })(model) }).losingChance(), b.wdl({ model: ((__finiteString) => { switch (__finiteString) { case "sf12": case "sf14": case "sf15": case "sf15.1": case "sf16": return __finiteString; default: throw new Error("compiler invariant failed: finite string value " + JSON.stringify(__finiteString) + " escaped its proved set"); } })(model) }).losingChance())))
         }
       }
     }

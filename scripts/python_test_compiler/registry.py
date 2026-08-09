@@ -705,7 +705,12 @@ ARRAY_MOVE_RULE = exact(array_of(MOVE))
 TWO_NUMBER_TUPLE_RULE = exact(tuple_of(NUMBER, NUMBER))
 SCORE_RULE = exact(SCORE)
 POV_SCORE_OR_NULL_RULE = exact(POV_SCORE, NULL, description="PovScore or null")
-ARROW_INPUT_ARRAY_RULE = exact(array_of(ARROW_INPUT))
+ARROW_INPUT_ARRAY_RULE = exact(
+    array_of(ARROW_INPUT),
+    array_of(ARROW),
+    array_of(tuple_of(NUMBER, NUMBER)),
+    description="array of Arrow objects or square pairs",
+)
 MAP_PIECE_RULE = exact(map_of(NUMBER, PIECE))
 PIECE_OR_NULL_RULE = exact(PIECE, NULL, description="piece or null")
 BITBOARD_INPUT_RULE = exact(

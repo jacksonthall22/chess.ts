@@ -191,6 +191,12 @@ class _TraceSession:
             return ["board", value.fen()]
         if isinstance(value, chess.BaseBoard):
             return ["base-board", value.board_fen()]
+        if isinstance(value, chess.engine.Cp):
+            return ["score", "cp", self.value(value.cp)]
+        if isinstance(value, chess.engine.Mate):
+            return ["score", "mate", self.value(value.moves)]
+        if value is chess.engine.MateGiven:
+            return ["score", "mate-given"]
         if isinstance(value, chess.engine.Wdl):
             return [
                 "wdl",

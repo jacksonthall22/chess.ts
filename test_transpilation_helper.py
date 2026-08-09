@@ -283,8 +283,9 @@ class RecursiveLoweringTest(unittest.TestCase):
         self.assertIn(
             "__left.lt(__right))(score, engineModule.MateGiven)", generated
         )
-        self.assertIn("satisfies engineModule.WdlModel[]", generated)
-        self.assertIn("score.wdl({ model: model }).expectation()", generated)
+        self.assertIn("switch (__finiteString)", generated)
+        self.assertIn("score.wdl({ model: ((__finiteString)", generated)
+        self.assertIn("})(model) }).expectation()", generated)
         self.assertNotIn(" as ", generated)
 
     def test_enumerate_preserves_lazy_source_iteration(self) -> None:
@@ -321,6 +322,15 @@ class RecursiveLoweringTest(unittest.TestCase):
         ):
             compile_fixture('chess.engine.Cp(0).wdl(model="unknown")')
 
+        ordinary_array = compile_fixture(
+            'models = ["sf"]\n'
+            'self.assertEqual(models, ["sf"])\n'
+            'self.assertEqual(models[0].lower(), "sf")'
+        )
+        self.assertNotIn("engineModule.WdlModel[]", ordinary_array)
+        self.assertIn('const models = ["sf"]', ordinary_array)
+        self.assertIn(".toLowerCase()", ordinary_array)
+
     def test_string_ordering_compares_unicode_code_points(self) -> None:
         generated = compile_fixture('self.assertFalse("𐀀" < "\\ue000")')
 
@@ -335,12 +345,32 @@ class RecursiveLoweringTest(unittest.TestCase):
             'chess.svg.Arrow(chess.A1, chess.H1, color="red")])'
         )
 
+        self.assertIn("game.setArrows(([[chess.A1, chess.A1]", generated)
         self.assertIn(
-            "game.setArrows([[chess.A1, chess.A1], "
-            'new svgModule.Arrow(chess.A1, chess.H1, { color: "red" })])',
+            'new svgModule.Arrow(chess.A1, chess.H1, { color: "red" })',
             generated,
         )
         self.assertNotIn(" as ", generated)
+
+        homogeneous_arrows = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            'game.set_arrows([chess.svg.Arrow(chess.A1, chess.H1)])\n'
+            "game.set_arrows([(chess.A1, chess.H1)])"
+        )
+        self.assertIn("game.setArrows([new svgModule.Arrow", homogeneous_arrows)
+        self.assertIn("game.setArrows([[chess.A1, chess.H1]])", homogeneous_arrows)
+
+        bound_mixed = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            "arrows = [(chess.A1, chess.A1), "
+            'chess.svg.Arrow(chess.A1, chess.H1, color="red")]\n'
+            "game.set_arrows(arrows)"
+        )
+        self.assertIn(
+            "satisfies (svgModule.Arrow | [number, number])[]",
+            bound_mixed,
+        )
+        self.assertIn("game.setArrows(arrows)", bound_mixed)
 
     def test_exporter_reassignment_has_one_explicit_target_union(self) -> None:
         generated = compile_fixture(
@@ -373,11 +403,19 @@ class RecursiveLoweringTest(unittest.TestCase):
         )
 
         self.assertIn(
-            "this.assertEqualRepresentationsUsing(left.toRepr(), "
-            "right.toRepr(), (__actual, __expected) => "
-            "__actual === __expected, left, right)",
+            "({ representation: __representedValue.toRepr(), "
+            "value: __representedValue })",
             generated,
         )
+        self.assertIn("this.assertEqualRepresentationsUsing(", generated)
+
+        side_effect = compile_fixture(
+            'board = chess.Board("8/8/8/8/8/8/8/K6k b - - 0 1")\n'
+            'board.push(chess.Move.from_uci("h1h2"))\n'
+            'self.assertEqual(repr(board.pop()), '
+            'repr(chess.Move.from_uci("h1h2")))'
+        )
+        self.assertEqual(side_effect.count("board.pop()"), 1)
 
     def test_composes_assignments_loops_calls_and_operators(self) -> None:
         generated = compile_fixture(

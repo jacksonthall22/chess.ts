@@ -45,7 +45,6 @@ from .registry import (
     KeywordStyle,
     ShapeRule,
     TypeAssertion,
-    WDL_MODEL_VALUES,
     attribute_shape,
     callable_shape_contract,
     exception_has_ordinary_message,
@@ -59,6 +58,7 @@ from .registry import (
     writable_attribute_shape,
 )
 from .target import (
+    ARROW_INPUT,
     BASE_BOARD,
     BIGINT,
     BOARD,
@@ -108,7 +108,7 @@ class Expression:
     code: str
     shape: TargetShape
     facts: ValueFacts = field(default_factory=ValueFacts)
-    oracle_value_code: str | None = None
+    oracle_representation_pair_code: str | None = None
 
 
 class UnsupportedSyntax(ValueError):
@@ -1106,7 +1106,15 @@ class MethodCompiler:
             self.shape_rebind_scopes.append(rebound)
             for source, target_name, target_shape in bindings:
                 self.symbol_shapes[source] = target_shape
-                self.symbol_facts[source] = ValueFacts()
+                self.symbol_facts[source] = (
+                    ValueFacts(
+                        finite_string_values=(
+                            iterable_expression.facts.finite_string_values
+                        )
+                    )
+                    if len(bindings) == 1 and target_shape == STRING
+                    else ValueFacts()
+                )
                 self.symbol_target_names[source] = target_name
             iterable = self.iterable_code(iterable_expression, node.iter)
             try:
@@ -1676,11 +1684,29 @@ class MethodCompiler:
     ) -> Expression:
         """Apply one syntax- and fact-proved shape supplied by call context."""
 
-        if (
-            value.shape == STRING
-            and value.facts.exact_string in rule.contextual_string_literals
-        ):
-            return Expression(value.code, rule.shapes[0], value.facts)
+        if value.shape == STRING:
+            exact_string = value.facts.exact_string
+            finite_strings = value.facts.finite_string_values
+            if exact_string in rule.contextual_string_literals:
+                return Expression(value.code, rule.shapes[0], value.facts)
+            if finite_strings and finite_strings <= rule.contextual_string_literals:
+                cases = " ".join(
+                    f"case {json.dumps(item, ensure_ascii=False)}:"
+                    for item in sorted(finite_strings)
+                )
+                code = self.bind_once(
+                    (value,),
+                    ("__finiteString",),
+                    lambda names, _fresh: (
+                        "{ switch ("
+                        f"{names[0]}) {{ {cases} return {names[0]}; "
+                        "default: throw new Error("
+                        '"compiler invariant failed: finite string value " + '
+                        f'JSON.stringify({names[0]}) + " escaped its proved set"'
+                        "); } }"
+                    ),
+                )
+                return Expression(code, rule.shapes[0], value.facts)
 
         if (
             value.shape.kind is ShapeKind.MAP
@@ -1701,7 +1727,7 @@ class MethodCompiler:
             array_targets = tuple(
                 shape for shape in rule.shapes if shape.kind is ShapeKind.ARRAY
             )
-            if len(array_targets) == 1:
+            if array_targets:
                 return Expression(value.code, array_targets[0], value.facts)
 
         return value
@@ -2330,10 +2356,18 @@ class MethodCompiler:
             ShapeKind.SQUARE_SET,
             ShapeKind.SCORE,
         }:
+            oracle_representation_pair_code = self.bind_once(
+                (argument,),
+                ("__representedValue",),
+                lambda names, _fresh: (
+                    "({ representation: "
+                    f"{names[0]}.toRepr(), value: {names[0]} }})"
+                ),
+            )
             return Expression(
                 f"{argument.code}.toRepr()",
                 STRING,
-                oracle_value_code=argument.code,
+                oracle_representation_pair_code=oracle_representation_pair_code,
             )
         if argument.shape.kind is ShapeKind.LEGAL_MOVE_GENERATOR:
             return Expression(f"{argument.code}.toString()", STRING)
@@ -2886,30 +2920,35 @@ class MethodCompiler:
                     f"[{values}]",
                     tuple_of(*(expression.shape for expression in expressions)),
                 )
-            is_wdl_model_array = bool(expressions) and all(
-                expression.shape == WDL_MODEL
-                or (
-                    expression.shape == STRING
-                    and expression.facts.exact_string in WDL_MODEL_VALUES
-                )
-                for expression in expressions
-            )
-            element_shape = (
-                WDL_MODEL
-                if is_wdl_model_array
-                else self.common_shape(
-                    [expression.shape for expression in expressions], node
-                )
+            element_shape = self.common_shape(
+                [expression.shape for expression in expressions], node
             )
             array_code = f"[{values}]"
-            if element_shape == WDL_MODEL:
+            if element_shape == ARROW_INPUT:
                 array_code = (
-                    f"({array_code} satisfies engineModule.WdlModel[])"
+                    f"({array_code} satisfies "
+                    "(svgModule.Arrow | [number, number])[])"
                 )
             return Expression(
                 array_code,
                 array_of(element_shape),
-                ValueFacts(exact_sequence_length=len(expressions)),
+                ValueFacts(
+                    exact_sequence_length=len(expressions),
+                    finite_string_values=(
+                        frozenset(
+                            expression.facts.exact_string
+                            for expression in expressions
+                            if expression.facts.exact_string is not None
+                        )
+                        if expressions
+                        and all(
+                            expression.shape == STRING
+                            and expression.facts.exact_string is not None
+                            for expression in expressions
+                        )
+                        else frozenset()
+                    ),
+                ),
             )
 
         if isinstance(node, ast.Dict):
@@ -3530,12 +3569,12 @@ class MethodCompiler:
                 comparator = self.equality_callback(
                     actual.shape, expected.shape, node
                 )
-            representation_values = (
-                actual.oracle_value_code,
-                expected.oracle_value_code,
+            representation_pairs = (
+                actual.oracle_representation_pair_code,
+                expected.oracle_representation_pair_code,
             )
-            if any(value is not None for value in representation_values):
-                if not all(value is not None for value in representation_values):
+            if any(value is not None for value in representation_pairs):
+                if not all(value is not None for value in representation_pairs):
                     self.fail(
                         node,
                         "comparison between repr() and a non-repr value requires "
@@ -3546,13 +3585,34 @@ class MethodCompiler:
                     if name == "self.assertEqual"
                     else "this.assertNotEqualRepresentationsUsing"
                 )
-                rendered = [
-                    actual.code,
-                    expected.code,
-                    comparator,
-                    representation_values[0],
-                    representation_values[1],
-                ]
+                pair_expressions = tuple(
+                    Expression(pair, UNKNOWN)
+                    for pair in representation_pairs
+                    if pair is not None
+                )
+
+                def render_representation_assertion(
+                    names: tuple[str, ...], _fresh: FreshName
+                ) -> str:
+                    rendered = [
+                        f"{names[0]}.representation",
+                        f"{names[1]}.representation",
+                        comparator,
+                        f"{names[0]}.value",
+                        f"{names[1]}.value",
+                    ]
+                    if len(arguments) == 3:
+                        rendered.append(arguments[2].code)
+                    return f"{method}({', '.join(rendered)})"
+
+                return Expression(
+                    self.bind_once(
+                        pair_expressions,
+                        ("__actualRepresentation", "__expectedRepresentation"),
+                        render_representation_assertion,
+                    ),
+                    VOID,
+                )
             else:
                 method = (
                     "this.assertEqualUsing"

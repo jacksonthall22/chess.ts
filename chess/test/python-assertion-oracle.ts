@@ -12,6 +12,8 @@ export type CanonicalValue =
   | readonly ['piece', string]
   | readonly ['board', string]
   | readonly ['base-board', string]
+  | readonly ['score', 'cp' | 'mate', CanonicalValue]
+  | readonly ['score', 'mate-given']
   | readonly ['wdl', string, string, string]
   | readonly ['sequence', readonly CanonicalValue[]]
   | readonly ['set', readonly CanonicalValue[]]
@@ -88,6 +90,11 @@ export class AssertionValueCanonicalizer {
     if (value instanceof chess.Board) return ['board', value.fen()]
     if (value instanceof chess.BaseBoard)
       return ['base-board', value.boardFen()]
+    if (value instanceof engine.Cp)
+      return ['score', 'cp', this.value(value.cp)]
+    if (value instanceof engine.Mate)
+      return ['score', 'mate', this.value(value.moves)]
+    if (value === engine.MateGiven) return ['score', 'mate-given']
     if (value instanceof engine.Wdl)
       return [
         'wdl',

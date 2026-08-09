@@ -89,6 +89,58 @@ export const parsePythonFloat = (value: string): number => {
   return Number(normalized.replaceAll('_', ''))
 }
 
+/** Direct equivalent of Python's shortest finite `str(float)` formatting. */
+export const formatPythonFloat = (value: number): string => {
+  if (!Number.isFinite(value)) {
+    throw new ValueError(`expected a finite float, got: ${value}`)
+  }
+  if (Object.is(value, -0)) {
+    return '-0.0'
+  }
+
+  const negative = value < 0
+  const source = Math.abs(value).toString()
+  const [coefficient, sourceExponent] = source.split('e')
+  const decimalIndex = coefficient.includes('.')
+    ? coefficient.indexOf('.')
+    : coefficient.length
+  const rawDigits = coefficient.replace('.', '')
+  const leadingZeroes = rawDigits.length - rawDigits.replace(/^0+/, '').length
+  const digits = rawDigits
+    .slice(leadingZeroes)
+    .replace(/0+$/, '') || '0'
+  const exponent =
+    sourceExponent === undefined
+      ? decimalIndex - leadingZeroes - 1
+      : Number(sourceExponent)
+  const sign = negative ? '-' : ''
+
+  if (exponent < -4 || exponent >= 16) {
+    const mantissa =
+      digits.length === 1 ? digits : `${digits[0]}.${digits.slice(1)}`
+    const exponentSign = exponent >= 0 ? '+' : '-'
+    return (
+      `${sign}${mantissa}e${exponentSign}` +
+      Math.abs(exponent).toString().padStart(2, '0')
+    )
+  }
+
+  const targetDecimalIndex = exponent + 1
+  if (targetDecimalIndex <= 0) {
+    return `${sign}0.${'0'.repeat(-targetDecimalIndex)}${digits}`
+  }
+  if (targetDecimalIndex >= digits.length) {
+    return (
+      `${sign}${digits}${'0'.repeat(targetDecimalIndex - digits.length)}` +
+      '.0'
+    )
+  }
+  return (
+    `${sign}${digits.slice(0, targetDecimalIndex)}.` +
+    digits.slice(targetDecimalIndex)
+  )
+}
+
 /** Direct equivalent of `str.split(None, maxsplit)`. */
 export const splitWhitespaceWithMax = (
   value: string,
