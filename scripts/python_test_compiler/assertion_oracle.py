@@ -13,9 +13,11 @@ rule instead of silently falling back to ``repr()`` or object internals.
 
 from __future__ import annotations
 
+import builtins
 import importlib.util
 import json
 import os
+import struct
 import sys
 import types
 import unittest
@@ -46,6 +48,17 @@ _FROZEN_TEST_MODULE = "_chess_ts_frozen_test_assertion_oracle"
 
 class AssertionOracleError(RuntimeError):
     """The frozen suite cannot produce the finite assertion oracle."""
+
+
+class _TracedRepresentation(str):
+    """A source repr string that retains the represented value for the oracle."""
+
+    value: object
+
+    def __new__(cls, value: object) -> _TracedRepresentation:
+        instance = super().__new__(cls, builtins.repr(value))
+        instance.value = value
+        return instance
 
 
 JsonValue = type(None) | bool | int | str | list["JsonValue"] | dict[str, "JsonValue"]
@@ -121,6 +134,7 @@ def _loaded_frozen_suite() -> Iterator[tuple[types.ModuleType, types.ModuleType]
         test_module = importlib.util.module_from_spec(test_spec)
         sys.modules[_FROZEN_TEST_MODULE] = test_module
         test_spec.loader.exec_module(test_module)
+        test_module.repr = _TracedRepresentation
         yield chess_module, test_module
     finally:
         for name in tuple(sys.modules):
@@ -148,6 +162,8 @@ class _TraceSession:
     def value(self, value: object) -> JsonValue:
         chess = self.chess
         pgn = chess.pgn
+        if isinstance(value, _TracedRepresentation):
+            return self.value(value.value)
         if value is None:
             return ["none"]
         if isinstance(value, bool):
@@ -157,6 +173,17 @@ class _TraceSession:
             return ["int", str(int(value))]
         if isinstance(value, int):
             return ["int", str(value)]
+        if isinstance(value, float):
+            binary64 = struct.pack(">d", value).hex()
+            if binary64 == "8000000000000000":
+                return ["number", binary64]
+            if value.is_integer():
+                if -(2**53 - 1) <= value <= 2**53 - 1:
+                    return ["int", str(int(value))]
+                raise AssertionOracleError(
+                    "integral Python float exceeds TypeScript's safe range"
+                )
+            return ["number", binary64]
         if isinstance(value, str):
             return ["str", value]
         if isinstance(value, chess.Move):
@@ -165,6 +192,21 @@ class _TraceSession:
             return ["piece", value.symbol()]
         if isinstance(value, chess.Board):
             return ["board", value.fen()]
+        if isinstance(value, chess.BaseBoard):
+            return ["base-board", value.board_fen()]
+        if isinstance(value, chess.engine.Cp):
+            return ["score", "cp", self.value(value.cp)]
+        if isinstance(value, chess.engine.Mate):
+            return ["score", "mate", self.value(value.moves)]
+        if value is chess.engine.MateGiven:
+            return ["score", "mate-given"]
+        if isinstance(value, chess.engine.Wdl):
+            return [
+                "wdl",
+                str(value.wins),
+                str(value.draws),
+                str(value.losses),
+            ]
         if isinstance(value, (list, tuple)):
             return ["sequence", [self.value(item) for item in value]]
         if isinstance(value, (set, frozenset)):

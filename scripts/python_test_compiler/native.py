@@ -44,12 +44,13 @@ def truthy_code(code: str, shape: TargetShape) -> str:
     kind = shape.kind
     if kind is ShapeKind.BOOLEAN and not shape.nullable:
         return code
-    if kind is ShapeKind.NUMBER:
+    if kind in {ShapeKind.NUMBER, ShapeKind.FLOAT}:
         return f"{code} !== 0"
     if kind is ShapeKind.BIGINT:
         return f"{code} !== 0n"
     if kind in {
         ShapeKind.STRING,
+        ShapeKind.WDL_MODEL,
         ShapeKind.ARRAY,
         ShapeKind.PIECE_VALUE_SET,
     }:
@@ -78,27 +79,7 @@ def piece_equality_code(
 ) -> str:
     """Call the production equality contract for direct Python equality."""
 
-    fresh = fresh_name or _local_name_allocator()
-    piece = fresh("__piece")
-    candidate = fresh("__candidate")
-    argument = fresh("__argument")
-    equals = fresh("__equals")
-    return (
-        f"(() => {{ const {piece} = "
-        f"{left_code} as /* parity-gap: piece-value-equality */ unknown as "
-        "/* parity-gap: piece-value-equality */ "
-        "{ equals?: (other: unknown) => boolean }; "
-        f"const {equals} = (({candidate}: unknown): "
-        "((other: unknown) => boolean) => { "
-        f"if (typeof {candidate} !== \"function\") "
-        "throw new TypeError(\"Piece.equals is not implemented\"); "
-        f"return ({argument}: unknown): boolean => "
-        f"Reflect.apply({candidate} as "
-        "/* parity-gap: piece-value-equality */ Function, "
-        f"{piece}, [{argument}]); "
-        f"}})({piece}.equals); "
-        f"return {equals}({right_code}); }})()"
-    )
+    return f"({left_code}).equals({right_code})"
 
 
 def piece_set_equality_code(
@@ -112,28 +93,11 @@ def piece_set_equality_code(
     fresh = fresh_name or _local_name_allocator()
     piece = fresh("__piece")
     other = fresh("__other")
-    candidate = fresh("__candidate")
-    argument = fresh("__argument")
-    equals = fresh("__equals")
     return (
-        f"(() => {{ const {piece} = "
-        f"{left_code} as /* parity-gap: piece-value-equality */ unknown as "
-        "/* parity-gap: piece-value-equality */ "
-        "{ hash(): number; equals?: (other: unknown) => boolean }; "
-        f"const {other} = "
-        f"{right_code} as /* parity-gap: piece-value-equality */ unknown as "
-        "/* parity-gap: piece-value-equality */ { hash(): number }; "
+        f"(() => {{ const {piece} = {left_code}; "
+        f"const {other} = {right_code}; "
         f"if ({piece}.hash() !== {other}.hash()) return false; "
-        f"const {equals} = (({candidate}: unknown): "
-        "((other: unknown) => boolean) => { "
-        f"if (typeof {candidate} !== \"function\") "
-        "throw new TypeError(\"Piece.equals is not implemented\"); "
-        f"return ({argument}: unknown): boolean => "
-        f"Reflect.apply({candidate} as "
-        "/* parity-gap: piece-value-equality */ Function, "
-        f"{piece}, [{argument}]); "
-        f"}})({piece}.equals); "
-        f"return {equals}({other}); }})()"
+        f"return {piece}.equals({other}); }})()"
     )
 
 
@@ -195,10 +159,15 @@ def equality_code(
     primitive = {
         ShapeKind.BOOLEAN,
         ShapeKind.NUMBER,
+        ShapeKind.FLOAT,
         ShapeKind.BIGINT,
         ShapeKind.STRING,
     }
     if left.kind == right.kind and left.kind in primitive:
+        return f"{left_code} === {right_code}"
+    if {left.kind, right.kind} == {ShapeKind.STRING, ShapeKind.WDL_MODEL}:
+        return f"{left_code} === {right_code}"
+    if {left.kind, right.kind} == {ShapeKind.NUMBER, ShapeKind.FLOAT}:
         return f"{left_code} === {right_code}"
     if {left.kind, right.kind} == {ShapeKind.NUMBER, ShapeKind.BIGINT}:
         if left.kind is ShapeKind.NUMBER:
@@ -212,6 +181,10 @@ def equality_code(
     if left.kind is ShapeKind.BOARD and right.kind is ShapeKind.BOARD:
         return f"{left_code}.equals({right_code})"
     if left.kind is ShapeKind.BASE_BOARD and right.kind is ShapeKind.BASE_BOARD:
+        return f"{left_code}.equals({right_code})"
+    if left.kind is ShapeKind.SCORE and right.kind is ShapeKind.SCORE:
+        return f"{left_code}.equals({right_code})"
+    if left.kind is ShapeKind.WDL and right.kind is ShapeKind.WDL:
         return f"{left_code}.equals({right_code})"
     if left.kind is ShapeKind.SQUARE_SET and right.kind in {
         ShapeKind.SQUARE_SET,
@@ -274,6 +247,82 @@ def equality_code(
         )
     raise NativeLoweringError(
         f"equality is not defined for {left.kind.value} and {right.kind.value}"
+    )
+
+
+def ordering_code(
+    operator: str,
+    left: TargetShape,
+    right: TargetShape,
+    left_code: str,
+    right_code: str,
+    *,
+    fresh_name: FreshName | None = None,
+) -> str:
+    """Lower one Python total-order operation without JS coercion."""
+
+    fresh = fresh_name or _local_name_allocator()
+    symbols = {"lt": "<", "le": "<=", "gt": ">", "ge": ">="}
+    symbol = symbols.get(operator)
+    if symbol is None:
+        raise NativeLoweringError(f"unknown ordering operator {operator}")
+
+    if left.nullable or right.nullable:
+        required_left = left.required() if left.nullable else left
+        required_right = right.required() if right.nullable else right
+        comparison = ordering_code(
+            operator,
+            required_left,
+            required_right,
+            left_code,
+            right_code,
+            fresh_name=fresh,
+        )
+        return (
+            "(() => { "
+            f"if ({left_code} === null || {right_code} === null) "
+            'throw new TypeError("cannot order null and a value"); '
+            f"return {comparison}; "
+            "})()"
+        )
+
+    numeric = {ShapeKind.NUMBER, ShapeKind.FLOAT}
+    if left.kind in numeric and right.kind in numeric:
+        return f"{left_code} {symbol} {right_code}"
+    if left.kind == right.kind and left.kind is ShapeKind.BIGINT:
+        return f"{left_code} {symbol} {right_code}"
+    string_like = {ShapeKind.STRING, ShapeKind.WDL_MODEL}
+    if left.kind in string_like and right.kind in string_like:
+        left_characters = fresh("__leftCharacters")
+        right_characters = fresh("__rightCharacters")
+        length = fresh("__length")
+        index = fresh("__index")
+        left_point = fresh("__leftPoint")
+        right_point = fresh("__rightPoint")
+        comparison = (
+            "(() => { "
+            f"const {left_characters} = Array.from({left_code}); "
+            f"const {right_characters} = Array.from({right_code}); "
+            f"const {length} = Math.min("
+            f"{left_characters}.length, {right_characters}.length); "
+            f"for (let {index} = 0; {index} < {length}; {index} += 1) {{ "
+            f"const {left_point} = {left_characters}[{index}].codePointAt(0); "
+            f"const {right_point} = {right_characters}[{index}].codePointAt(0); "
+            f"if ({left_point} === undefined || {right_point} === undefined) "
+            'throw new Error("a Unicode character must contain one code point"); '
+            f"if ({left_point} < {right_point}) return -1; "
+            f"if ({left_point} > {right_point}) return 1; "
+            "} "
+            f"if ({left_characters}.length < {right_characters}.length) return -1; "
+            f"if ({left_characters}.length > {right_characters}.length) return 1; "
+            "return 0; "
+            "})()"
+        )
+        return f"{comparison} {symbol} 0"
+    if left.kind is ShapeKind.SCORE and right.kind is ShapeKind.SCORE:
+        return f"{left_code}.{operator}({right_code})"
+    raise NativeLoweringError(
+        f"ordering is not defined for {left.kind.value} and {right.kind.value}"
     )
 
 

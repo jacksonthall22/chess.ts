@@ -105,8 +105,12 @@ Q . p . . . . .
 
 
 ## Contributing
-This package aims to be a direct port of `python-chess` to TypeScript, faithful down to the line.
-I compiled some notes about how I approached this massive transpilation effort [here](py-to-ts-tips.md).
+This package aims to be a source-faithful port of `python-chess` to TypeScript,
+not merely a behaviorally compatible reimplementation. After accounting for
+language syntax, the control flow, decomposition, expressions, and comments
+should remain faithful down to the line. The mandatory translation contract is
+in [AGENTS.md](AGENTS.md), with detailed language mappings in
+[py-to-ts-tips.md](py-to-ts-tips.md).
 
 In the long run, this repo should aim to transpile everything from the [pinned python-chess submodule](./python-chess/)
 over to the corresponding files in [`chess/`](chess/):
@@ -116,8 +120,9 @@ over to the corresponding files in [`chess/`](chess/):
 - [x]  Add a test harness and account for every frozen upstream test
 - [ ]  Complete the test-suite translation
 
-The exact upstream commit represented by the pinned source and test snapshot is
-recorded in [UPSTREAM.md](UPSTREAM.md).
+The exact upstream commit represented by the pinned source and test snapshot,
+and the one-upstream-state-at-a-time synchronization process, are recorded in
+[UPSTREAM.md](UPSTREAM.md).
 
 PRs welcome!
 
@@ -133,26 +138,68 @@ and drag to select multiple code lines, including leading indents). Press `Enter
 (you may need `pip install pyperclip`). Paste it into a TypeScript file, continue to make edits until warnings disappear, and check the
 final TypeScript against the Python in a splitscreen to verify it works the same.
 
-For the frozen upstream test suite, the repository also has a deterministic
-compiler in
+### Generated upstream tests
+
+The frozen upstream tests use a deterministic compiler that is separate from
+the manual helper above. Here, **generated** applies only to selected test
+bodies; the production modules under [`chess/`](chess/) are still translated
+and reviewed as source code.
+
+The test system follows two paths from the same pinned `python-chess/test.py`:
+
+```text
+                              ┌─────────────────────────────┐
+                              │ pinned python-chess/test.py │
+                              └──────────────┬──────────────┘
+                                             │
+                   ┌─────────────────────────┴─────────────────────────┐
+                   │                                                   │
+       ┌───────────▼───────────┐                           ┌───────────▼───────────┐
+       │      SYNTAX PATH      │                           │     RUNTIME PATH      │
+       │ Parse and compile AST │                           │ Execute original test│
+       └───────────┬───────────┘                           │ against pinned Python│
+                   │                                       └───────────┬───────────┘
+       ┌───────────▼──────────────┐                        ┌───────────▼──────────────┐
+       │ python-generated.test.ts │                        │ python-assertion-oracle │
+       └───────────┬──────────────┘                        │ .generated.ts           │
+                   │                                       │ expected Python events │
+       ┌───────────▼──────────────┐                        └───────────┬──────────────┘
+       │ Run against chess.ts     │                                    │
+       │ + normal Vitest checks   │                                    │
+       └───────────┬──────────────┘                                    │
+                   │                                                   │
+       ┌───────────▼──────────────┐                                    │
+       │ actual TypeScript events │                                    │
+       └───────────┬──────────────┘                                    │
+                   │                                                   │
+                   └────────────────────────┬──────────────────────────┘
+                                            ▼
+                              ┌──────────────────────────┐
+                              │ Exact event-by-event     │
+                              │ comparison, in order     │
+                              └────────────┬─────────────┘
+                                           ▼
+                                    test passes or fails
+```
+
+The code calls that golden trace the **assertion oracle**. For each runtime
+assertion it records portable versions of the actual value, expected value,
+assertion kind, and relevant exception or container information. A generated
+TypeScript assertion must both pass normally in Vitest and produce the same
+next trace event as Python. This second check catches a compiler error that
+mistranslates an expected value, changes loop behavior, or otherwise lets a
+different assertion pass. The 5,060 observations are dynamic events from 465
+assertion calls; assertions inside loops account for the larger number.
+
+The compiler lives in
 [`scripts/python_test_compiler/`](scripts/python_test_compiler/). It parses the
-Python file and its comments once, recursively lowers each supported AST node,
-and proves target shapes and flow facts through finite symbol and call
-contracts. Target API differences—including constructors, keyword layout,
-structural protocols, adapters, and dependent return refinements—are declared
-in the registry rather than matched from individual test bodies. Atomic rules
-then emit native TypeScript operations such as `.length`, `Array.from()`, `Set`,
-bigint operators, and domain `.equals()` methods; there is no Python-semantics
-runtime or `py.*` compatibility layer. It reuses only the parsed-identifier
-conversion from `transpilation_helper.py`; it does not run the helper's textual
-rewrites. Unsupported constructs, unknown semantic inputs, unclaimed AST nodes,
-unclaimed comments, stale parity selectors, or generated drift fail the build
-instead of producing approximate code. All 76 translated upstream test bodies
-are generated this way, and a generated runtime oracle compares 1,917 assertion
-observations for the 61 gap-free methods directly with the frozen Python
-implementation. See
-[`UPSTREAM.md`](UPSTREAM.md) for the architecture, provenance, and update
-process.
+Python syntax tree and comments, then emits native TypeScript operations using
+explicit target API contracts. It does not run the textual rewrites from
+`transpilation_helper.py` and does not add a Python-semantics runtime.
+Unsupported syntax, unknown semantics, unclaimed comments, stale generated
+files, or values that cannot be compared safely across runtimes fail the build
+instead of producing approximate tests. See [`UPSTREAM.md`](UPSTREAM.md) for
+the complete architecture, provenance, and update process.
 
 ### `chess.ts`'s GPT
 I made a GPT to help with this project, [`python-chess` to `chess.ts` helper](https://chat.openai.com/g/g-Ht5toEWik-python-chess-to-chess-ts-helper).

@@ -66,14 +66,11 @@ describe('PgnTestCase — translation pending', () => {
   test.todo('test_game_without_tag_roster (python-chess test.py:2137)',)
   test.todo('test_setup (python-chess test.py:2141)',)
   test.todo('test_read_game (python-chess test.py:2192)',)
-  test.todo('test_comment_at_eol (python-chess test.py:2218)',)
   test.todo('test_promotion_without_equals (python-chess test.py:2234)',)
   test.todo('test_header_with_paren (python-chess test.py:2271)',)
   test.todo('test_special_tag_names (python-chess test.py:2277)',)
   test.todo('test_chess960_without_fen (python-chess test.py:2287)',)
   test.todo('test_variation_stack (python-chess test.py:2297)',)
-  test.todo('test_game_starting_comment (python-chess test.py:2317)',)
-  test.todo('test_game_starting_variation (python-chess test.py:2327)',)
   test.todo('test_annotation_symbols (python-chess test.py:2345)',)
   test.todo('test_skip_game (python-chess test.py:2425)',)
   test.todo('test_tricky_skip_game (python-chess test.py:2446)',)
@@ -99,10 +96,7 @@ describe('PgnTestCase — translation pending', () => {
   test.todo('test_is_wild (python-chess test.py:2789)',)
   test.todo('test_my_game_node (python-chess test.py:2794)',)
   test.todo('test_recursion (python-chess test.py:2811)',)
-  test.todo('test_annotations (python-chess test.py:2821)',)
   test.todo('test_eval (python-chess test.py:2866)',)
-  test.todo('test_float_emt (python-chess test.py:2872)',)
-  test.todo('test_float_clk (python-chess test.py:2885)',)
   test.todo('test_node_turn (python-chess test.py:2898)',)
   test.todo('test_skip_inner_variation (python-chess test.py:2914)',)
 })
@@ -110,9 +104,7 @@ describe('PgnTestCase — translation pending', () => {
 describe('EngineTestCase — translation pending', () => {
   test.todo('test_uci_option_map_equality (python-chess test.py:2944)',)
   test.todo('test_uci_option_map_len (python-chess test.py:2963)',)
-  test.todo('test_score_ordering (python-chess test.py:2973)',)
   test.todo('test_score (python-chess test.py:3003)',)
-  test.todo('test_wdl_model (python-chess test.py:3032)',)
   test.todo('test_sf_forced_mates (python-chess test.py:3040)',)
   test.todo('test_sf_options (python-chess test.py:3055)',)
   test.todo('test_sf_analysis (python-chess test.py:3062)',)
@@ -255,5 +247,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Baseline: python-chess cd7f5958289dd08156436a1f84b9ea03cb1f75a1
 // Total upstream tests: 282
-// Translated tests: 76
-// Pending tests: 206
+// Translated tests: 84
+// Pending tests: 198

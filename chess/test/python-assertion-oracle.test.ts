@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
+import * as engine from '../engine'
 import * as pgn from '../pgn'
 
 import {
@@ -20,9 +21,25 @@ describe('Python assertion oracle', () => {
     expect(values.value(true)).toEqual(['bool', true])
     expect(values.value(42)).toEqual(['int', '42'])
     expect(values.value(42n)).toEqual(['int', '42'])
+    expect(values.value(0)).toEqual(['int', '0'])
+    expect(values.value(-0)).toEqual(['number', '8000000000000000'])
     expect(values.value('x')).toEqual(['str', 'x'])
     expect(values.value(move)).toEqual(['move', 'e2e4'])
     expect(values.value(chess.Piece.fromSymbol('N'))).toEqual(['piece', 'N'])
+    expect(values.value(new engine.Cp(12))).toEqual([
+      'score',
+      'cp',
+      ['int', '12'],
+    ])
+    expect(values.value(new engine.Mate(-3))).toEqual([
+      'score',
+      'mate',
+      ['int', '-3'],
+    ])
+    expect(values.value(engine.MateGiven)).toEqual([
+      'score',
+      'mate-given',
+    ])
     expect(values.value(new chess.SquareSet(chess.BB_E4))).toEqual([
       'int',
       chess.BB_E4.toString(),
@@ -47,6 +64,18 @@ describe('Python assertion oracle', () => {
     expect(() => values.value(Number.MAX_SAFE_INTEGER + 1)).toThrow(
       'requires a safe integer',
     )
+    expect(values.value(Number.NaN)).toEqual([
+      'number',
+      '7ff8000000000000',
+    ])
+    expect(values.value(Number.POSITIVE_INFINITY)).toEqual([
+      'number',
+      '7ff0000000000000',
+    ])
+    expect(values.value(Number.NEGATIVE_INFINITY)).toEqual([
+      'number',
+      'fff0000000000000',
+    ])
   })
 
   test('assigns deterministic per-test identities to PGN nodes', () => {

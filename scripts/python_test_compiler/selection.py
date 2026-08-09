@@ -1,4 +1,4 @@
-"""The deliberate 76-method translation boundary for PR #9."""
+"""The deliberate 84-method translation boundary through PR #11."""
 
 from __future__ import annotations
 
@@ -102,15 +102,22 @@ TRANSLATED_TESTS = (
         "PgnTestCase",
         "test_exporter",
         "test_promote_to_main",
+        "test_comment_at_eol",
+        "test_game_starting_comment",
+        "test_game_starting_variation",
         "test_tree_traversal",
         "test_promote_demote",
         "test_add_line",
         "test_mainline",
+        "test_annotations",
+        "test_float_emt",
+        "test_float_clk",
     ),
+    *_tests("EngineTestCase", "test_score_ordering", "test_wdl_model"),
 )
 
 
-if len(TRANSLATED_TESTS) != 76:
+if len(TRANSLATED_TESTS) != 84:
     raise RuntimeError(
-        f"translation selection must contain 76 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 84 methods, got {len(TRANSLATED_TESTS)}"
     )

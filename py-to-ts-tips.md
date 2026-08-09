@@ -11,23 +11,157 @@ examples to show the most important ideas to be aware of when trying to
 understand how to correctly (or effectively) convert different Python code 
 patterns to TS.
 
-## Rule `0`
-Use ChatGPT. If you need help transpiling a particular Python code pattern, just explain the problem like you would explain it to a friend or coworker.
+## Translation contract: the same program in different syntax
 
-## Note
-I try to keep the TS files as closely aligned to their Python counterparts
-as possible. In fact, I have been copying entire Python methods into the TS
-files and editing them from there until all the red lines go away. However, 
-some Python builtins have no equivalent in TS and need to be manually
-defined. An example is `int.bit_count()` and `int.bit_length()`
+The goal is stronger than making the two libraries return the same answers.
+The TypeScript should preserve the structure of the pinned Python source down
+to classes, methods, blocks, branches, local steps, expression order, comments,
+and docstrings. Imagine wearing glasses that hide each language's syntax. What
+remains should look like the same program.
 
-My plan is to include a section at the top of each file, below any imports, 
-for all functions, constants, etc. that can be useful in more than one place
-throughout the file and do not exactly mirror the `python-chess` code.
-Check [`init.ts`]('/init.ts') for an example.
+This matters because the intended user may already know how `python-chess`
+works internally. The familiar implementation is itself a library benefit, not
+an incidental detail. It also makes this unaffiliated port easy to audit and
+makes future upstream maintenance mechanical: a Python diff should point to an
+obvious TypeScript diff in the same place and with the same shape.
+
+Most of this code is assignments, control flow, exceptions, functions, and
+classes. Those constructs have direct TypeScript forms. Do not refactor them
+into a more idiomatic TypeScript design, extract different abstractions,
+reorder work, or otherwise make a new implementation merely because it behaves
+the same. Behavioral parity is necessary, but it is not sufficient.
+
+Some Python primitives do not have semantically equivalent JavaScript syntax.
+Examples include `int.bit_count()`, lexicographic tuple comparison, Unicode
+`len()`, and Python's round-half-even fixed-point formatting. Put the smallest
+reusable adapter for such a primitive near the top of the target file under
+`Custom declarations (no mirror in python-chess)`. The directly translated
+method should retain the Python shape and invoke that adapter exactly where the
+Python invokes its builtin or operator. The adapter is a language boundary; it
+must not absorb or rearrange chess-domain logic.
+
+### Spend target-only code only on proved language gaps
+
+Treat every declaration with no `python-chess` mirror as an exception that
+needs evidence, not as an ordinary refactoring tool. Use this order:
+
+1. Start with the closest direct TypeScript expression at the exact Python
+   expression site.
+2. If a short composition of native TypeScript operations has the same
+   semantics, keep it inline. Do not extract a one-use helper merely to give
+   that expression a name.
+3. Use the repository's established exact target representation before
+   rejecting an input or inventing an adapter. In particular, Python integers
+   outside JavaScript's safe `number` range become TypeScript `bigint`; a
+   narrower `number` API is not evidence that the Python value is invalid.
+4. Reuse an established language adapter when one already exists. General
+   Python primitive bridges belong with the repository's existing helpers in
+   `chess/utils.ts`; a file-local adapter should represent a gap specific to
+   that translated value or source operation.
+5. Add a new adapter only after identifying a concrete valid input for which
+   the direct JavaScript operation differs from pinned Python. Document that
+   mismatch and cover it with a parity test.
+
+For example, JavaScript and Python disagree about the truthiness of `NaN`, but
+the fixed `Score._score_tuple()` expression does not need a separate
+`negatedOrZero()` declaration:
+
+```py
+-(mate or 0)
+```
+
+```ts
+mate === null || mate === 0 ? 0 : -mate
+```
+
+The inline target syntax is longer, but it still performs the source's one
+numeric selection and negation in place. By contrast, Python tuple comparison
+needs an adapter: JavaScript array equality is reference equality and its
+ordering operators coerce arrays to strings. That is a proved semantic gap,
+not a readability preference.
+
+Do not move chess decisions, branches, state transitions, or fallback policy
+into an adapter. Do not introduce a wrapper solely to make primitives expose a
+preferred method name. A `number`, `boolean`, or `null` remains a native
+primitive when its native operation is faithful; exceptional element behavior
+belongs inside the smallest containing value adapter that actually needs it.
+
+Default whitespace operations are one proved language boundary. Python
+`str.strip()` and whitespace `str.split()` include `U+001C` but exclude
+`U+FEFF`; JavaScript `trim()` and `\s` do the opposite for those characters.
+JavaScript `value.split()` with no separator does not implement Python
+`value.split()`, and a JavaScript split limit discards the remainder whereas
+Python `split(None, maxsplit)` preserves it.
+
+Translate the ordinary forms inline and unilaterally:
+
+| Python | TypeScript |
+| --- | --- |
+| `value.strip()` | `value.replace(PYTHON_LEADING_WHITESPACE, "").replace(PYTHON_TRAILING_WHITESPACE, "")` |
+| `value.rstrip()` | `value.replace(PYTHON_TRAILING_WHITESPACE, "")` |
+| `value.split()` | `value.split(PYTHON_WHITESPACE_RUN).filter(Boolean)` |
+| `value.split(separator)` | `value.split(separator)` |
+
+Only `split(None, maxsplit)` uses `splitWhitespaceWithMax()`: JavaScript's
+native limit drops the source's unsplit remainder, and inlining the required
+scan would obscure the surrounding source structure. Keep that adapter limited
+to the exceptional max-split form.
+
+### Comparison methods
+
+The existing production convention for comparisons of translated object
+types is to call a method on the left operand. Python `__eq__()` is represented
+as TypeScript `equals()`. The comparable `Score` hierarchy represents
+`__lt__()`, `__le__()`, `__gt__()`, and `__ge__()` as `lt()`, `le()`, `gt()`,
+and `ge()`, respectively. The generated upstream tests use those same methods
+when their proved operand shapes identify the corresponding production types.
+Native TypeScript primitives still use native operators whenever those
+operators have the required Python semantics.
+
+When Python applies one of these operators to a value whose JavaScript
+representation does not support the same operation, put the exceptional
+semantics on the smallest internal value adapter and retain the established
+method-shaped comparison at the translated call site. For example, JavaScript
+arrays do not provide Python tuple equality or lexicographic ordering, so the
+internal value returned by `Score._scoreTuple()` implements the same comparison
+methods:
+
+```py
+return self._score_tuple() < other._score_tuple()
+```
+
+```ts
+return this._scoreTuple().lt(other._scoreTuple())
+```
+
+Do not expose a lower-level implementation such as
+`compareScoreTuples(left, right) < 0` in that translated body: it turns the
+source's one object comparison into a helper call plus a different numeric
+comparison. A private comparison routine may implement the adapter's methods,
+but that target-only machinery stays behind the value's established method
+interface.
+
+This is the repository's existing comparison convention, not a general rule
+for renaming every Python dunder. Preserve the established mapping for each
+other protocol rather than deriving a new name mechanically.
+
+Start from the complete pinned Python method and edit its syntax in place.
+Transpilation helpers and AI can accelerate that syntax work, but neither is an
+authority for changing the program's structure. Always finish with a
+side-by-side source comparison. Do not fix an upstream defect only in the
+TypeScript synchronization; upstream it first or make the divergence a
+separate, explicitly approved change.
+
+See [`AGENTS.md`](AGENTS.md) for the mandatory review rules and
+[`UPSTREAM.md`](UPSTREAM.md) for the commit-by-commit update process.
 
 ## Style, comments, and docstrings
-Unfortunately the TS norm is `camelCase` for variables and functions \:'(. 
+Unfortunately the TS norm is `camelCase` for variables and functions \:'(.
+Translate Python `snake_case` identifiers to that established target spelling
+wherever they name the TypeScript API, including method names embedded in a
+representation string. Faithful structure does not mean emitting a Python
+identifier that does not exist in TypeScript: `Piece.from_symbol(...)` becomes
+`Piece.fromSymbol(...)`.
 
 Constants should be in `CAPITAL_SNAKE_CASE`.
 
@@ -36,7 +170,7 @@ This is widely accepted by now, but you should only ever use `const` or
 ```ts
 // TS
 const FOO_BAR = 42;     // ✅
-let foo_bar = 42;       // ✅
+let fooBar = 42;        // ✅
 var bad_foo_bar = 42;   // ❌
 ```
 

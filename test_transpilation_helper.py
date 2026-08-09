@@ -16,7 +16,6 @@ sys.path.insert(0, str(REPOSITORY_ROOT))
 sys.path.insert(0, str(REPOSITORY_ROOT / "scripts"))
 
 from python_test_compiler.gaps import (  # noqa: E402
-    GapCategory,
     PARITY_GAPS,
     ast_fingerprint,
     validate_manifest,
@@ -213,8 +212,8 @@ class SourceBoundaryTest(unittest.TestCase):
     def test_parses_exact_selection_once_and_preserves_every_comment(self) -> None:
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
-        self.assertEqual(len(unit.methods), 76)
-        self.assertEqual(len(unit.comments), 53)
+        self.assertEqual(len(unit.methods), 84)
+        self.assertEqual(len(unit.comments), 57)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
 
@@ -249,6 +248,307 @@ class SourceBoundaryTest(unittest.TestCase):
 
 
 class RecursiveLoweringTest(unittest.TestCase):
+    def test_composes_float_none_and_nullable_dereference_rules(self) -> None:
+        generated = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            "self.assertTrue(game.emt() is None)\n"
+            "game.set_emt(1.234)\n"
+            "self.assertEqual(game.emt(), 1.234)\n"
+            "game.set_eval(chess.engine.PovScore(chess.engine.Cp(-80), chess.WHITE))\n"
+            "self.assertEqual(game.eval().white().score(), -80)"
+        )
+
+        self.assertIn("game.setEmt(1.234)", generated)
+        self.assertIn("game.emt(), null", generated)
+        self.assertIn("if (__receiver === null)", generated)
+        self.assertIn("new engineModule.PovScore(new engineModule.Cp(-(80))", generated)
+        self.assertNotIn(" as ", generated)
+
+    def test_read_game_preserves_eof_none_and_guards_only_dereferences(self) -> None:
+        generated = compile_fixture(
+            "stream = io.StringIO()\n"
+            "self.assertTrue(chess.pgn.read_game(stream) is None)\n"
+            "game = chess.pgn.read_game(stream)\n"
+            'self.assertEqual(game.headers["Result"], "*")\n'
+            "self.assertEqual(game[0].comment, \"\")"
+        )
+
+        self.assertIn("pgnModule.readGame(stream), null", generated)
+        self.assertGreaterEqual(generated.count("if (__receiver === null)"), 2)
+        self.assertNotIn("instanceof pgnModule.Game", generated)
+
+    def test_composes_enumeration_score_ordering_and_finite_models(self) -> None:
+        generated = compile_fixture(
+            "scores = [chess.engine.Cp(0), chess.engine.Mate(1)]\n"
+            "for index, score in enumerate(scores):\n"
+            "    self.assertEqual(index < 1, score < chess.engine.MateGiven)\n"
+            '    for model in ["sf12", "sf16"]:\n'
+            "        self.assertTrue(score.wdl(model=model).expectation() <= 1)"
+        )
+
+        self.assertIn("for (let [index, score] of ((__iterable) =>", generated)
+        self.assertIn("function* ()", generated)
+        self.assertIn(
+            "yield [__index, __value] satisfies [number, typeof __value]",
+            generated,
+        )
+        self.assertNotIn("Array.from(scores).entries()", generated)
+        self.assertIn(
+            "__left.lt(__right))(score, engineModule.MateGiven)", generated
+        )
+        self.assertIn("switch (__finiteString)", generated)
+        self.assertIn("score.wdl({ model: ((__finiteString)", generated)
+        self.assertIn("})(model) }).expectation()", generated)
+        self.assertNotIn(" as ", generated)
+
+    def test_enumerate_preserves_lazy_source_iteration(self) -> None:
+        generated = compile_fixture(
+            "values = [1, 2, 3]\n"
+            "indexed = enumerate(value for value in values)\n"
+            "values.pop(0)\n"
+            "observed = list(indexed)"
+        )
+
+        self.assertIn("const indexed = ((__iterable) => (function* ()", generated)
+        self.assertNotIn("Array.from(__iterable).entries()", generated)
+        self.assertLess(
+            generated.index("__sequence.splice("),
+            generated.index("const observed = Array.from(indexed)"),
+        )
+
+    def test_wdl_models_narrow_only_in_registered_finite_contexts(self) -> None:
+        generated = compile_fixture(
+            'lowered = "sf".lower()\n'
+            'self.assertEqual("sf", "sf")\n'
+            'model = "sf16"\n'
+            "wdl = chess.engine.Cp(0).wdl(model=model)"
+        )
+
+        self.assertIn('})("sf")', generated)
+        self.assertIn('(__actual, __expected) => __actual === __expected', generated)
+        self.assertIn(".wdl({ model: model })", generated)
+        self.assertNotIn(" as ", generated)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            re.escape("keyword 'model' requires registered WDL model, got string"),
+        ):
+            compile_fixture('chess.engine.Cp(0).wdl(model="unknown")')
+
+        ordinary_array = compile_fixture(
+            'models = ["sf"]\n'
+            'self.assertEqual(models, ["sf"])\n'
+            'self.assertEqual(models[0].lower(), "sf")'
+        )
+        self.assertNotIn("engineModule.WdlModel[]", ordinary_array)
+        self.assertIn('const models = ["sf"]', ordinary_array)
+        self.assertIn(".toLowerCase()", ordinary_array)
+
+        for mutable_models in (
+            'models = ["sf12"]\n'
+            'models[0] = "sf14"\n'
+            'for model in models:\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12"]\n'
+            'aliases = models\n'
+            'aliases[0] = "sf14"\n'
+            'for model in models:\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12"]\n'
+            'aliases, other = (models, ["x"])\n'
+            'aliases[0] = "sf14"\n'
+            'for model in models:\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+        ):
+            with self.assertRaises(UnsupportedSyntax):
+                compile_fixture(mutable_models)
+
+        for loop_mutation in (
+            'models = ["sf12", "sf12"]\n'
+            'for model in models:\n'
+            '    models[1] = "sf14"\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12", "sf12"]\n'
+            'for model in models:\n'
+            '    aliases = models\n'
+            '    aliases[1] = "sf14"\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12", "sf12"]\n'
+            'for model in models:\n'
+            '    aliases, other = (models, ["x"])\n'
+            '    aliases[1] = "sf14"\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+        ):
+            with self.assertRaises(UnsupportedSyntax):
+                compile_fixture(loop_mutation)
+
+    def test_registered_contracts_preserve_supported_optional_forms(self) -> None:
+        generated = compile_fixture(
+            "virtual_file = io.StringIO()\n"
+            "exporter = chess.pgn.FileExporter(\n"
+            "    virtual_file, columns=None, headers=False,\n"
+            "    comments=False, variations=False)\n"
+            "game = chess.pgn.Game()\n"
+            'move = chess.Move.from_uci("e2e4")\n'
+            "child = game.add_variation(move)\n"
+            "self.assertTrue(game.has_variation(0))\n"
+            "self.assertTrue(game.has_variation(child))\n"
+            "self.assertEqual(game.variation(move), child)\n"
+            "game.promote_to_main(0)\n"
+            "game.promote(child)\n"
+            "game.demote(move)\n"
+            "game.remove_variation(child)\n"
+            "self.assertTrue(chess.engine.Mate(1).score(mate_score=None) is None)"
+        )
+
+        self.assertIn(
+            "new pgnModule.FileExporter(virtualFile, { columns: null, "
+            "headers: false, comments: false, variations: false })",
+            generated,
+        )
+        self.assertIn("game.hasVariation(0)", generated)
+        self.assertIn("game.hasVariation(child)", generated)
+        self.assertIn("game.variation(move)", generated)
+        self.assertIn("game.promoteToMain(0)", generated)
+        self.assertIn("game.promote(child)", generated)
+        self.assertIn("game.demote(move)", generated)
+        self.assertIn("game.removeVariation(child)", generated)
+        self.assertIn("new engineModule.Mate(1).score({ mateScore: null })", generated)
+
+    def test_string_ordering_compares_unicode_code_points(self) -> None:
+        generated = compile_fixture('self.assertFalse("𐀀" < "\\ue000")')
+
+        self.assertIn("Array.from(__left)", generated)
+        self.assertIn(".codePointAt(0)", generated)
+        self.assertNotIn("=> __left < __right", generated)
+
+    def test_composes_mixed_arrow_inputs_without_erasing_the_union(self) -> None:
+        generated = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            "game.set_arrows([(chess.A1, chess.A1), "
+            'chess.svg.Arrow(chess.A1, chess.H1, color="red")])'
+        )
+
+        self.assertIn("game.setArrows(([[chess.A1, chess.A1]", generated)
+        self.assertIn(
+            'new svgModule.Arrow(chess.A1, chess.H1, { color: "red" })',
+            generated,
+        )
+        self.assertNotIn(" as ", generated)
+
+        homogeneous_arrows = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            'game.set_arrows([chess.svg.Arrow(chess.A1, chess.H1)])\n'
+            "game.set_arrows([(chess.A1, chess.H1)])"
+        )
+        self.assertIn("game.setArrows([new svgModule.Arrow", homogeneous_arrows)
+        self.assertIn("game.setArrows([[chess.A1, chess.H1]])", homogeneous_arrows)
+
+        bound_mixed = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            "arrows = [(chess.A1, chess.A1), "
+            'chess.svg.Arrow(chess.A1, chess.H1, color="red")]\n'
+            "game.set_arrows(arrows)"
+        )
+        self.assertIn(
+            "satisfies (svgModule.Arrow | [number, number])[]",
+            bound_mixed,
+        )
+        self.assertIn("game.setArrows(arrows)", bound_mixed)
+
+    def test_exporter_reassignment_has_one_explicit_target_union(self) -> None:
+        generated = compile_fixture(
+            "game = chess.pgn.Game()\n"
+            "exporter = chess.pgn.StringExporter()\n"
+            "self.assertEqual(str(exporter), \"\")\n"
+            "virtual_file = io.StringIO()\n"
+            "exporter = chess.pgn.FileExporter(virtual_file)\n"
+            "file_representation = str(exporter)\n"
+            "game.accept(exporter)"
+        )
+
+        self.assertIn(
+            "let exporter: pgnModule.StringExporter | pgnModule.FileExporter",
+            generated,
+        )
+        self.assertIn("exporter.toString()", generated)
+        self.assertIn("exporter = new pgnModule.FileExporter(virtualFile)", generated)
+        self.assertIn(
+            "const fileRepresentation = exporter.toString()",
+            generated,
+        )
+        self.assertNotIn(" as ", generated)
+
+    def test_repr_assertions_compare_target_strings_and_oracle_source_values(self) -> None:
+        generated = compile_fixture(
+            "left = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "right = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "self.assertEqual(repr(left), repr(right))"
+        )
+
+        self.assertIn(
+            "({ representation: __representedValue.toRepr(), "
+            "value: __representedValue })",
+            generated,
+        )
+        self.assertIn("this.assertEqualRepresentationsUsing(", generated)
+
+        side_effect = compile_fixture(
+            'board = chess.Board("8/8/8/8/8/8/8/K6k b - - 0 1")\n'
+            'board.push(chess.Move.from_uci("h1h2"))\n'
+            'self.assertEqual(repr(board.pop()), '
+            'repr(chess.Move.from_uci("h1h2")))'
+        )
+        self.assertEqual(side_effect.count("board.pop()"), 1)
+
+        bound = compile_fixture(
+            "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "left = repr(piece)\n"
+            "right = repr(piece)\n"
+            "self.assertEqual(left, right)"
+        )
+        self.assertIn("const __leftRepresentation =", bound)
+        self.assertIn(
+            "const left = __leftRepresentation.representation", bound
+        )
+        self.assertIn("__actualRepresentation.value", bound)
+        self.assertIn(")(__leftRepresentation, __rightRepresentation)", bound)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            r"bound repr\(\) value must have exactly one assignment",
+        ):
+            compile_fixture(
+                "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+                "left = repr(piece)\n"
+                "left = repr(piece)"
+            )
+
+        materialized = compile_fixture(
+            "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "self.assertEqual(str(repr(piece)), str(repr(piece)))"
+        )
+        self.assertIn("this.assertEqualUsing(", materialized)
+        self.assertNotIn("assertEqualRepresentationsUsing", materialized)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            r"literals containing repr\(\) values",
+        ):
+            compile_fixture(
+                "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+                "self.assertEqual([repr(piece)], [repr(piece)])"
+            )
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            r"containment assertions with repr\(\) members",
+        ):
+            compile_fixture(
+                "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+                'self.assertIn(repr(piece), "x" + repr(piece))'
+            )
+
     def test_composes_assignments_loops_calls_and_operators(self) -> None:
         generated = compile_fixture(
             """values = [chess.BB_A1, chess.BB_A2]
@@ -278,7 +578,7 @@ self.assertFalse(chess.Piece.from_symbol(\"P\") != chess.Piece.from_symbol(\"P\"
         self.assertIn("!__values.slice(0, __index).some(__candidate =>", generated)
         self.assertNotIn(".findIndex(", generated)
         self.assertIn("__piece.hash() !== __other.hash()", generated)
-        self.assertIn('throw new TypeError("Piece.equals is not implemented")', generated)
+        self.assertIn("(__left).equals(__right)", generated)
         self.assertIn("this.assertEqualUsing(pieces.length, 2", generated)
 
     def test_preserves_bound_assert_raises_as_a_composed_block(self) -> None:
@@ -428,34 +728,30 @@ self.assertEqual(copy.copy(move), move)""",
             ):
                 compile_fixture(body)
 
-    def test_gap_adapters_require_source_addressed_manifest_authority(self) -> None:
+    def test_fixed_target_contracts_need_no_gap_authority(self) -> None:
         cases = (
             (
                 "chess.SquareSet(chess.SquareSet(1))",
-                "target adapter 'parity-gap: square-set-value-semantics' "
-                "requires exact parity gap cause for root "
-                "'square-set-value-semantics'",
+                "new chess.SquareSet(new chess.SquareSet(BigInt(1)))",
             ),
             (
                 "left = chess.SquareSet(1)\n"
                 "right = chess.SquareSet(2)\n"
                 "left.union(right)",
-                "target adapter 'parity-gap: square-set-value-semantics' "
-                "requires exact parity gap cause for root "
-                "'square-set-value-semantics'",
+                "left.union(right)",
             ),
             (
                 "virtual_file = io.StringIO()\n"
                 "chess.pgn.FileExporter(virtual_file)",
-                "missing constructor FileExporter requires exact parity gap cause "
-                "for root 'pgn-file-exporter'",
+                "new pgnModule.FileExporter(virtualFile)",
             ),
         )
-        for body, message in cases:
-            with self.subTest(body=body), self.assertRaisesRegex(
-                UnsupportedSyntax, re.escape(message)
-            ):
-                compile_fixture(body)
+        for body, expected in cases:
+            with self.subTest(body=body):
+                generated = compile_fixture(body)
+                self.assertIn(expected, generated)
+                self.assertNotIn("parity-gap:", generated)
+                self.assertNotIn("missing-capability:", generated)
 
     def test_keyed_mapping_result_contracts_require_literal_keys(self) -> None:
         prefix = (
@@ -553,7 +849,7 @@ self.assertEqual(copy.copy(move), move)""",
             three_deep.count("instanceof pgnModule.ChildNode"), 3
         )
 
-        rejected = (
+        dynamically_checked = (
             (
                 "moves = [first, second]\n"
                 "moves.pop(0)\n"
@@ -581,15 +877,11 @@ self.assertEqual(copy.copy(move), move)""",
                 "unknown length",
             ),
         )
-        for body, label in rejected:
-            with self.subTest(label=label), self.assertRaisesRegex(
-                UnsupportedSyntax,
-                re.escape(
-                    "attribute access requires a proved non-null receiver, got "
-                    "nullable game-node"
-                ),
-            ):
-                compile_fixture(prefix + body)
+        for body, label in dynamically_checked:
+            with self.subTest(label=label):
+                generated = compile_fixture(prefix + body)
+                self.assertIn("if (__receiver === null)", generated)
+                self.assertIn("cannot access an attribute of null", generated)
 
     def test_target_only_helper_methods_are_not_python_source_api(self) -> None:
         adversarial_source_calls = (
@@ -1167,9 +1459,9 @@ self.assertEqual(example.count, 1)"""
                 ("every(__setValue2 =>",),
             ),
             (
-                '__piece = 1\nleft = chess.Piece.from_symbol("P")\n'
+                '__actual = 1\nleft = chess.Piece.from_symbol("P")\n'
                 'right = chess.Piece.from_symbol("P")\nself.assertEqual(left, right)',
-                ("const __piece2 = __actual",),
+                ("(__actual2, __expected) => (__actual2).equals",),
             ),
             (
                 "__index = 1\nvalues = range(2)",
@@ -1611,7 +1903,7 @@ class TargetAlgebraTest(unittest.TestCase):
             ):
                 equality_code(left, right, "left", "right")
 
-    def test_array_equality_checks_length_before_a_throwing_comparator(self) -> None:
+    def test_array_equality_checks_length_before_value_comparison(self) -> None:
         code = equality_code(
             array_of(PIECE),
             array_of(PIECE),
@@ -1619,9 +1911,9 @@ class TargetAlgebraTest(unittest.TestCase):
             "longer",
         )
         length_check = "shorter.length === longer.length"
-        throwing_comparator = 'throw new TypeError("Piece.equals is not implemented")'
+        value_comparator = "(__value0).equals(__expected0)"
         self.assertTrue(code.startswith(length_check + " && "))
-        self.assertLess(code.index(length_check), code.index(throwing_comparator))
+        self.assertLess(code.index(length_check), code.index(value_comparator))
 
     def test_containment_is_native_only_for_exact_element_shapes(self) -> None:
         cases = (
@@ -1697,7 +1989,7 @@ class TargetAlgebraTest(unittest.TestCase):
         square_set = named_call_contract("chess.SquareSet")
         assert square_set is not None
         self.assertIs(square_set.invocation, InvocationKind.CONSTRUCT)
-        self.assertEqual(len(square_set.argument_adapters), 2)
+        self.assertEqual(len(square_set.argument_adapters), 1)
 
         add_line = method_call_contract("add_line", GAME)
         assert add_line is not None
@@ -1822,21 +2114,16 @@ class ParityManifestTest(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
 
-    def test_names_seven_defects_and_one_unimplemented_capability_accurately(self) -> None:
-        categories = [root.category for root in PARITY_GAPS.roots]
-        self.assertEqual(categories.count(GapCategory.DEFECT), 7)
-        self.assertEqual(
-            categories.count(GapCategory.UNIMPLEMENTED_CAPABILITY),
-            1,
-        )
-        file_exporter = PARITY_GAPS.root("pgn-file-exporter")
-        self.assertEqual(file_exporter.category, GapCategory.UNIMPLEMENTED_CAPABILITY)
+    def test_current_manifest_has_no_known_parity_gaps(self) -> None:
+        self.assertEqual(PARITY_GAPS.roots, ())
+        self.assertEqual(PARITY_GAPS.cases, ())
+        self.assertEqual(PARITY_GAPS.affected_tests, ())
 
     def test_all_exact_source_selectors_resolve(self) -> None:
         validate_manifest(PARITY_GAPS, self.unit)
-        self.assertEqual(len(PARITY_GAPS.roots), 8)
-        self.assertEqual(len(PARITY_GAPS.cases), 51)
-        self.assertEqual(len(set(PARITY_GAPS.affected_tests)), 15)
+        self.assertEqual(len(PARITY_GAPS.roots), 0)
+        self.assertEqual(len(PARITY_GAPS.cases), 0)
+        self.assertEqual(len(set(PARITY_GAPS.affected_tests)), 0)
 
 
 class WholeSuiteCompilationTest(unittest.TestCase):
@@ -1850,7 +2137,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         # compile_suite() fails if any selected semantic AST node or COMMENT token
         # is unclaimed by a lowering rule.
         self.assertEqual(self.first, self.second)
-        self.assertEqual(len(TRANSLATED_TESTS), 76)
+        self.assertEqual(len(TRANSLATED_TESTS), 84)
         for identity in TRANSLATED_TESTS:
             self.assertIn(py_identifier_to_ts(identity.method_name), self.first.typescript)
 
@@ -1859,40 +2146,30 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         self.assertNotIn("python-semantics", self.first.typescript)
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
-        self.assertEqual(self.provenance["translatedMethodCount"], 76)
-        self.assertEqual(self.provenance["sourceCommentCount"], 53)
-        self.assertEqual(self.provenance["semanticNodeCount"], 5859)
-        self.assertEqual(self.provenance["assertionCount"], 406)
-        self.assertEqual(self.provenance["parityGapRootCount"], 8)
-        self.assertEqual(self.provenance["parityGapCaseCount"], 51)
+        self.assertEqual(self.provenance["translatedMethodCount"], 84)
+        self.assertEqual(self.provenance["sourceCommentCount"], 57)
+        self.assertEqual(self.provenance["semanticNodeCount"], 6805)
+        self.assertEqual(self.provenance["assertionCount"], 465)
+        self.assertEqual(self.provenance["parityGapRootCount"], 0)
+        self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
-        self.assertEqual(len(methods), 76)
-        self.assertEqual(len({method["identity"] for method in methods}), 76)
+        self.assertEqual(len(methods), 84)
+        self.assertEqual(len({method["identity"] for method in methods}), 84)
         for method in methods:
             self.assertRegex(method["sourceSha256"], r"^[0-9a-f]{64}$")
             self.assertRegex(method["astSha256"], r"^[0-9a-f]{64}$")
 
-    def test_error_gaps_execute_the_exact_cause_and_keep_the_boundary(self) -> None:
+    def test_generated_suite_has_no_current_parity_gap_wrappers(self) -> None:
         generated = self.first.typescript
-        self.assertIn(
-            "() => new chess.SquareSet((new chess.SquareSet(BigInt(999)) as "
-            "/* parity-gap: square-set-value-semantics */ unknown as "
-            "/* parity-gap: square-set-value-semantics */ chess.IntoSquareSet)),",
-            generated,
-        )
-        self.assertIn(
-            "if (false) {\n"
-            "      this.assertEqualUsing(new chess.SquareSet(",
-            generated,
-        )
+        self.assertNotIn("parity-gap:", generated)
+        self.assertNotIn("missing-capability:", generated)
+        self.assertNotIn("this.assertKnown", generated)
+        self.assertNotIn("if (false)", generated)
 
     def test_every_generated_type_assertion_has_an_adjacent_approved_reason(self) -> None:
         generated = self.first.typescript
         allowed_markers = (
-            "parity-gap: piece-value-equality",
-            "parity-gap: square-set-value-semantics",
             "protocol-adapter: legal-move-generator-board",
-            "missing-capability: pgn-file-exporter",
         )
         marker_pattern = "|".join(re.escape(marker) for marker in allowed_markers)
         assertion_pattern = re.compile(
@@ -1924,15 +2201,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
                     f"unproved postfix non-null assertion: {line}",
                 )
         self.assertNotIn("!:", generated)
-        self.assertIn(
-            "() => chess.Board.fromEpd((baseEpd + \" ce 55;\")),",
-            generated,
-        )
-        self.assertIn(
-            "if (false) {\n"
-            "      const [board, ops] = chess.Board.fromEpd(",
-            generated,
-        )
+        self.assertNotIn("parity-gap:", generated)
 
     def test_preserves_finite_python_error_families(self) -> None:
         generated = self.first.typescript
