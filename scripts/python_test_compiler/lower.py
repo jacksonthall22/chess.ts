@@ -706,6 +706,10 @@ class MethodCompiler:
     ) -> bool:
         """Conservatively detect writes through one sequence or a local alias."""
 
+        # Loop targets can also alias mutable values through arbitrary iterators.
+        # The fixed pinned selection does not use that shape; generated execution
+        # and oracle comparison will fail CI if a future selection introduces it,
+        # at which point this scan should grow around that concrete source.
         nodes = [child for statement in statements for child in ast.walk(statement)]
         aliases = {source_name}
         changed = True
