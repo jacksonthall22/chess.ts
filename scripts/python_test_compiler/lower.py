@@ -225,6 +225,7 @@ class MethodCompiler:
         self.symbol_shapes: dict[str, TargetShape] = {}
         self.symbol_facts: dict[str, ValueFacts] = {}
         self.symbol_target_names: dict[str, str] = {}
+        self.symbol_representation_pair_codes: dict[str, str] = {}
         self.unavailable_names: set[str] = set()
         self.shape_rebind_scopes: list[set[str]] = [set()]
         self.lazy_captured_names: set[str] = set()
@@ -938,7 +939,18 @@ class MethodCompiler:
                 name = py_identifier_to_ts(target.id)
                 self.unavailable_names.discard(target.id)
                 self.facts_after_assignment(target.id, node.value, value)
+                representation_pair_code = value.oracle_representation_pair_code
+                if (
+                    representation_pair_code is not None
+                    and self.assignment_counts[target.id] != 1
+                ):
+                    self.fail(
+                        node,
+                        "a bound repr() value must have exactly one assignment so "
+                        "its assertion-oracle provenance remains unambiguous",
+                    )
                 if target.id in self.declared_names:
+                    self.symbol_representation_pair_codes.pop(target.id, None)
                     previous_shape = self.symbol_shapes.get(target.id)
                     current_name = self.symbol_target_names.get(target.id, name)
                     if previous_shape is not None and previous_shape != value.shape:
@@ -1008,6 +1020,15 @@ class MethodCompiler:
                     if declaration_shape != value.shape
                     else ""
                 )
+                if representation_pair_code is not None:
+                    pair_name = self.fresh_target_name(f"__{name}Representation")
+                    self.symbol_representation_pair_codes[target.id] = pair_name
+                    return [
+                        f"{prefix}{keyword} {pair_name} = "
+                        f"{representation_pair_code}",
+                        f"{prefix}{keyword} {name}{annotation} = "
+                        f"{pair_name}.representation",
+                    ]
                 return [f"{prefix}{keyword} {name}{annotation} = {value.code}"]
             if isinstance(target, (ast.Tuple, ast.List)):
                 self.claim(target)
@@ -1088,6 +1109,9 @@ class MethodCompiler:
             outer_shapes = self.symbol_shapes.copy()
             outer_facts = self.symbol_facts.copy()
             outer_target_names = self.symbol_target_names.copy()
+            outer_representation_pairs = (
+                self.symbol_representation_pair_codes.copy()
+            )
             outer_declarations = self.declared_names.copy()
             outer_unavailable = self.unavailable_names.copy()
             outer_lazy_captures = self.lazy_captured_names.copy()
@@ -1116,6 +1140,7 @@ class MethodCompiler:
                     else ValueFacts()
                 )
                 self.symbol_target_names[source] = target_name
+                self.symbol_representation_pair_codes.pop(source, None)
             iterable = self.iterable_code(iterable_expression, node.iter)
             try:
                 body_lines = self.block(
@@ -1134,6 +1159,7 @@ class MethodCompiler:
             self.symbol_shapes = outer_shapes
             self.symbol_facts = surviving_facts
             self.symbol_target_names = outer_target_names
+            self.symbol_representation_pair_codes = outer_representation_pairs
             self.declared_names = outer_declarations
             self.unavailable_names = outer_unavailable
             self.lazy_captured_names = outer_lazy_captures
@@ -1148,6 +1174,9 @@ class MethodCompiler:
             outer_shapes = self.symbol_shapes.copy()
             outer_facts = self.symbol_facts.copy()
             outer_target_names = self.symbol_target_names.copy()
+            outer_representation_pairs = (
+                self.symbol_representation_pair_codes.copy()
+            )
             outer_declarations = self.declared_names.copy()
             outer_unavailable = self.unavailable_names.copy()
             outer_lazy_captures = self.lazy_captured_names.copy()
@@ -1176,6 +1205,7 @@ class MethodCompiler:
             self.symbol_shapes = outer_shapes
             self.symbol_facts = surviving_facts
             self.symbol_target_names = outer_target_names
+            self.symbol_representation_pair_codes = outer_representation_pairs
             self.declared_names = outer_declarations
             self.unavailable_names = outer_unavailable
             self.lazy_captured_names = outer_lazy_captures
@@ -1324,6 +1354,7 @@ class MethodCompiler:
         outer_shapes = self.symbol_shapes.copy()
         outer_facts = self.symbol_facts.copy()
         outer_target_names = self.symbol_target_names.copy()
+        outer_representation_pairs = self.symbol_representation_pair_codes.copy()
         outer_declarations = self.declared_names.copy()
         outer_unavailable = self.unavailable_names.copy()
         outer_lazy_captures = self.lazy_captured_names.copy()
@@ -1343,6 +1374,7 @@ class MethodCompiler:
         self.symbol_shapes = outer_shapes
         self.symbol_facts = surviving_facts
         self.symbol_target_names = outer_target_names
+        self.symbol_representation_pair_codes = outer_representation_pairs
         self.declared_names = outer_declarations
         self.unavailable_names = outer_unavailable | callback_bindings
         self.lazy_captured_names = outer_lazy_captures
@@ -1404,6 +1436,7 @@ class MethodCompiler:
             outer_shapes = self.symbol_shapes
             outer_facts = self.symbol_facts
             outer_target_names = self.symbol_target_names
+            outer_representation_pairs = self.symbol_representation_pair_codes
             outer_declarations = self.declared_names
             outer_unavailable = self.unavailable_names
             outer_rebind_scopes = self.shape_rebind_scopes
@@ -1411,6 +1444,7 @@ class MethodCompiler:
             self.symbol_shapes = {"self": class_shape}
             self.symbol_facts = {"self": ValueFacts()}
             self.symbol_target_names = {}
+            self.symbol_representation_pair_codes = {}
             self.declared_names = set()
             self.unavailable_names = set()
             self.shape_rebind_scopes = [set()]
@@ -1423,6 +1457,7 @@ class MethodCompiler:
                 self.symbol_shapes = outer_shapes
                 self.symbol_facts = outer_facts
                 self.symbol_target_names = outer_target_names
+                self.symbol_representation_pair_codes = outer_representation_pairs
                 self.declared_names = outer_declarations
                 self.unavailable_names = outer_unavailable
                 self.shape_rebind_scopes = outer_rebind_scopes
@@ -2826,6 +2861,7 @@ class MethodCompiler:
                 ),
                 self.shape_for_name(node.id),
                 self.symbol_facts.get(node.id, ValueFacts()),
+                self.symbol_representation_pair_codes.get(node.id),
             )
 
         if isinstance(node, ast.Attribute):
@@ -3193,11 +3229,15 @@ class MethodCompiler:
         previous_shape = self.symbol_shapes.get(generator.target.id)
         previous_facts = self.symbol_facts.get(generator.target.id)
         previous_target_name = self.symbol_target_names.get(generator.target.id)
+        previous_representation_pair = self.symbol_representation_pair_codes.get(
+            generator.target.id
+        )
         self.symbol_shapes[generator.target.id] = self.iterated_shape(
             iterable, generator.iter
         )
         self.symbol_facts[generator.target.id] = ValueFacts()
         self.symbol_target_names[generator.target.id] = target
+        self.symbol_representation_pair_codes.pop(generator.target.id, None)
         element = self.expression(node.elt, suppress_gap=suppress_gap)
         if previous_shape is None:
             self.symbol_shapes.pop(generator.target.id, None)
@@ -3211,6 +3251,12 @@ class MethodCompiler:
             self.symbol_target_names.pop(generator.target.id, None)
         else:
             self.symbol_target_names[generator.target.id] = previous_target_name
+        if previous_representation_pair is None:
+            self.symbol_representation_pair_codes.pop(generator.target.id, None)
+        else:
+            self.symbol_representation_pair_codes[generator.target.id] = (
+                previous_representation_pair
+            )
         iterable_code = self.iterable_code(iterable, generator.iter)
         if isinstance(node, ast.GeneratorExp):
             bound_iterable = Expression(iterable_code, iterable.shape)

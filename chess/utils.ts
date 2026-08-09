@@ -42,8 +42,26 @@ const PYTHON_DECIMAL_ZERO_CODE_POINTS = [
   0x1e140, 0x1e2f0, 0x1e4f0, 0x1e950, 0x1fbf0,
 ] as const
 
+const regexBmpCodePoint = (codePoint: number): string =>
+  `\\u${codePoint.toString(16).padStart(4, '0')}`
+
+const pythonBmpDecimalRanges = PYTHON_DECIMAL_ZERO_CODE_POINTS.filter(
+  zero => zero <= 0xffff,
+)
+  .map(zero => `${regexBmpCodePoint(zero)}-${regexBmpCodePoint(zero + 9)}`)
+  .join('')
+const pythonAstralDecimalDigits = PYTHON_DECIMAL_ZERO_CODE_POINTS.filter(
+  zero => zero > 0xffff,
+).flatMap(zero =>
+  Array.from({ length: 10 }, (_, digit) => String.fromCodePoint(zero + digit)),
+)
+
+/** Python 3.12 / Unicode 15.0 `re` decimal-digit atom (`\\d`). */
+export const PYTHON_DECIMAL_DIGIT_SOURCE =
+  `(?:[${pythonBmpDecimalRanges}]|` + pythonAstralDecimalDigits.join('|') + ')'
+
 /** Direct equivalent of Python's acceptance of Unicode decimal digits. */
-const normalizePythonDecimalDigits = (value: string): string =>
+export const normalizePythonDecimalDigits = (value: string): string =>
   Array.from(value, character => {
     const codePoint = character.codePointAt(0)
     if (codePoint === undefined) {

@@ -417,6 +417,29 @@ class RecursiveLoweringTest(unittest.TestCase):
         )
         self.assertEqual(side_effect.count("board.pop()"), 1)
 
+        bound = compile_fixture(
+            "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "left = repr(piece)\n"
+            "right = repr(piece)\n"
+            "self.assertEqual(left, right)"
+        )
+        self.assertIn("const __leftRepresentation =", bound)
+        self.assertIn(
+            "const left = __leftRepresentation.representation", bound
+        )
+        self.assertIn("__actualRepresentation.value", bound)
+        self.assertIn(")(__leftRepresentation, __rightRepresentation)", bound)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            r"bound repr\(\) value must have exactly one assignment",
+        ):
+            compile_fixture(
+                "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+                "left = repr(piece)\n"
+                "left = repr(piece)"
+            )
+
     def test_composes_assignments_loops_calls_and_operators(self) -> None:
         generated = compile_fixture(
             """values = [chess.BB_A1, chess.BB_A2]

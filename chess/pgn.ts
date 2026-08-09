@@ -9,10 +9,12 @@ import { KeyError, ValueError } from './errors'
 
 import * as utils from './utils'
 
-/** Replace Python's Unicode `\\s` atom before compiling a JavaScript regex. */
-const pythonWhitespaceRegex = (source: string, flags?: string): RegExp =>
+/** Replace Python's Unicode-sensitive atoms before compiling a JavaScript regex. */
+const pythonRegex = (source: string, flags?: string): RegExp =>
   new RegExp(
-    source.replaceAll('\\s', utils.PYTHON_WHITESPACE_SOURCE),
+    source
+      .replaceAll('\\s', utils.PYTHON_WHITESPACE_SOURCE)
+      .replaceAll('\\d', utils.PYTHON_DECIMAL_DIGIT_SOURCE),
     flags,
   )
 
@@ -156,7 +158,7 @@ export const NAG_BLACK_SEVERE_TIME_PRESSURE = 139
 
 export const NAG_NOVELTY = 146
 
-export const TAG_REGEX = pythonWhitespaceRegex(
+export const TAG_REGEX = pythonRegex(
   '^\\[([A-Za-z0-9][A-Za-z0-9_+#=:-]*)\\s+"([^\\r]*)"\\]\\s*$',
 )
 
@@ -185,14 +187,14 @@ export const MOVETEXT_REGEX = new RegExp(
 
 export const SKIP_MOVETEXT_REGEX = /;|\{|\}/
 
-export const CLOCK_REGEX = pythonWhitespaceRegex(
+export const CLOCK_REGEX = pythonRegex(
   '(?<prefix>\\s?)\\[%clk\\s(?<hours>\\d+):(?<minutes>\\d+):(?<seconds>\\d+(?:\\.\\d*)?)\\](?<suffix>\\s?)',
 )
-export const EMT_REGEX = pythonWhitespaceRegex(
+export const EMT_REGEX = pythonRegex(
   '(?<prefix>\\s?)\\[%emt\\s(?<hours>\\d+):(?<minutes>\\d+):(?<seconds>\\d+(?:\\.\\d*)?)\\](?<suffix>\\s?)',
 )
 
-export const EVAL_REGEX = pythonWhitespaceRegex(
+export const EVAL_REGEX = pythonRegex(
   '(?<prefix>\\s?)' +
     '\\[%eval\\s(?:' +
     '\\#(?<mate>[+-]?\\d+)' +
@@ -203,7 +205,7 @@ export const EVAL_REGEX = pythonWhitespaceRegex(
     '(?<suffix>\\s?)',
 )
 
-export const ARROWS_REGEX = pythonWhitespaceRegex(
+export const ARROWS_REGEX = pythonRegex(
   '(?<prefix>\\s?)' +
     '\\[%(?:csl|cal)\\s(?<arrows>' +
     '[RGYB][a-h][1-8](?:[a-h][1-8])?' +
@@ -674,7 +676,9 @@ export abstract class GameNode {
     const turn = this.turn()
     let score: Score
     if (match.groups!['mate']) {
-      const mate = parseInt(match.groups!['mate'])
+      const mate = parseInt(
+        utils.normalizePythonDecimalDigits(match.groups!['mate']),
+      )
       score = new Mate(mate)
       if (mate === 0) {
         // Resolve this ambiguity in the specification in favor of
@@ -683,7 +687,13 @@ export abstract class GameNode {
         return new PovScore(score, turn)
       }
     } else {
-      score = new Cp(Math.round(parseFloat(match.groups!['cp']) * 100))
+      score = new Cp(
+        Math.round(
+          parseFloat(
+            utils.normalizePythonDecimalDigits(match.groups!['cp']),
+          ) * 100,
+        ),
+      )
     }
 
     return new PovScore(turn ? score : score.neg(), turn)
@@ -698,7 +708,7 @@ export abstract class GameNode {
   evalDepth(): number | null {
     const match = this.comment.match(EVAL_REGEX)
     return match && match.groups!['depth']
-      ? parseInt(match.groups!['depth'])
+      ? parseInt(utils.normalizePythonDecimalDigits(match.groups!['depth']))
       : null
   }
 
@@ -802,9 +812,11 @@ export abstract class GameNode {
       return null
     }
     return (
-      parseInt(match.groups!['hours']) * 3600 +
-      parseInt(match.groups!['minutes']) * 60 +
-      parseFloat(match.groups!['seconds'])
+      parseInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
+        3600 +
+      parseInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) *
+        60 +
+      parseFloat(utils.normalizePythonDecimalDigits(match.groups!['seconds']))
     )
   }
 
@@ -823,7 +835,7 @@ export abstract class GameNode {
         .padStart(6, '0')
         .replace(/0+$/, '')
         .replace(/\.$/, '')
-      clk = `[%clk ${hours}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
+      clk = `[%clk ${BigInt(hours)}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
     }
 
     let found: number
@@ -859,9 +871,11 @@ export abstract class GameNode {
       return null
     }
     return (
-      parseInt(match.groups!['hours']) * 3600 +
-      parseInt(match.groups!['minutes']) * 60 +
-      parseFloat(match.groups!['seconds'])
+      parseInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
+        3600 +
+      parseInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) *
+        60 +
+      parseFloat(utils.normalizePythonDecimalDigits(match.groups!['seconds']))
     )
   }
 
@@ -880,7 +894,7 @@ export abstract class GameNode {
         .padStart(6, '0')
         .replace(/0+$/, '')
         .replace(/\.$/, '')
-      emt = `[%emt ${hours}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
+      emt = `[%emt ${BigInt(hours)}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
     }
 
     let found: number

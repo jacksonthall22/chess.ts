@@ -2,6 +2,7 @@ import { describe, expect, test } from 'vitest'
 
 import * as chess from '../index'
 import * as engine from '../engine'
+import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
@@ -57,6 +58,32 @@ describe('TypeScript-native parity contracts', () => {
     const nanWdl = new engine.Wdl(Number.NaN, 2, 3)
     expect(nanWdl.equals(nanWdl)).toBe(true)
     expect(nanWdl.equals(new engine.Wdl(Number.NaN, 2, 3))).toBe(false)
+  })
+
+  test('PGN annotations use Python Unicode decimal digits', () => {
+    const node = new pgn.Game()
+
+    node.comment = '[%clk ١:٠٢:٠٣]'
+    expect(node.clock()).toBe(3723)
+
+    node.comment = '[%emt ١:٠٢:٠٣.٥]'
+    expect(node.emt()).toBe(3723.5)
+
+    node.comment = '[%eval #١٢,٣]'
+    expect(node.eval()?.white().mate()).toBe(12)
+    expect(node.evalDepth()).toBe(3)
+  })
+
+  test('PGN clock annotations format large hours without exponent notation', () => {
+    const node = new pgn.Game()
+    const expectedHours = '277777777777777796739760128'
+
+    node.setClock(1e30)
+    expect(node.comment).toBe(`[%clk ${expectedHours}:24:16]`)
+
+    node.comment = ''
+    node.setEmt(1e30)
+    expect(node.comment).toBe(`[%emt ${expectedHours}:24:16]`)
   })
 
   test('Score ordering preserves Python unordered NaN comparisons', () => {
