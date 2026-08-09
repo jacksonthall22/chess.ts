@@ -110,16 +110,14 @@ The automatic translation in this repository applies to the selected upstream
 system creates two artifacts through separate paths:
 
 ```text
-python-chess/test.py syntax
-        │
-        └──AST compiler──> chess/test/python-generated.test.ts
+SYNTAX PATH
+python-chess/test.py -> AST compiler -> python-generated.test.ts -> run against chess.ts -> actual TypeScript assertion events
 
-python-chess/test.py executing against pinned Python
-        │
-        └──tracing TestCase──> chess/test/python-assertion-oracle.generated.ts
-                                      │
-generated TypeScript test executing against chess.ts
-        └──runtime assertion event────┘ exact ordered comparison
+RUNTIME PATH
+python-chess/test.py -> tracing TestCase against pinned Python -> python-assertion-oracle.generated.ts (expected Python assertion events)
+
+COMPARISON
+actual TypeScript event 1..n -> exact ordered match -> expected Python event 1..n
 ```
 
 The first path checks source translation. It reads the frozen Python syntax

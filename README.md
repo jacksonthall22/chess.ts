@@ -148,11 +148,14 @@ and reviewed as source code.
 The test system follows two paths from the same pinned `python-chess/test.py`:
 
 ```text
-pinned Python test syntax ──compile──> generated TypeScript tests
-          │
-          └──run in Python and record assertions──> golden assertion trace
-                                                        │
-generated TypeScript test run ──record assertions───────┘ compare in order
+SYNTAX PATH
+pinned test.py -> compile AST -> generated TypeScript tests -> run on chess.ts -> actual TypeScript assertion events
+
+RUNTIME PATH
+pinned test.py -> run on pinned python-chess -> expected Python assertion events (the golden trace)
+
+COMPARISON
+actual TypeScript assertion events -> exact event-by-event match in execution order -> expected Python assertion events
 ```
 
 The code calls that golden trace the **assertion oracle**. For each runtime
