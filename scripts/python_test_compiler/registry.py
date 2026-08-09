@@ -753,10 +753,8 @@ CHILD_NODE_GUARD = RuntimeTypeGuard(
         "but did not return ChildNode"
     ),
 )
-GAME_RESULT_GUARD = RuntimeTypeGuard(
-    constructor="pgnModule.Game",
-    failure="pgn.read_game() returned no Game for a selected valid PGN fixture",
-)
+
+
 def named_call_contract(name: str | None) -> CallContract | None:
     """Return the complete contract for one registered named call."""
 
@@ -840,9 +838,8 @@ def named_call_contract(name: str | None) -> CallContract | None:
             invocation=InvocationKind.CONSTRUCT,
         ),
         "chess.pgn.read_game": call_contract(
-            GAME,
+            GAME.optional(),
             STRING_IO_RULE,
-            result_guard=GAME_RESULT_GUARD,
         ),
         "chess.engine.Cp": call_contract(
             SCORE,

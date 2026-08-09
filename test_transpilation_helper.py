@@ -264,6 +264,19 @@ class RecursiveLoweringTest(unittest.TestCase):
         self.assertIn("new engineModule.PovScore(new engineModule.Cp(-(80))", generated)
         self.assertNotIn(" as ", generated)
 
+    def test_read_game_preserves_eof_none_and_guards_only_dereferences(self) -> None:
+        generated = compile_fixture(
+            "stream = io.StringIO()\n"
+            "self.assertTrue(chess.pgn.read_game(stream) is None)\n"
+            "game = chess.pgn.read_game(stream)\n"
+            'self.assertEqual(game.headers["Result"], "*")\n'
+            "self.assertEqual(game[0].comment, \"\")"
+        )
+
+        self.assertIn("pgnModule.readGame(stream), null", generated)
+        self.assertGreaterEqual(generated.count("if (__receiver === null)"), 2)
+        self.assertNotIn("instanceof pgnModule.Game", generated)
+
     def test_composes_enumeration_score_ordering_and_finite_models(self) -> None:
         generated = compile_fixture(
             "scores = [chess.engine.Cp(0), chess.engine.Mate(1)]\n"

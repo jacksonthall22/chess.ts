@@ -18,3 +18,11 @@ export class KeyError extends Error {
     this.name = 'KeyError'
   }
 }
+
+/** The runtime equivalent of Python's `OverflowError`. */
+export class OverflowError extends Error {
+  constructor(message?: string) {
+    super(message)
+    this.name = 'OverflowError'
+  }
+}

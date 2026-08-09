@@ -113,6 +113,17 @@ describe('TypeScript-native PGN parity contracts', () => {
     )
   })
 
+  test('clock annotations reject integers too large for a Python float', () => {
+    const game = new pgn.Game()
+    const hours = '9'.repeat(310)
+
+    game.comment = `[%clk ${hours}:00:00]`
+    expect(() => game.clock()).toThrow(chess.OverflowError)
+
+    game.comment = `[%emt ${hours}:00:00]`
+    expect(() => game.emt()).toThrow(chess.OverflowError)
+  })
+
   test('export wrapping counts Unicode code points', () => {
     const game = new pgn.Game()
     const comment = `${'x'.repeat(72)}😀`

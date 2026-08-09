@@ -233,7 +233,7 @@ from a test identity.
 | `SquareSet(number)` to `SquareSet(BigInt(number))` | The target mask representation is bigint. | A proved safe integral-number shape. |
 | Bitboard transform of `SquareSet` to `transform(value.int())` | Python's type is an `int` subclass; TypeScript uses a wrapper. | A registered transform and `SquareSet` operand. |
 | Local legal-move board to concrete `Board` | Python uses a structural protocol; the target constructor is concrete. | A local object with the required zero-argument generator method. This is the sole current marked type escape. |
-| `StringIO.getvalue()` to `StringIO.read()` | The equivalent target helper has a different name. | A `StringIO` receiver and exact zero-argument contract. |
+| `StringIO.getvalue()` to `StringIO.getValue()` | The equivalent target helper has a different name. | A `StringIO` receiver and exact zero-argument contract. |
 | Non-empty `Game.add_line()` to `ChildNode` | Python guarantees the last added child; the target declaration is broad. | Exact positive sequence length plus a runtime `ChildNode` guard. |
 | Nullable member access | Python fails on `None`; TypeScript exposes `null`. | A nullable proved shape; bind once, check, then expose the required shape. |
 | `enumerate()` and tuple loop binding | JavaScript exposes indexed iteration through `entries()`. | A proved iterable element and a same-arity tuple of names. |

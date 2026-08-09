@@ -36,9 +36,9 @@ import {
   splitWhitespaceWithMax,
   StopIteration,
 } from './utils'
-import { KeyError, ValueError } from './errors'
+import { KeyError, OverflowError, ValueError } from './errors'
 
-export { KeyError, ValueError } from './errors'
+export { KeyError, OverflowError, ValueError } from './errors'
 
 export type RankOrFileIndex = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7
 
@@ -5768,6 +5768,7 @@ export default {
   Outcome,
   ValueError,
   KeyError,
+  OverflowError,
   InvalidMoveError,
   IllegalMoveError,
   AmbiguousMoveError,

@@ -997,12 +997,16 @@ class MethodCompiler:
                     previous_shape = self.symbol_shapes.get(target.id)
                     current_name = self.symbol_target_names.get(target.id, name)
                     if previous_shape is not None and previous_shape != value.shape:
-                        if previous_shape == GAME_NODE and value.shape.kind in {
-                            ShapeKind.GAME,
-                            ShapeKind.GAME_NODE,
-                            ShapeKind.CHILD_GAME_NODE,
-                        }:
-                            self.symbol_shapes[target.id] = GAME_NODE
+                        if (
+                            previous_shape.kind is ShapeKind.GAME_NODE
+                            and value.shape.kind
+                            in {
+                                ShapeKind.GAME,
+                                ShapeKind.GAME_NODE,
+                                ShapeKind.CHILD_GAME_NODE,
+                            }
+                        ):
+                            self.symbol_shapes[target.id] = previous_shape
                             return [f"{prefix}{current_name} = {value.code}"]
                         if {
                             previous_shape.kind,
@@ -1035,7 +1039,7 @@ class MethodCompiler:
                 self.declared_names.add(target.id)
                 self.shape_rebind_scopes[-1].add(target.id)
                 declaration_shape = (
-                    GAME_NODE
+                    (GAME_NODE.optional() if value.shape.nullable else GAME_NODE)
                     if self.assignment_counts[target.id] > 1
                     and value.shape.kind
                     in {
@@ -1053,7 +1057,9 @@ class MethodCompiler:
                     else value.shape
                 )
                 current_shape = (
-                    GAME_NODE if declaration_shape == GAME_NODE else value.shape
+                    declaration_shape
+                    if declaration_shape.kind is ShapeKind.GAME_NODE
+                    else value.shape
                 )
                 self.symbol_shapes[target.id] = current_shape
                 self.symbol_target_names[target.id] = name
@@ -2595,7 +2601,12 @@ class MethodCompiler:
     ) -> Expression:
         shape = container.shape
         if shape.nullable:
-            self.fail(node, f"subscription does not support nullable {shape.kind.value}")
+            container = Expression(
+                self.require_non_null_code(container),
+                shape.required(),
+                container.facts,
+            )
+            shape = container.shape
         if shape.kind is ShapeKind.ARRAY and shape.element is not None:
             if key.shape != NUMBER:
                 self.fail(

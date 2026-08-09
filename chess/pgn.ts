@@ -3,7 +3,7 @@ import { Board, Color, Move, Square, WHITE } from './index'
 import { PovScore, Cp, Score, Mate } from './engine'
 import { Arrow } from './svg'
 import { findVariant } from './variant'
-import { KeyError, ValueError } from './errors'
+import { KeyError, OverflowError, ValueError } from './errors'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
@@ -855,8 +855,12 @@ export abstract class GameNode {
       BigInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
         3600n +
       BigInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) * 60n
+    const wholeSecondsFloat = Number(wholeSeconds)
+    if (!Number.isFinite(wholeSecondsFloat)) {
+      throw new OverflowError('int too large to convert to float')
+    }
     return (
-      Number(wholeSeconds) +
+      wholeSecondsFloat +
       parseFloat(utils.normalizePythonDecimalDigits(match.groups!['seconds']))
     )
   }
@@ -918,8 +922,12 @@ export abstract class GameNode {
       BigInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
         3600n +
       BigInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) * 60n
+    const wholeSecondsFloat = Number(wholeSeconds)
+    if (!Number.isFinite(wholeSecondsFloat)) {
+      throw new OverflowError('int too large to convert to float')
+    }
     return (
-      Number(wholeSeconds) +
+      wholeSecondsFloat +
       parseFloat(utils.normalizePythonDecimalDigits(match.groups!['seconds']))
     )
   }

@@ -1198,42 +1198,42 @@ class PgnTestCase extends TestCase {
   testCommentAtEol(): void {
     const pgn = new pgnModule.StringIO("1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d3 d6 6. Nbd2 a6 $6 (6... Bb6 $5 {\n/\\ Ne7, c6}) *")
 
-    const game = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
+    const game = pgnModule.readGame(pgn)
 
     // Seek the node after 6.Nbd2 and before 6...a6.
-    let node: pgnModule.GameNode = game
-    while ((node.variations.length !== 0 && !(node.hasVariation(chess.Move.fromUci("a7a6"))))) {
-      node = node.getitem(0)
+    let node: pgnModule.GameNode | null = game
+    while ((((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).variations.length !== 0 && !(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).hasVariation(chess.Move.fromUci("a7a6"))))) {
+      node = ((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).getitem(0)
     }
 
     // Make sure the comment for the second variation is there.
-    this.assertContainsUsing(5, node.getitem(1).nags, (__container, __member) => __container.has(__member))
-    this.assertEqualUsing(node.getitem(1).comment, "\n/\\ Ne7, c6", (__actual, __expected) => __actual === __expected)
+    this.assertContainsUsing(5, ((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).getitem(1).nags, (__container, __member) => __container.has(__member))
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).getitem(1).comment, "\n/\\ Ne7, c6", (__actual, __expected) => __actual === __expected)
   }
 
   testGameStartingComment(): void {
     let pgn = new pgnModule.StringIO("{ Game starting comment } 1. d3")
-    let game: pgnModule.GameNode = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
-    this.assertEqualUsing(game.comment, "Game starting comment", (__actual, __expected) => __actual === __expected)
-    this.assertEqualUsing(game.getitem(0).san(), "d3", (__actual, __expected) => __actual === __expected)
+    let game: pgnModule.GameNode | null = pgnModule.readGame(pgn)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).comment, "Game starting comment", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).getitem(0).san(), "d3", (__actual, __expected) => __actual === __expected)
 
     pgn = new pgnModule.StringIO("{ Empty game, but has a comment }")
-    game = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
-    this.assertEqualUsing(game.comment, "Empty game, but has a comment", (__actual, __expected) => __actual === __expected)
+    game = pgnModule.readGame(pgn)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).comment, "Empty game, but has a comment", (__actual, __expected) => __actual === __expected)
   }
 
   testGameStartingVariation(): void {
     const pgn = new pgnModule.StringIO("{Start of game} 1. e4 ({Start of variation} 1. d4) 1... e5\n")
 
-    const game = ((__guardedValue) => { if (!(__guardedValue instanceof pgnModule.Game)) throw new Error("compiler invariant failed: pgn.read_game() returned no Game for a selected valid PGN fixture"); return __guardedValue; })(pgnModule.readGame(pgn))
-    this.assertEqualUsing(game.comment, "Start of game", (__actual, __expected) => __actual === __expected)
+    const game = pgnModule.readGame(pgn)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).comment, "Start of game", (__actual, __expected) => __actual === __expected)
 
-    let node: pgnModule.GameNode = game.getitem(0)
+    let node: pgnModule.GameNode = ((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).getitem(0)
     this.assertEqualUsing(node.move, chess.Move.fromUci("e2e4"), (__actual, __expected) => __actual !== null && (__actual.equals(__expected)))
     this.assertFalse(node.comment.length !== 0)
     this.assertFalse(node.startingComment.length !== 0)
 
-    node = game.getitem(1)
+    node = ((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).getitem(1)
     this.assertEqualUsing(node.move, chess.Move.fromUci("d2d4"), (__actual, __expected) => __actual !== null && (__actual.equals(__expected)))
     this.assertFalse(node.comment.length !== 0)
     this.assertEqualUsing(node.startingComment, "Start of variation", (__actual, __expected) => __actual === __expected)

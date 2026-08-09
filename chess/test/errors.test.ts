@@ -19,6 +19,13 @@ describe('Python-compatible error families', () => {
     expect(keyError).not.toBeInstanceOf(RangeError)
     expect(keyError.name).toBe('KeyError')
     expect(keyError.message).toBe('missing key')
+
+    const overflowError = new chess.OverflowError('too large')
+    expect(chessDefault.OverflowError).toBe(chess.OverflowError)
+    expect(overflowError).toBeInstanceOf(Error)
+    expect(overflowError).not.toBeInstanceOf(RangeError)
+    expect(overflowError.name).toBe('OverflowError')
+    expect(overflowError.message).toBe('too large')
   })
 
   test('move errors retain their precise names under ValueError', () => {
