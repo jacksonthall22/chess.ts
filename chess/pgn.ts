@@ -22,6 +22,35 @@ const pythonRegex = (source: string, flags?: string): RegExp =>
 const max = (first: number, second: number): number =>
   second > first ? second : first
 
+/** Direct equivalent of CPython's float `divmod()`. */
+const floatDivmod = (dividend: number, divisor: number): [number, number] => {
+  if (!Number.isFinite(dividend) || !Number.isFinite(divisor)) {
+    throw new ValueError('cannot convert float NaN to integer')
+  }
+
+  let remainder = dividend % divisor
+  let division = (dividend - remainder) / divisor
+  if (remainder !== 0) {
+    if ((divisor < 0) !== (remainder < 0)) {
+      remainder += divisor
+      division -= 1
+    }
+  } else {
+    remainder = divisor < 0 ? -0 : 0
+  }
+
+  let quotient: number
+  if (division !== 0) {
+    quotient = Math.floor(division)
+    if (division - quotient > 0.5) {
+      quotient += 1
+    }
+  } else {
+    quotient = dividend / divisor < 0 ? -0 : 0
+  }
+  return [quotient, remainder]
+}
+
 /** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
 const formatFixed = (value: number, fractionDigits: number): string => {
   if (!Number.isFinite(value)) {
@@ -811,11 +840,12 @@ export abstract class GameNode {
     if (match === null) {
       return null
     }
+    const wholeSeconds =
+      BigInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
+        3600n +
+      BigInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) * 60n
     return (
-      parseInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
-        3600 +
-      parseInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) *
-        60 +
+      Number(wholeSeconds) +
       parseFloat(utils.normalizePythonDecimalDigits(match.groups!['seconds']))
     )
   }
@@ -828,9 +858,12 @@ export abstract class GameNode {
     let clk = ''
     if (seconds !== null) {
       seconds = max(0, seconds)
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-      seconds = (seconds % 3600) % 60
+      const [hours, remainingHourSeconds] = floatDivmod(seconds, 3600)
+      const [minutes, remainingMinuteSeconds] = floatDivmod(
+        remainingHourSeconds,
+        60,
+      )
+      seconds = remainingMinuteSeconds
       const secondsPart = formatFixed(seconds, 3)
         .padStart(6, '0')
         .replace(/0+$/, '')
@@ -870,11 +903,12 @@ export abstract class GameNode {
     if (match === null) {
       return null
     }
+    const wholeSeconds =
+      BigInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
+        3600n +
+      BigInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) * 60n
     return (
-      parseInt(utils.normalizePythonDecimalDigits(match.groups!['hours'])) *
-        3600 +
-      parseInt(utils.normalizePythonDecimalDigits(match.groups!['minutes'])) *
-        60 +
+      Number(wholeSeconds) +
       parseFloat(utils.normalizePythonDecimalDigits(match.groups!['seconds']))
     )
   }
@@ -887,9 +921,12 @@ export abstract class GameNode {
     let emt = ''
     if (seconds !== null) {
       seconds = max(0, seconds)
-      const hours = Math.floor(seconds / 3600)
-      const minutes = Math.floor((seconds % 3600) / 60)
-      seconds = (seconds % 3600) % 60
+      const [hours, remainingHourSeconds] = floatDivmod(seconds, 3600)
+      const [minutes, remainingMinuteSeconds] = floatDivmod(
+        remainingHourSeconds,
+        60,
+      )
+      seconds = remainingMinuteSeconds
       const secondsPart = formatFixed(seconds, 3)
         .padStart(6, '0')
         .replace(/0+$/, '')

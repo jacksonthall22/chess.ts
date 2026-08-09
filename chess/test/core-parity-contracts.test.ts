@@ -84,6 +84,21 @@ describe('TypeScript-native parity contracts', () => {
     node.comment = ''
     node.setEmt(1e30)
     expect(node.comment).toBe(`[%emt ${expectedHours}:24:16]`)
+
+    node.comment = ''
+    node.setClock(2.9816236034477412e19)
+    expect(node.comment).toBe('[%clk 8282287787354836:45:52]')
+  })
+
+  test('PGN clock annotations delay integer conversion until float addition', () => {
+    const node = new pgn.Game()
+    const annotation = '9778509567454608800:01:55.073'
+
+    node.comment = `[%clk ${annotation}]`
+    expect(node.clock()).toBe(3.520263444283659e22)
+
+    node.comment = `[%emt ${annotation}]`
+    expect(node.emt()).toBe(3.520263444283659e22)
   })
 
   test('Score ordering preserves Python unordered NaN comparisons', () => {

@@ -331,6 +331,20 @@ class RecursiveLoweringTest(unittest.TestCase):
         self.assertIn('const models = ["sf"]', ordinary_array)
         self.assertIn(".toLowerCase()", ordinary_array)
 
+        for mutable_models in (
+            'models = ["sf12"]\n'
+            'models[0] = "sf14"\n'
+            'for model in models:\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12"]\n'
+            'aliases = models\n'
+            'aliases[0] = "sf14"\n'
+            'for model in models:\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+        ):
+            with self.assertRaises(UnsupportedSyntax):
+                compile_fixture(mutable_models)
+
     def test_string_ordering_compares_unicode_code_points(self) -> None:
         generated = compile_fixture('self.assertFalse("𐀀" < "\\ue000")')
 

@@ -662,8 +662,10 @@ class MethodCompiler:
         if isinstance(source, ast.Name) and value.shape.kind is ShapeKind.ARRAY:
             # A second binding could mutate the same array behind either name.
             source_facts = self.symbol_facts.get(source.id, ValueFacts())
-            self.symbol_facts[source.id] = source_facts.without_sequence_length()
-            facts = facts.without_sequence_length()
+            self.symbol_facts[source.id] = (
+                source_facts.without_mutable_sequence_facts()
+            )
+            facts = facts.without_mutable_sequence_facts()
         if value.shape.kind is not ShapeKind.ARRAY:
             facts = facts.without_sequence_length()
         self.symbol_facts[target] = facts
@@ -1088,6 +1090,16 @@ class MethodCompiler:
                 self.claim(target)
                 container = self.expression(target.value)
                 key = self.expression(target.slice)
+                if (
+                    isinstance(target.value, ast.Name)
+                    and container.shape.kind is ShapeKind.ARRAY
+                ):
+                    facts = self.symbol_facts.get(
+                        target.value.id, ValueFacts()
+                    )
+                    self.symbol_facts[target.value.id] = (
+                        facts.without_finite_string_values()
+                    )
                 assignment = self.set_item(container, key, value, target)
                 return [
                     f"{prefix}{self.statement_expression(assignment)}"
@@ -3384,7 +3396,7 @@ class MethodCompiler:
             if isinstance(node.func.value, ast.Name):
                 facts = self.symbol_facts.get(node.func.value.id, ValueFacts())
                 self.symbol_facts[node.func.value.id] = (
-                    facts.without_sequence_length()
+                    facts.without_mutable_sequence_facts()
                 )
             return self.indexed_pop(receiver_expression, arguments[0], node)
 

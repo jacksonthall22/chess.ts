@@ -141,6 +141,19 @@ class ValueFacts:
             repeated_attributes=self.repeated_attributes,
         )
 
+    def without_finite_string_values(self) -> ValueFacts:
+        return ValueFacts(
+            exact_sequence_length=self.exact_sequence_length,
+            exact_string=self.exact_string,
+            repeated_attributes=self.repeated_attributes,
+        )
+
+    def without_mutable_sequence_facts(self) -> ValueFacts:
+        return ValueFacts(
+            exact_string=self.exact_string,
+            repeated_attributes=self.repeated_attributes,
+        )
+
 
 UNKNOWN = TargetShape(ShapeKind.UNKNOWN)
 VOID = TargetShape(ShapeKind.VOID)
