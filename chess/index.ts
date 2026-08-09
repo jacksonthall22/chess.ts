@@ -19,6 +19,7 @@ import {
   divmod,
   enumerate,
   formatPythonFloat,
+  isspace,
   iterAny,
   iterAll,
   iterFilter,
@@ -3687,7 +3688,7 @@ export class Board extends BaseBoard {
     for (let ch of [...operationPart, null]) {
       switch (state) {
         case 'opcode':
-          if (ch !== null && [' ', '\t', '\r', '\n'].includes(ch)) {
+          if (ch !== null && isspace(ch)) {
             if (opcode === '-') {
               opcode = ''
             } else if (opcode) {
@@ -3708,7 +3709,7 @@ export class Board extends BaseBoard {
           }
           break
         case 'after_opcode':
-          if (ch !== null && [' ', '\t', '\r', '\n'].includes(ch)) {
+          if (ch !== null && isspace(ch)) {
             // pass
           } else if (ch === '"') {
             state = 'string'

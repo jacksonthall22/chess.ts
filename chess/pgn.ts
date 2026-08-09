@@ -101,30 +101,41 @@ export interface TextIO {
 
 /** A minimal in-memory text stream used by the PGN reader and writer. */
 export class StringIO implements TextIO {
-  private buffer: string = ''
+  private buffer: string[]
+  private position = 0
 
   constructor(s: string = '') {
-    this.buffer = s
+    this.buffer = Array.from(s)
   }
 
   write(str: string): number {
-    this.buffer += str
-    return Array.from(str).length
+    const characters = Array.from(str)
+    const replaced = Math.min(
+      characters.length,
+      this.buffer.length - this.position,
+    )
+    this.buffer.splice(this.position, replaced, ...characters)
+    this.position += characters.length
+    return characters.length
+  }
+
+  getValue(): string {
+    return this.buffer.join('')
   }
 
   read(): string {
-    return this.buffer
+    const value = this.buffer.slice(this.position).join('')
+    this.position = this.buffer.length
+    return value
   }
 
   readline(): string {
-    const index = this.buffer.indexOf('\n')
+    const index = this.buffer.indexOf('\n', this.position)
     if (index === -1) {
-      const line = this.buffer
-      this.buffer = ''
-      return line
+      return this.read()
     }
-    const line = this.buffer.slice(0, index + 1)
-    this.buffer = this.buffer.slice(index + 1)
+    const line = this.buffer.slice(this.position, index + 1).join('')
+    this.position = index + 1
     return line
   }
 }

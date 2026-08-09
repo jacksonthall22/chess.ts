@@ -1176,7 +1176,7 @@ def method_call_contract(
     if kind is ShapeKind.STRING_IO and method in {"getvalue", "read"}:
         return call_contract(
             STRING,
-            target_member="read" if method == "getvalue" else None,
+            target_member="getValue" if method == "getvalue" else None,
         )
 
     if kind is ShapeKind.SET and receiver.element is not None:

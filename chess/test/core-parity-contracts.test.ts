@@ -74,6 +74,15 @@ describe('TypeScript-native parity contracts', () => {
     expect(node.evalDepth()).toBe(3)
   })
 
+  test('StringIO reads and writes from its Python-compatible cursor', () => {
+    const stream = new pgn.StringIO('prefix')
+
+    expect(stream.write('abc')).toBe(3)
+    expect(stream.getValue()).toBe('abcfix')
+    expect(stream.read()).toBe('fix')
+    expect(stream.read()).toBe('')
+  })
+
   test('PGN clock annotations format large hours without exponent notation', () => {
     const node = new pgn.Game()
     const expectedHours = '277777777777777796739760128'
@@ -288,6 +297,14 @@ describe('TypeScript-native parity contracts', () => {
     expect(board.epd({}, operations)).toBe(
       '8/8/8/8/8/8/8/8 w - - ce 1.0; acd -0.0; acs 1e-07;',
     )
+  })
+
+  test('setEpd recognizes the exact Python whitespace set inside operations', () => {
+    const operations = new chess.Board().setEpd(
+      '8/8/8/8/8/8/8/8 w - - ce\u001c55;',
+    )
+
+    expect(operations.get('ce')).toBe(55)
   })
 
   test.each([

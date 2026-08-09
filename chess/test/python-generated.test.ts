@@ -1179,7 +1179,7 @@ class PgnTestCase extends TestCase {
     const virtualFile = new pgnModule.StringIO()
     exporter = new pgnModule.FileExporter(virtualFile)
     game.accept(exporter)
-    this.assertEqualUsing(virtualFile.read(), (pgn + "\n\n"), (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(virtualFile.getValue(), (pgn + "\n\n"), (__actual, __expected) => __actual === __expected)
   }
 
   testPromoteToMain(): void {
