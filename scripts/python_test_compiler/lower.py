@@ -676,6 +676,47 @@ class MethodCompiler:
 
         return name in self.shape_rebind_scopes[-1]
 
+    @staticmethod
+    def sequence_is_mutated_in_block(
+        statements: list[ast.stmt], source_name: str
+    ) -> bool:
+        """Conservatively detect writes through one sequence or a local alias."""
+
+        nodes = [child for statement in statements for child in ast.walk(statement)]
+        aliases = {source_name}
+        changed = True
+        while changed:
+            changed = False
+            for child in nodes:
+                if not isinstance(child, ast.Assign) or len(child.targets) != 1:
+                    continue
+                target = child.targets[0]
+                if (
+                    isinstance(target, ast.Name)
+                    and isinstance(child.value, ast.Name)
+                    and child.value.id in aliases
+                    and target.id not in aliases
+                ):
+                    aliases.add(target.id)
+                    changed = True
+
+        return any(
+            (
+                isinstance(child, ast.Subscript)
+                and isinstance(child.ctx, ast.Store)
+                and isinstance(child.value, ast.Name)
+                and child.value.id in aliases
+            )
+            or (
+                isinstance(child, ast.Call)
+                and isinstance(child.func, ast.Attribute)
+                and child.func.attr == "pop"
+                and isinstance(child.func.value, ast.Name)
+                and child.func.value.id in aliases
+            )
+            for child in nodes
+        )
+
     def compile(self) -> list[str]:
         name = py_identifier_to_ts(self.method.node.name)
         lines = [f"  {name}(): void {{"]
@@ -1128,6 +1169,12 @@ class MethodCompiler:
             outer_unavailable = self.unavailable_names.copy()
             outer_lazy_captures = self.lazy_captured_names.copy()
             iterable_expression = self.expression(node.iter)
+            iterable_finite_strings = (
+                frozenset()
+                if isinstance(node.iter, ast.Name)
+                and self.sequence_is_mutated_in_block(node.body, node.iter.id)
+                else iterable_expression.facts.finite_string_values
+            )
             element_shape = self.iterated_shape(iterable_expression, node.iter)
             target, bindings = self.loop_target(node.target, element_shape)
             rebound = {source for source, _target, _shape in bindings}
@@ -1144,9 +1191,7 @@ class MethodCompiler:
                 self.symbol_shapes[source] = target_shape
                 self.symbol_facts[source] = (
                     ValueFacts(
-                        finite_string_values=(
-                            iterable_expression.facts.finite_string_values
-                        )
+                        finite_string_values=iterable_finite_strings
                     )
                     if len(bindings) == 1 and target_shape == STRING
                     else ValueFacts()
@@ -2367,7 +2412,7 @@ class MethodCompiler:
         if argument.shape.nullable:
             self.fail(node, f"str() does not support nullable {kind.value}")
         if kind in {ShapeKind.STRING, ShapeKind.WDL_MODEL}:
-            return argument
+            return Expression(argument.code, argument.shape, argument.facts)
         if kind is ShapeKind.ERROR:
             if not exception_has_ordinary_message(argument.shape.label):
                 self.fail(
@@ -2962,6 +3007,15 @@ class MethodCompiler:
                 self.expression(element, suppress_gap=suppress_gap)
                 for element in node.elts
             ]
+            if any(
+                expression.oracle_representation_pair_code is not None
+                for expression in expressions
+            ):
+                self.fail(
+                    node,
+                    "list and tuple literals containing repr() values require "
+                    "unsupported recursive assertion-oracle provenance",
+                )
             values = ", ".join(expression.code for expression in expressions)
             if isinstance(node, ast.Tuple):
                 return Expression(

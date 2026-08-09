@@ -345,6 +345,20 @@ class RecursiveLoweringTest(unittest.TestCase):
             with self.assertRaises(UnsupportedSyntax):
                 compile_fixture(mutable_models)
 
+        for loop_mutation in (
+            'models = ["sf12", "sf12"]\n'
+            'for model in models:\n'
+            '    models[1] = "sf14"\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+            'models = ["sf12", "sf12"]\n'
+            'for model in models:\n'
+            '    aliases = models\n'
+            '    aliases[1] = "sf14"\n'
+            '    chess.engine.Cp(0).wdl(model=model)',
+        ):
+            with self.assertRaises(UnsupportedSyntax):
+                compile_fixture(loop_mutation)
+
     def test_string_ordering_compares_unicode_code_points(self) -> None:
         generated = compile_fixture('self.assertFalse("𐀀" < "\\ue000")')
 
@@ -452,6 +466,22 @@ class RecursiveLoweringTest(unittest.TestCase):
                 "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
                 "left = repr(piece)\n"
                 "left = repr(piece)"
+            )
+
+        materialized = compile_fixture(
+            "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+            "self.assertEqual(str(repr(piece)), str(repr(piece)))"
+        )
+        self.assertIn("this.assertEqualUsing(", materialized)
+        self.assertNotIn("assertEqualRepresentationsUsing", materialized)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            r"literals containing repr\(\) values",
+        ):
+            compile_fixture(
+                "piece = chess.Piece(chess.BISHOP, chess.WHITE)\n"
+                "self.assertEqual([repr(piece)], [repr(piece)])"
             )
 
     def test_composes_assignments_loops_calls_and_operators(self) -> None:
