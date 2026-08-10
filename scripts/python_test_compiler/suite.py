@@ -27,7 +27,7 @@ GENERATED_TEST = REPOSITORY_ROOT / "chess" / "test" / "python-generated.test.ts"
 GENERATED_PROVENANCE = (
     REPOSITORY_ROOT / "chess" / "test" / "python-generated.provenance.json"
 )
-UPSTREAM_COMMIT = "76cbe9843b7be94676cf19ea2a446e4eb3ac4291"
+UPSTREAM_COMMIT = "312f3bf07758628e4ee9befbd9e3df7dd5eccea6"
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,7 +58,7 @@ def _semantic_node_count(node: ast.AST) -> int:
 
 
 def compile_suite(source: str | None = None) -> CompiledSuite:
-    """Compile all 88 methods from one parsed frozen source unit."""
+    """Compile all 89 methods from one parsed frozen source unit."""
 
     if source is None:
         source_unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
