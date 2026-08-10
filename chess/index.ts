@@ -1730,8 +1730,8 @@ export class BaseBoard {
     ;[n, bb] = divmod(n, 4)
     ;[n, q] = divmod(n, 6)
 
-    let n1: number = 0
-    let n2: number = 0
+    let n1!: number
+    let n2!: number
     for (n1 of range(0, 4)) {
       n2 = n + Math.floor(((3 - n1) * (4 - n1)) / 2) - 5
       if (n1 < n2 && 1 <= n2 && n2 <= 4) {
@@ -4316,8 +4316,8 @@ export class Board extends BaseBoard {
 
     // Filter by original square.
     let fromMask = BB_ALL
-    let fromFile: RankOrFileIndex | null = null
-    let fromRank: RankOrFileIndex | null = null
+    let fromFile!: RankOrFileIndex | null
+    let fromRank!: RankOrFileIndex | null
     if (match[2]) {
       fromFile = FILE_NAMES.indexOf(match[2]) as RankOrFileIndex
       fromMask &= BB_FILES[fromFile]
