@@ -3223,7 +3223,7 @@ export class Board extends BaseBoard {
       ) {
         // Remove pawns captured en passant.
         const down = this.turn === WHITE ? -8 : 8
-        captureSquare = epSquare + down
+        captureSquare = move.toSquare + down
         capturedPieceType = this._removePieceAt(captureSquare)
       }
     }
