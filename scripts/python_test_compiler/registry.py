@@ -621,8 +621,8 @@ def attribute_shape(attribute: str, receiver: TargetShape) -> TargetShape:
             if kind is ShapeKind.CHILD_GAME_NODE:
                 return MOVE
             return MOVE.optional()
-        if attribute in {"comment", "starting_comment"}:
-            return STRING
+        if attribute in {"comments", "starting_comments"}:
+            return array_of(STRING)
     if kind is ShapeKind.ARROW and attribute == "color":
         return STRING
     if kind is ShapeKind.GAME and attribute == "headers":
@@ -658,8 +658,8 @@ def writable_attribute_shape(
         ShapeKind.CHILD_GAME_NODE,
     }:
         return {
-            "comment": STRING,
-            "starting_comment": STRING,
+            "comments": array_of(STRING),
+            "starting_comments": array_of(STRING),
         }.get(attribute)
     if receiver.kind in {
         ShapeKind.STRING_EXPORTER,

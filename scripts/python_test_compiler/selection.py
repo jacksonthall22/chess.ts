@@ -103,6 +103,7 @@ TRANSLATED_TESTS = (
         "PgnTestCase",
         "test_exporter",
         "test_promote_to_main",
+        "test_read_game_with_multicomment_move",
         "test_comment_at_eol",
         "test_game_starting_comment",
         "test_game_starting_variation",
@@ -119,7 +120,7 @@ TRANSLATED_TESTS = (
 )
 
 
-if len(TRANSLATED_TESTS) != 86:
+if len(TRANSLATED_TESTS) != 87:
     raise RuntimeError(
-        f"translation selection must contain 86 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 87 methods, got {len(TRANSLATED_TESTS)}"
     )
