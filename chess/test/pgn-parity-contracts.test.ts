@@ -5,6 +5,30 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
+  test('parent and move identity are getter-only', () => {
+    const game = new pgn.Game()
+    const move = chess.Move.fromUci('e2e4')
+    const child = game.addVariation(move)
+
+    if (false) {
+      // @ts-expect-error The root identity is immutable.
+      game.parent = child
+      // @ts-expect-error Child ancestry is immutable.
+      child.parent = game
+      // @ts-expect-error The move identifying a child node is immutable.
+      child.move = chess.Move.fromUci('d2d4')
+    }
+
+    expect(() => {
+      ;(child as unknown as { parent: pgn.GameNode | null }).parent = null
+    }).toThrow(TypeError)
+    expect(() => {
+      ;(child as unknown as { move: chess.Move | null }).move = null
+    }).toThrow(TypeError)
+    expect(child.parent).toBe(game)
+    expect(child.move).toBe(move)
+  })
+
   test('next returns null when a node has no mainline child', () => {
     const game = new pgn.Game()
     expect(game.next()).toBeNull()

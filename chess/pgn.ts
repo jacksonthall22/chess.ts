@@ -368,15 +368,6 @@ export class _AcceptFrame {
 }
 
 export abstract class GameNode {
-  /** The parent node or `null` if this is the root node of the game. */
-  parent: GameNode | null
-
-  /**
-   * The move leading to this node or `null` if this is the root node of the
-   * game.
-   */
-  move: Move | null
-
   /** A list of child nodes. */
   variations: ChildNode[]
 
@@ -390,8 +381,6 @@ export abstract class GameNode {
   nags: Set<number>
 
   constructor({ comment = '' }: { comment?: string | string[] } = {}) {
-    this.parent = null
-    this.move = null
     this.variations = []
     this.comments = _standardizeComments(comment)
 
@@ -400,6 +389,15 @@ export abstract class GameNode {
     this.startingComments = []
     this.nags = new Set<number>()
   }
+
+  /** The parent node or `null` if this is the root node of the game. */
+  abstract get parent(): GameNode | null
+
+  /**
+   * The move leading to this node or `null` if this is the root node of the
+   * game.
+   */
+  abstract get move(): Move | null
 
   /**
    * Gets a board with the position of the node.
@@ -1009,11 +1007,8 @@ export abstract class GameNode {
  * Extends :class:`~pgn.GameNode`.
  */
 export class ChildNode extends GameNode {
-  /** The parent node. */
-  parent: GameNode
-
-  /** The move leading to this node. */
-  move: Move
+  private readonly _parent: GameNode
+  private readonly _move: Move
 
   /**
    * A comment for the start of a variation. Only nodes that
@@ -1043,8 +1038,8 @@ export class ChildNode extends GameNode {
     } = {},
   ) {
     super({ comment })
-    this.parent = parent
-    this.move = move
+    this._parent = parent
+    this._move = move
     this.parent.variations.push(this)
 
     this.nags = new Set<number>()
@@ -1052,6 +1047,16 @@ export class ChildNode extends GameNode {
       this.nags.add(nag)
     }
     this.startingComments = _standardizeComments(startingComment)
+  }
+
+  /** The parent node. */
+  get parent(): GameNode {
+    return this._parent
+  }
+
+  /** The move leading to this node. */
+  get move(): Move {
+    return this._move
   }
 
   board(): Board {
@@ -1233,6 +1238,14 @@ export class Game extends GameNode {
     super()
     this.headers = new Headers(headers)
     this.errors = []
+  }
+
+  get parent(): null {
+    return null
+  }
+
+  get move(): null {
+    return null
   }
 
   board(): Board {

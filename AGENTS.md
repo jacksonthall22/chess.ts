@@ -3,6 +3,9 @@
 The primary design constraint of this repository is **source fidelity to the
 pinned `python-chess` implementation**, not merely API or behavioral parity.
 Read the corresponding Python before changing code under `chess/`.
+Before any transpilation work, read and apply
+[`py-to-ts-tips.md`](py-to-ts-tips.md); it is the repository's detailed
+translation policy.
 
 ## The glasses test
 
