@@ -245,7 +245,7 @@ describe('GiveawayTestCase — translation pending', () => {
   test.todo('test_antichess_pgn (python-chess test.py:4862)',)
 })
 
-// Baseline: python-chess ec8ecec5c0277691ec76041e82bf13140f7f719a
+// Baseline: python-chess 63aac2ec65860a64256a190220b793e80b132b50
 // Total upstream tests: 283
 // Translated tests: 85
 // Pending tests: 198
