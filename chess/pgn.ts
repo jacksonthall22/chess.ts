@@ -284,7 +284,7 @@ export enum SkipType {
 export const SKIP: SkipType = SkipType.SKIP
 
 export enum TimeControlType {
-  UNKNOW = 0,
+  UNKNOWN = 0,
   UNLIMITED = 1,
   STANDARD = 2,
   RAPID = 3,
@@ -326,7 +326,7 @@ export class TimeControl {
 
   constructor(
     parts: TimeControlPart[] = [],
-    type: TimeControlType = TimeControlType.UNKNOW,
+    type: TimeControlType = TimeControlType.UNKNOWN,
   ) {
     this.parts = parts
     this.type = type

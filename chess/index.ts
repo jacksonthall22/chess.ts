@@ -1313,7 +1313,13 @@ export class BaseBoard {
     return new SquareSet(this.attacksMask(square))
   }
 
-  _attackersMask(color: Color, square: Square, occupied: Bitboard): Bitboard {
+  attackersMask(
+    color: Color,
+    square: Square,
+    occupied: Bitboard | null = null,
+  ): Bitboard {
+    occupied = occupied === null ? this.occupied : occupied
+
     const rankPieces = BB_RANK_MASKS[square] & occupied
     const filePieces = BB_FILE_MASKS[square] & occupied
     const diagPieces = BB_DIAG_MASKS[square] & occupied
@@ -1333,18 +1339,31 @@ export class BaseBoard {
     return attackers & this.occupiedCo[colorIdx(color)]
   }
 
-  attackersMask(color: Color, square: Square): Bitboard {
-    return this._attackersMask(color, square, this.occupied)
-  }
-
   /**
    * Checks if the given side attacks the given square.
    *
    * Pinned pieces still count as attackers. Pawns that can be captured
    * en passant are **not** considered attacked.
+   *
+   * *occupied* determines which squares are considered to block attacks.
+   * For example,
+   * `board.occupied ^ board.piecesMask(chess.KING, board.turn)` can be used
+   * to consider X-ray attacks through the king.
+   * Defaults to `board.occupied` (all pieces including the king,
+   * no X-ray attacks).
    */
-  isAttackedBy(color: Color, square: Square): boolean {
-    return bool(this.attackersMask(color, square))
+  isAttackedBy(
+    color: Color,
+    square: Square,
+    occupied: IntoSquareSet | null = null,
+  ): boolean {
+    return bool(
+      this.attackersMask(
+        color,
+        square,
+        occupied === null ? null : new SquareSet(occupied).mask,
+      ),
+    )
   }
 
   /**
@@ -1352,10 +1371,27 @@ export class BaseBoard {
    *
    * Pinned pieces still count as attackers.
    *
+   * *occupied* determines which squares are considered to block attacks.
+   * For example,
+   * `board.occupied ^ board.piecesMask(chess.KING, board.turn)` can be used
+   * to consider X-ray attacks through the king.
+   * Defaults to `board.occupied` (all pieces including the king,
+   * no X-ray attacks).
+   *
    * Returns a :class:`set of squares <chess.SquareSet>`.
    */
-  attackers(color: Color, square: Square): SquareSet {
-    return new SquareSet(this.attackersMask(color, square))
+  attackers(
+    color: Color,
+    square: Square,
+    occupied: IntoSquareSet | null = null,
+  ): SquareSet {
+    return new SquareSet(
+      this.attackersMask(
+        color,
+        square,
+        occupied === null ? null : new SquareSet(occupied).mask,
+      ),
+    )
   }
 
   pinMask(color: Color, square: Square): Bitboard {
@@ -5115,7 +5151,7 @@ export class Board extends BaseBoard {
   _attackedForKing(path: Bitboard, occupied: Bitboard): boolean {
     return iterAny(
       iterMap(scanReversed(path), sq =>
-        this._attackersMask(!this.turn, sq, occupied),
+        this.attackersMask(!this.turn, sq, occupied),
       ),
     )
   }

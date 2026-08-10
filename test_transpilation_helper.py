@@ -213,7 +213,7 @@ class SourceBoundaryTest(unittest.TestCase):
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
         self.assertEqual(len(unit.methods), 85)
-        self.assertEqual(len(unit.comments), 58)
+        self.assertEqual(len(unit.comments), 59)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
 
@@ -2157,9 +2157,9 @@ class WholeSuiteCompilationTest(unittest.TestCase):
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
         self.assertEqual(self.provenance["translatedMethodCount"], 85)
-        self.assertEqual(self.provenance["sourceCommentCount"], 58)
-        self.assertEqual(self.provenance["semanticNodeCount"], 6844)
-        self.assertEqual(self.provenance["assertionCount"], 467)
+        self.assertEqual(self.provenance["sourceCommentCount"], 59)
+        self.assertEqual(self.provenance["semanticNodeCount"], 6866)
+        self.assertEqual(self.provenance["assertionCount"], 468)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
