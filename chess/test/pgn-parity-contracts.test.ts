@@ -5,6 +5,15 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
+  test('repeated initial BOM markers are removed before headers', () => {
+    const game = pgn.readGame(
+      new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n1. e4 *'),
+    )
+
+    expect(game?.headers.get('Event')).toBe('BOM')
+    expect(game?.next()?.move).toEqual(chess.Move.fromUci('e2e4'))
+  })
+
   test('parent and move identity are getter-only', () => {
     const game = new pgn.Game()
     const move = chess.Move.fromUci('e2e4')

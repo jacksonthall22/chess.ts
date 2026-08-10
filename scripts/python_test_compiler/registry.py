@@ -627,6 +627,8 @@ def attribute_shape(attribute: str, receiver: TargetShape) -> TargetShape:
         return STRING
     if kind is ShapeKind.GAME and attribute == "headers":
         return HEADERS
+    if kind is ShapeKind.GAME and attribute == "errors":
+        return array_of(UNKNOWN)
     if kind in {
         ShapeKind.STRING_EXPORTER,
         ShapeKind.FILE_EXPORTER,
@@ -1128,6 +1130,8 @@ def method_call_contract(
             return call_contract(VOID, ARROW_INPUT_ARRAY_RULE)
         if method in {"root", "end"}:
             return call_contract(GAME_NODE)
+        if method == "next":
+            return call_contract(CHILD_GAME_NODE.optional())
         if method in {"add_variation", "add_main_variation"}:
             return call_contract(CHILD_GAME_NODE, MOVE_RULE)
         if method == "board":

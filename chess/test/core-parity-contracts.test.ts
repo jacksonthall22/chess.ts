@@ -158,6 +158,8 @@ describe('TypeScript-native parity contracts', () => {
   })
 
   test('inline Python whitespace translations preserve the exact source character set', () => {
+    expect(utils.lstrip('\u001c\u001dvalue')).toBe('value')
+    expect(utils.lstrip('\ufeffvalue')).toBe('\ufeffvalue')
     expect(
       '\u001cvalue\u001c'
         .replace(utils.PYTHON_LEADING_WHITESPACE, '')

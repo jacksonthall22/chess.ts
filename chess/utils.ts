@@ -255,6 +255,17 @@ export const sub = (
 }
 
 /**
+ * Remove the leading characters that Python treats as Unicode whitespace.
+ *
+ * This is intentionally not implemented with JavaScript's `trimStart()`:
+ * ECMAScript strips U+FEFF but Python does not, while Python strips the
+ * information separators U+001C–U+001F and ECMAScript does not.
+ */
+export const lstrip = (s: string): string => {
+  return s.replace(PYTHON_LEADING_WHITESPACE, '')
+}
+
+/**
  * A mirror of Python's `str.isspace()` method.
  */
 export const isspace = (s: string): boolean => {
@@ -508,6 +519,7 @@ export default {
   parseIntStrict,
   subn,
   sub,
+  lstrip,
   isspace,
   bool,
   boolToNumber,
