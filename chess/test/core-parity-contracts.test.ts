@@ -187,6 +187,23 @@ describe('TypeScript-native parity contracts', () => {
     expect(chess960.boardFen()).toBe(chess.STARTING_BOARD_FEN)
   })
 
+  test('attack queries preserve explicit empty and iterable occupancy overrides', () => {
+    const board = new chess.Board('4r3/8/8/8/8/8/4K3/8 w - - 0 1')
+
+    expect(Array.from(board.attackers(chess.BLACK, chess.E1))).toEqual([])
+    expect(
+      board.attackersMask(
+        chess.BLACK,
+        chess.E1,
+        board.occupied ^ chess.BB_E2,
+      ),
+    ).toBe(chess.BB_E8)
+    expect(board.isAttackedBy(chess.BLACK, chess.E1, 0n)).toBe(true)
+    expect(
+      Array.from(board.attackers(chess.BLACK, chess.E1, [chess.E8])),
+    ).toEqual([chess.E8])
+  })
+
   test('setEpd preserves and parses the complete operation field', () => {
     const board = new chess.Board()
     const operations = board.setEpd(
