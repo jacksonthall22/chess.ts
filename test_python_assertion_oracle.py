@@ -79,7 +79,7 @@ class AssertionOracleTest(unittest.TestCase):
         # stops observing assertions.
         self.assertEqual(first.traced_method_count, 84)
         self.assertEqual(len(first.excluded_methods), 0)
-        self.assertEqual(first.event_count, 5060)
+        self.assertEqual(first.event_count, 5424)
 
     def test_trace_preserves_exact_python_error_families(self):
         compiled = compile_assertion_oracle()

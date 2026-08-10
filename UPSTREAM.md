@@ -1,8 +1,22 @@
-# python-chess baseline
+# python-chess synchronization
 
 `chess.ts` is a mechanical TypeScript translation of
 [`python-chess`](https://github.com/niklasf/python-chess). The `python-chess/`
-submodule pins this selected upstream baseline:
+submodule currently pins:
+
+```text
+8e91525e47593932911951919a6855f2ea2aa170
+v1.10.0-70-g8e91525e
+2024-02-24 — Add sf16.1 WDL model
+```
+
+This is the first canonical `master` first-parent state after the recovered
+original baseline. Its gitlink advance, TypeScript source change, and affected
+generated tests land together.
+
+## Original baseline provenance
+
+The original selected upstream baseline is:
 
 ```text
 cd7f5958289dd08156436a1f84b9ea03cb1f75a1
@@ -89,7 +103,7 @@ tests; 36 Board tests; 12 PGN tests; and 2 engine score tests. The generated
 All 84 upstream bodies are emitted into
 `chess/test/python-generated.test.ts` by the deterministic compiler in
 `scripts/python_test_compiler/`. None is maintained as a hand-written
-TypeScript test. The compiler also carries all 57 Python comments and all 465
+TypeScript test. The compiler also carries all 57 Python comments and all 466
 upstream assertion calls in those methods into the generated file.
 
 The other Vitest files are explicitly not translations:
@@ -165,7 +179,7 @@ form. For example, moves use UCI, boards use FEN, integers use exact decimal
 strings, and non-integral numbers use their IEEE-754 bits. Unsupported values
 fail generation rather than falling back to object internals or display text.
 
-There are 465 assertion calls in the 84 selected source methods but 5,060
+There are 466 assertion calls in the 84 selected source methods but 5,424
 runtime oracle events because many calls execute repeatedly inside loops. These
 figures describe one test selection at the pinned commit; they are integrity
 counts, not separate tests written by hand.
@@ -212,7 +226,7 @@ The compiler is deliberately built from small, composable rules:
 Generated tests use native TypeScript operations such as `.length`,
 `Array.from()`, `Set`, bigint operators, and production `.equals()` methods.
 They do not import a Python-semantics runtime or emit `py.*` compatibility
-calls. The assertion oracle compares all 5,060 runtime observations from all
+calls. The assertion oracle compares all 5,424 runtime observations from all
 84 selected methods with the frozen Python run; `excludedMethods` is empty.
 
 Integral oracle values compare by exact mathematical value across TypeScript
@@ -318,7 +332,7 @@ live in `test_transpilation_helper.py` and run as part of
 
 ## Frozen upstream verification
 
-The selected upstream commit was run directly under Python 3.14.5:
+The original selected baseline was run directly under Python 3.14.5:
 
 ```text
 Ran 282 tests

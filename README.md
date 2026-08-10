@@ -188,7 +188,7 @@ assertion kind, and relevant exception or container information. A generated
 TypeScript assertion must both pass normally in Vitest and produce the same
 next trace event as Python. This second check catches a compiler error that
 mistranslates an expected value, changes loop behavior, or otherwise lets a
-different assertion pass. The 5,060 observations are dynamic events from 465
+different assertion pass. The 5,424 observations are dynamic events from 466
 assertion calls; assertions inside loops account for the larger number.
 
 The compiler lives in
