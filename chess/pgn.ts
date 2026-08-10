@@ -1366,7 +1366,9 @@ export class Game extends GameNode {
     return new this(new Map<string, string>()) as InstanceType<T>
   }
 
-  static builder<GameT extends typeof Game>(this: GameT): GameBuilder {
+  static builder<GameT extends Game>(
+    this: GameClass<GameT>,
+  ): GameBuilder<GameT> {
     return new GameBuilder({ Game_: this })
   }
 
@@ -1514,9 +1516,9 @@ export class Headers {
     return this.toRepr()
   }
 
-  static builder<HeadersT extends typeof Headers>(
-    this: HeadersT,
-  ): HeadersBuilder {
+  static builder<HeadersT extends Headers>(
+    this: HeadersClass<HeadersT>,
+  ): HeadersBuilder<HeadersT> {
     return new HeadersBuilder({ Headers_: this })
   }
 
@@ -1738,21 +1740,42 @@ export abstract class BaseVisitor<ResultT> {
   }
 }
 
+type GameClass<GameT extends Game> = Omit<typeof Game, 'prototype'> &
+  (new () => GameT) & { readonly prototype: GameT }
+
+type GameBuilderArguments<GameT extends Game> = Game extends GameT
+  ? [] | [{ Game_: GameClass<GameT> }]
+  : [{ Game_: GameClass<GameT> }]
+
+type HeadersClass<HeadersT extends Headers> = Omit<
+  typeof Headers,
+  'prototype'
+> &
+  (new (
+    data?: Map<string, string> | Iterable<[string, string]> | null,
+  ) => HeadersT) & { readonly prototype: HeadersT }
+
+type HeadersBuilderArguments<HeadersT extends Headers> =
+  Headers extends HeadersT
+    ? [] | [{ Headers_: HeadersClass<HeadersT> }]
+    : [{ Headers_: HeadersClass<HeadersT> }]
+
 /**
  * Creates a game model. Default visitor for :func:`~pgn.readGame()`.
  */
-export class GameBuilder extends BaseVisitor<Game> {
-  Game_: typeof Game
-  game: Game = null!
+export class GameBuilder<GameT extends Game = Game> extends BaseVisitor<GameT> {
+  Game_: GameClass<GameT>
+  game: GameT = null!
   variationStack: GameNode[] = null!
   startingComments: string[] = null!
   inVariation: boolean = null!
 
-  constructor()
-  constructor({ Game_ }: { Game_: typeof Game })
-  constructor({ Game_ = Game }: { Game_?: typeof Game } = {}) {
+  constructor(...args: GameBuilderArguments<GameT>) {
     super()
-    this.Game_ = Game_
+    this.Game_ =
+      args.length === 0
+        ? (Game as GameClass<GameT>)
+        : args[0].Game_
   }
 
   beginGame(): void {
@@ -1865,7 +1888,7 @@ export class GameBuilder extends BaseVisitor<Game> {
   /**
    * Returns the visited :class:`~pgn.Game()`.
    */
-  result(): Game {
+  result(): GameT {
     return this.game
   }
 }
@@ -1873,18 +1896,21 @@ export class GameBuilder extends BaseVisitor<Game> {
 /**
  * Collects headers into a dictionary.
  */
-export class HeadersBuilder extends BaseVisitor<Headers> {
-  Headers_: typeof Headers
-  headers: Headers = null!
+export class HeadersBuilder<
+  HeadersT extends Headers = Headers,
+> extends BaseVisitor<HeadersT> {
+  Headers_: HeadersClass<HeadersT>
+  headers: HeadersT = null!
 
-  constructor()
-  constructor({ Headers_ }: { Headers_: typeof Headers })
-  constructor({ Headers_ = Headers }: { Headers_?: typeof Headers } = {}) {
+  constructor(...args: HeadersBuilderArguments<HeadersT>) {
     super()
-    this.Headers_ = Headers_
+    this.Headers_ =
+      args.length === 0
+        ? (Headers as HeadersClass<HeadersT>)
+        : args[0].Headers_
   }
 
-  beginHeaders(): Headers {
+  beginHeaders(): HeadersT {
     this.headers = new this.Headers_(new Map<string, string>())
     return this.headers
   }
@@ -1897,7 +1923,7 @@ export class HeadersBuilder extends BaseVisitor<Headers> {
     return SKIP
   }
 
-  result(): Headers {
+  result(): HeadersT {
     return this.headers
   }
 }
