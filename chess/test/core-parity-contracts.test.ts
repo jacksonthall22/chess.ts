@@ -7,7 +7,7 @@ import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
   test('mirrored python-chess version is independent of the npm package version', () => {
-    expect(chess.__version__).toBe('1.11.1')
+    expect(chess.__version__).toBe('1.11.2')
   })
 
   test('Board parses and reverses a null move', () => {
