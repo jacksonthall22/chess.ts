@@ -32,7 +32,7 @@ TYPESCRIPT_METADATA_EXTRACTOR = (
     REPOSITORY_ROOT / "scripts" / "extract_typescript_test_metadata.mjs"
 )
 
-UPSTREAM_COMMIT = "5826ef5dd1c463654d2479408a7ddf56a91603d6"
+UPSTREAM_COMMIT = "0e7fabc8ae0127a994aaece31e3c69a510cef527"
 
 EXPECTED_GIT_BLOBS = {
     "chess/__init__.py": "55bd4cad28c3931e9a43317c83c9502c124a15e0",
@@ -43,7 +43,7 @@ EXPECTED_GIT_BLOBS = {
     "chess/svg.py": "c665b171b9e493e2b71f9f23726775ddcc85cc04",
     "chess/syzygy.py": "77a6eeded5f10a4acd9e828fb9c4f554c3835b14",
     "chess/variant.py": "6e9161dc89faeda13f563ddcc7dbe589ee44a2a9",
-    "test.py": "438628b98ee2bf088251ab51e2edacc2df8e8eb5",
+    "test.py": "6102eabdbb8556705cef4e80d5fd05d34ab3d282",
     "data/pgn/anastasian-lewis.pgn": "04faad1e205c242877e7170f2ca5bda2ed0e2260",
     "data/pgn/antichess-programfox.pgn": "d4e9cce919ee16a9dabcd3395c00162fa8d3501d",
     "data/pgn/chessbase-empty-line.pgn": "f343a3d47a46bb54dfeae3f7332e23982397c1d8",
@@ -55,6 +55,7 @@ EXPECTED_GIT_BLOBS = {
     "data/pgn/saturs-jannlee-zh-lichess.pgn": "f03040a2819ce22d4256ca8a2c1f32d46891e623",
     "data/pgn/stockfish-learning.pgn": "6504c8593b736f9f333da0627b6806676be3edfa",
     "data/pgn/uci-moves.pgn": "32c70f235305c456c6d222c9fff988b0039c4e58",
+    "data/pgn/utf8-bom.pgn": "665e7775a54659136416dba1c1e33276f6ea8a7e",
 }
 
 @dataclass(frozen=True)

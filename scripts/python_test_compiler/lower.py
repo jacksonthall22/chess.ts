@@ -80,6 +80,7 @@ from .target import (
     PSEUDO_LEGAL_MOVE_GENERATOR,
     SQUARE_SET,
     STRING,
+    STRING_IO,
     STRING_EXPORTER,
     UNKNOWN,
     VOID,
@@ -700,6 +701,27 @@ class MethodCompiler:
             )
         return ()
 
+    def assignments_are_nullable_game_calls(self, name: str) -> bool:
+        """Prove that every assignment to one repeated local keeps Game|null."""
+
+        assignments = [
+            child
+            for child in ast.walk(self.method.node)
+            if isinstance(child, ast.Assign)
+            and len(child.targets) == 1
+            and isinstance(child.targets[0], ast.Name)
+            and child.targets[0].id == name
+        ]
+        if not assignments:
+            return False
+        for assignment in assignments:
+            if not isinstance(assignment.value, ast.Call):
+                return False
+            contract = named_call_contract(dotted_name(assignment.value.func))
+            if contract is None or contract.result != GAME.optional():
+                return False
+        return True
+
     @staticmethod
     def sequence_is_mutated_in_block(
         statements: list[ast.stmt], source_name: str
@@ -1064,6 +1086,12 @@ class MethodCompiler:
                 self.declared_names.add(target.id)
                 self.shape_rebind_scopes[-1].add(target.id)
                 declaration_shape = (
+                    value.shape
+                    if self.assignment_counts[target.id] > 1
+                    and value.shape.kind is ShapeKind.GAME
+                    and value.shape.nullable
+                    and self.assignments_are_nullable_game_calls(target.id)
+                    else
                     (GAME_NODE.optional() if value.shape.nullable else GAME_NODE)
                     if self.assignment_counts[target.id] > 1
                     and value.shape.kind
@@ -1310,6 +1338,14 @@ class MethodCompiler:
             return lines
 
         if isinstance(node, ast.With):
+            if (
+                len(node.items) == 1
+                and isinstance(node.items[0].context_expr, ast.Call)
+                and dotted_name(node.items[0].context_expr.func) == "open"
+            ):
+                return self.open_text_fixture(
+                    node, indent, suppress_gap=suppress_gap
+                )
             return self.assert_raises(node, indent, suppress_gap=suppress_gap)
 
         if isinstance(node, ast.AugAssign):
@@ -1501,6 +1537,64 @@ class MethodCompiler:
         lines = [f"{prefix}const {name} = this.captureRaises({error_type}, () => {{"]
         lines.extend(body_lines)
         lines.append(f"{prefix}}})")
+        return lines
+
+    def open_text_fixture(
+        self,
+        node: ast.With,
+        indent: int,
+        *,
+        suppress_gap: GapCase | None,
+    ) -> list[str]:
+        """Lower the finite pinned UTF-8 fixture context-manager boundary."""
+
+        if len(node.items) != 1:
+            self.fail(node, "open() blocks must have one context manager")
+        item = node.items[0]
+        context = item.context_expr
+        if not (
+            isinstance(context, ast.Call)
+            and dotted_name(context.func) == "open"
+            and len(context.args) == 1
+            and len(context.keywords) == 1
+            and context.keywords[0].arg == "encoding"
+        ):
+            self.fail(
+                context,
+                "fixture open() requires one path and one encoding keyword",
+            )
+        if not isinstance(item.optional_vars, ast.Name):
+            self.fail(item.optional_vars or context, "fixture open() must bind a name")
+
+        self.claim(context)
+        self.claim(context.func)
+        path = self.expression(context.args[0], suppress_gap=suppress_gap)
+        encoding = self.expression(
+            context.keywords[0].value, suppress_gap=suppress_gap
+        )
+        if path.shape != STRING:
+            self.fail(context.args[0], "fixture open() path must be a string")
+        if encoding.facts.exact_string != "utf-8":
+            self.fail(
+                context.keywords[0].value,
+                "fixture open() requires a proved utf-8 encoding",
+            )
+
+        target = item.optional_vars
+        self.claim(target)
+        if target.id in self.declared_names:
+            self.fail(target, "fixture open() cannot replace an existing local")
+        name = py_identifier_to_ts(target.id)
+        self.unavailable_names.discard(target.id)
+        self.declared_names.add(target.id)
+        self.shape_rebind_scopes[-1].add(target.id)
+        self.symbol_shapes[target.id] = STRING_IO
+        self.symbol_facts[target.id] = ValueFacts()
+        self.symbol_target_names[target.id] = name
+
+        prefix = "  " * indent
+        lines = [f"{prefix}const {name} = openTextFixture({path.code})"]
+        lines.extend(self.block(node.body, indent, suppress_gap=suppress_gap))
         return lines
 
     def local_class(self, node: ast.ClassDef, indent: int) -> list[str]:

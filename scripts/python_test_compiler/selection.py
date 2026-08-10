@@ -113,12 +113,13 @@ TRANSLATED_TESTS = (
         "test_annotations",
         "test_float_emt",
         "test_float_clk",
+        "test_utf8_bom",
     ),
     *_tests("EngineTestCase", "test_score_ordering", "test_wdl_model"),
 )
 
 
-if len(TRANSLATED_TESTS) != 85:
+if len(TRANSLATED_TESTS) != 86:
     raise RuntimeError(
-        f"translation selection must contain 85 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 86 methods, got {len(TRANSLATED_TESTS)}"
     )
