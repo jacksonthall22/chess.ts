@@ -621,12 +621,6 @@ export const MateGiven = new MateGivenType()
 /**
  * Relative :class:`win/draw/loss statistics <chess.engine.Wdl>` and the point
  * of view.
- *
- * .. deprecated:: 1.2
- *     Behaves like a tuple
- *     ``(wdl.relative.wins, wdl.relative.draws, wdl.relative.losses)``
- *     for backwards compatibility. But it is recommended to use the provided
- *     fields and methods instead.
  */
 export class PovWdl {
   /** The relative :class:`~chess.engine.Wdl`. */
@@ -672,42 +666,14 @@ export class PovWdl {
     return `PovWdl(${this.relative}, ${this.turn ? 'WHITE' : 'BLACK'})`
   }
 
-  // Unfortunately in python-chess v1.1.0, info["wdl"] was a simple tuple
-  // of the relative permille values, so we have to support __iter__,
-  // __len__, __getitem__, and equality comparisons with other tuples.
-  // Never mind the ordering, because that's not a sensible operation, anyway.
-
-  // __iter__()
-  *iter(): IterableIterator<number> {
-    yield this.relative.wins
-    yield this.relative.draws
-    yield this.relative.losses
-  }
-
-  // __len__()
-  len(): number {
-    return 3
-  }
-
-  // __getitem__()
-  getitem(idx: number): number {
-    return [this.relative.wins, this.relative.draws, this.relative.losses][idx]
-  }
-
   // __eq__()
   equals(other: object): boolean {
-    if (other instanceof PovWdl) {
-      return this.white().equals(other.white())
-    } else if (other instanceof Array) {
-      return (
-        other.length === 3 &&
-        this.relative.wins === other[0] &&
-        this.relative.draws === other[1] &&
-        this.relative.losses === other[2]
-      )
-    } else {
-      return false
-    }
+    return (
+      other instanceof PovWdl &&
+      other.constructor === this.constructor &&
+      this.relative.equals(other.relative) &&
+      this.turn === other.turn
+    )
   }
 }
 
@@ -783,20 +749,6 @@ export class Wdl {
   // __bool__()
   bool(): boolean {
     return utilsBool(this.total())
-  }
-
-  // __iter__()
-  *iter(): IterableIterator<number> {
-    yield this.wins
-    yield this.draws
-    yield this.losses
-  }
-
-  // __reversed__()
-  *reversed(): IterableIterator<number> {
-    yield this.losses
-    yield this.draws
-    yield this.wins
   }
 
   // __pos__()

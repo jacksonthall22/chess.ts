@@ -161,6 +161,43 @@ describe('TypeScript-native parity contracts', () => {
     ).toBe(true)
   })
 
+  test('Wdl values use dataclass equality without deprecated tuple behavior', () => {
+    class DerivedWdl extends engine.Wdl {}
+    class DerivedPovWdl extends engine.PovWdl {}
+
+    const value = new engine.Wdl(249, 747, 4)
+    expect(value.equals(new engine.Wdl(249, 747, 4))).toBe(true)
+    expect(value.equals(new engine.Wdl(249, 746, 5))).toBe(false)
+    expect(value.equals(new DerivedWdl(249, 747, 4))).toBe(false)
+    expect(
+      new DerivedWdl(249, 747, 4).equals(new DerivedWdl(249, 747, 4)),
+    ).toBe(true)
+
+    const pov = new engine.PovWdl(value, chess.WHITE)
+    expect(
+      pov.equals(
+        new engine.PovWdl(new engine.Wdl(249, 747, 4), chess.WHITE),
+      ),
+    ).toBe(true)
+    expect(
+      pov.equals(
+        new engine.PovWdl(new engine.Wdl(4, 747, 249), chess.BLACK),
+      ),
+    ).toBe(false)
+    expect(
+      pov.equals(
+        new DerivedPovWdl(new engine.Wdl(249, 747, 4), chess.WHITE),
+      ),
+    ).toBe(false)
+
+    expect('iter' in value).toBe(false)
+    expect('reversed' in value).toBe(false)
+    expect('iter' in pov).toBe(false)
+    expect('len' in pov).toBe(false)
+    expect('getitem' in pov).toBe(false)
+    expect(pov.equals([249, 747, 4])).toBe(false)
+  })
+
   test('BaseBoard factories and copies preserve subclasses', () => {
     class DerivedBoard extends chess.BaseBoard {
       initializedWith: string | null
