@@ -888,6 +888,7 @@ def named_call_contract(name: str | None) -> CallContract | None:
             tuple_of(BOARD, keyed_map(("ce", NUMBER))), STRING_RULE
         ),
         "chess.Move.from_uci": call_contract(MOVE, STRING_RULE),
+        "chess.Move.null": call_contract(MOVE),
         "chess.Piece.from_symbol": call_contract(PIECE, STRING_RULE),
         "chess.SquareSet.from_square": call_contract(SQUARE_SET, NUMBER_RULE),
         "chess.square": call_contract(NUMBER, NUMBER_RULE, NUMBER_RULE),
@@ -957,6 +958,11 @@ def method_call_contract(
             "is_check": BOOLEAN,
             "is_checkmate": BOOLEAN,
             "is_stalemate": BOOLEAN,
+            "can_claim_threefold_repetition": BOOLEAN,
+            "is_repetition": BOOLEAN,
+            "is_fifty_moves": BOOLEAN,
+            "can_claim_fifty_moves": BOOLEAN,
+            "can_claim_draw": BOOLEAN,
             "ply": NUMBER,
             "status": NUMBER,
             "shredder_fen": STRING,
@@ -980,6 +986,8 @@ def method_call_contract(
         if method == "king":
             return call_contract(NUMBER.optional(), BOOLEAN_RULE)
         if method in {"is_legal", "is_pseudo_legal"}:
+            return call_contract(BOOLEAN, MOVE_RULE)
+        if method == "is_irreversible":
             return call_contract(BOOLEAN, MOVE_RULE)
         if method == "is_game_over":
             return call_contract(
@@ -1021,7 +1029,9 @@ def method_call_contract(
             )
         if method == "push":
             return call_contract(VOID, MOVE_RULE)
-        if method in {"push_san", "push_uci", "set_board_fen", "set_fen"}:
+        if method in {"push_san", "push_uci"}:
+            return call_contract(MOVE, STRING_RULE)
+        if method in {"set_board_fen", "set_fen", "set_castling_fen"}:
             return call_contract(VOID, STRING_RULE)
         if method == "set_epd":
             return call_contract(map_of(STRING, UNKNOWN), STRING_RULE)

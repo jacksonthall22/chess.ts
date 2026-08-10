@@ -3118,7 +3118,7 @@ export class Board extends BaseBoard {
     }
 
     if (this.halfmoveClock >= 99) {
-      for (const move of this.generatePseudoLegalMoves()) {
+      for (const move of this.generateLegalMoves()) {
         if (!this.isZeroing(move)) {
           this.push(move)
           try {
