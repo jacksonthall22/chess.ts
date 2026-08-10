@@ -5,14 +5,15 @@
 submodule currently pins:
 
 ```text
-8e91525e47593932911951919a6855f2ea2aa170
-v1.10.0-70-g8e91525e
-2024-02-24 — Add sf16.1 WDL model
+315052c0105ea1e0d0b4e1cbee70577fd9349f2d
+v1.10.0-71-g315052c0
+2024-02-24 — Fix sf16.1 WDL type annotation
 ```
 
-This is the first canonical `master` first-parent state after the recovered
-original baseline. Its gitlink advance, TypeScript source change, and affected
-generated tests land together.
+This is the second canonical `master` first-parent state after the recovered
+original baseline. Its Python-only annotation correction requires no TypeScript
+source change because the existing target signature is already explicit; its
+gitlink and generated verification artifacts still advance together.
 
 ## Original baseline provenance
 
