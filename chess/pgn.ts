@@ -2307,6 +2307,7 @@ export function readGame<ResultT>(
   let skippingGame = false
   let managedHeaders: Headers | null = null
   let unmanagedHeaders: Headers | null = null
+  let boardStack: Board[] = []
 
   // Ignore leading empty lines and comments.
   let line: string = handle.readline().replace(/^\ufeff/, '')
@@ -2374,7 +2375,6 @@ export function readGame<ResultT>(
   }
 
   let board: Board
-  let boardStack: Board[]
   if (!skippingGame) {
     // Chess variant.
     const headers =
