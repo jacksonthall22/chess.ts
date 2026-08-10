@@ -2459,12 +2459,17 @@ export class Board extends BaseBoard {
     return 2 * (this.fullmoveNumber - 1) + boolToNumber(this.turn === BLACK)
   }
 
+  /**
+   * Remove a piece, if any, from the given square and return the removed
+   * piece.
+   */
   removePieceAt(square: Square): Piece | null {
     const piece = super.removePieceAt(square)
     this.clearStack()
     return piece
   }
 
+  /** Place a piece on a square. */
   setPieceAt(
     square: Square,
     piece: Piece | null,
@@ -2717,6 +2722,7 @@ export class Board extends BaseBoard {
     return bool(this.attacksMask(move.fromSquare) & toMask)
   }
 
+  /** Check if a move is legal in the current position. */
   isLegal(move: Move): boolean {
     return (
       !this.isVariantEnd() &&
@@ -2762,10 +2768,26 @@ export class Board extends BaseBoard {
     return false
   }
 
+  /**
+   * Check if the game is over by any rule.
+   *
+   * The game is not considered to be over by the
+   * :func:`fifty-move rule <chess.Board.canClaimFiftyMoves()>` or
+   * :func:`threefold repetition <chess.Board.canClaimThreefoldRepetition()>`,
+   * unless *claimDraw* is given. Note that checking the latter can be slow.
+   */
   isGameOver({ claimDraw = false }: { claimDraw?: boolean } = {}): boolean {
     return this.outcome({ claimDraw: claimDraw }) !== null
   }
 
+  /**
+   * Return the result of a game: 1-0, 0-1, 1/2-1/2, or *.
+   *
+   * The game is not considered to be over by the
+   * :func:`fifty-move rule <chess.Board.canClaimFiftyMoves()>` or
+   * :func:`threefold repetition <chess.Board.canClaimThreefoldRepetition()>`,
+   * unless *claimDraw* is given. Note that checking the latter can be slow.
+   */
   result({ claimDraw = false }: { claimDraw?: boolean } = {}): string {
     const outcome = this.outcome({ claimDraw })
     return outcome !== null ? outcome.result() : '*'
