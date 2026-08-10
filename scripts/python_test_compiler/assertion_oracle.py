@@ -42,7 +42,7 @@ GENERATED_ASSERTION_ORACLE = (
     / "test"
     / "python-assertion-oracle.generated.ts"
 )
-UPSTREAM_COMMIT = "6af0ff4c8947486e3e3fa8e83ca88815301aaa37"
+UPSTREAM_COMMIT = "716a0b9459480b852b5169a0f1b0b3dbecd3be31"
 _FROZEN_TEST_MODULE = "_chess_ts_frozen_test_assertion_oracle"
 
 

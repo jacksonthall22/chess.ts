@@ -1019,6 +1019,8 @@ def method_call_contract(
             return call_contract(VOID, MOVE_RULE)
         if method in {"push_san", "push_uci", "set_board_fen", "set_fen"}:
             return call_contract(VOID, STRING_RULE)
+        if method == "set_epd":
+            return call_contract(map_of(STRING, UNKNOWN), STRING_RULE)
         if method == "remove_piece_at":
             return call_contract(VOID, NUMBER_RULE)
         if method == "set_piece_at":
