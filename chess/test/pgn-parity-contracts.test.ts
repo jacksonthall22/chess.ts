@@ -104,6 +104,13 @@ describe('TypeScript-native PGN parity contracts', () => {
     expect(child.next()).toBeNull()
   })
 
+  test('ignores a variation opener before any move exists', () => {
+    const game = pgn.readGame(new pgn.StringIO('((( 1. c4 *'))
+
+    expect(game?.variations[0].san()).toBe('c4')
+    expect(game?.errors).toEqual([])
+  })
+
   test('StringExporter output round-trips the mainline and sidelines', () => {
     const game = new pgn.Game()
     const e4 = game.addVariation(chess.Move.fromUci('e2e4'))
