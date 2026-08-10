@@ -2713,6 +2713,19 @@ export class Board extends BaseBoard {
     }
   }
 
+  /**
+   * Probes if the given move would put the opponent in checkmate. The move
+   * must be at least pseudo-legal.
+   */
+  givesCheckmate(move: Move): boolean {
+    this.push(move)
+    try {
+      return this.isCheckmate()
+    } finally {
+      this.pop()
+    }
+  }
+
   isIntoCheck(move: Move): boolean {
     const king = this.king(this.turn)
     if (king === null) {

@@ -80,6 +80,48 @@ describe('TypeScript-native parity contracts', () => {
     )
   })
 
+  test('givesCheckmate identifies mate and restores the board', () => {
+    const board = new chess.Board()
+    for (const san of ['e4', 'e5', 'Qf3', 'Nc6', 'Bc4', 'Rb8']) {
+      board.pushSan(san)
+    }
+    const beforeFen = board.fen({ enPassant: 'fen' })
+    const beforeStack = board.moveStack.map(move => move.uci())
+
+    expect(board.givesCheckmate(chess.Move.fromUci('f3f7'))).toBe(true)
+    expect(board.fen({ enPassant: 'fen' })).toBe(beforeFen)
+    expect(board.moveStack.map(move => move.uci())).toEqual(beforeStack)
+  })
+
+  test('givesCheckmate returns false for non-mating moves', () => {
+    const board = new chess.Board()
+    const before = board.fen({ enPassant: 'fen' })
+
+    expect(board.givesCheckmate(chess.Move.fromUci('e2e4'))).toBe(false)
+    expect(board.fen({ enPassant: 'fen' })).toBe(before)
+    expect(board.moveStack).toEqual([])
+  })
+
+  test('givesCheckmate restores the board when the probe throws', () => {
+    const expected = new Error('isCheckmate failed')
+    class ThrowingBoard extends chess.Board {
+      isCheckmate(): boolean {
+        throw expected
+      }
+    }
+
+    const board = new ThrowingBoard()
+    board.pushSan('e4')
+    const beforeFen = board.fen({ enPassant: 'fen' })
+    const beforeStack = board.moveStack.map(move => move.uci())
+
+    expect(() => board.givesCheckmate(chess.Move.fromUci('e7e5'))).toThrow(
+      expected,
+    )
+    expect(board.fen({ enPassant: 'fen' })).toBe(beforeFen)
+    expect(board.moveStack.map(move => move.uci())).toEqual(beforeStack)
+  })
+
   test('inline Python whitespace translations preserve the exact source character set', () => {
     expect(
       '\u001cvalue\u001c'
