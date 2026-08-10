@@ -5041,7 +5041,8 @@ export class Board extends BaseBoard {
       errors |= STATUS_OPPOSITE_CHECK
     }
 
-    // More than the maximum number of possible checkers in the variant.
+    // More than the maximum number of possible checkers in the variant,
+    // or impossibly aligned checkers.
     const checkers = this.checkersMask()
     const ourKings =
       this.kings &
@@ -5072,6 +5073,12 @@ export class Board extends BaseBoard {
         ) {
           errors |= STATUS_IMPOSSIBLE_CHECK
         }
+      }
+
+      // Multiple steppers.
+      const steppers = this.pawns | this.knights | this.kings
+      if (popcount(checkers & steppers) > 1) {
+        errors |= STATUS_IMPOSSIBLE_CHECK
       }
     }
 

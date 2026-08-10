@@ -30,6 +30,11 @@ describe('TypeScript-native parity contracts', () => {
     expect(board.pieceCount()).toBe(0)
   })
 
+  test('status rejects multiple stepping checkers', () => {
+    const board = new chess.Board('8/8/N7/2k5/N7/8/8/3K4 b - - 0 1')
+    expect(board.status()).toBe(chess.STATUS_IMPOSSIBLE_CHECK)
+  })
+
   test('file parsing rejects JavaScript indexOf sentinels', () => {
     for (const invalid of ['', 'A', 'aa', '1', 'i']) {
       expect(() => chess.parseFile(invalid)).toThrow(Error)
