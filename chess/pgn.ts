@@ -508,7 +508,7 @@ export abstract class GameNode {
     while (node.parent) {
       const parent = node.parent
 
-      if (!parent.variations || parent.variations[0] !== node) {
+      if (parent.variations.length === 0 || parent.variations[0] !== node) {
         return false
       }
 
@@ -654,7 +654,7 @@ export abstract class GameNode {
    * Complexity is `O(1)`.
    */
   next(): ChildNode | null {
-    return this.variations ? this.variations[0] : null
+    return this.variations.length !== 0 ? this.variations[0] : null
   }
 
   /**
@@ -2493,7 +2493,7 @@ export function readGame<ResultT>(
       } else if (token === '(') {
         if (skipVariationDepth) {
           skipVariationDepth += 1
-        } else if (boardStack!.at(-1)!.moveStack) {
+        } else if (boardStack!.at(-1)!.moveStack.length !== 0) {
           if (visitor.beginVariation() === SKIP) {
             skipVariationDepth = 1
           } else {
@@ -2631,7 +2631,7 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
 
     const [movesTime, ...bonus] = part.split('+')
 
-    if (bonus) {
+    if (bonus.length !== 0) {
       const _bonus = bonus[0]
       if (_bonus.toLowerCase().endsWith('d')) {
         tcp.delay = parseFloat(_bonus.slice(0, -1))
@@ -2641,7 +2641,7 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
     }
 
     const [moves, ...time] = movesTime.split('/')
-    if (time) {
+    if (time.length !== 0) {
       tcp.moves = parseInt(moves)
       tcp.time = parseInt(time[0])
     } else {

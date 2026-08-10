@@ -5,6 +5,36 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
+  test('next returns null when a node has no mainline child', () => {
+    const game = new pgn.Game()
+    expect(game.next()).toBeNull()
+
+    const child = game.addVariation(chess.Move.fromUci('e2e4'))
+    expect(game.next()).toBe(child)
+    expect(child.next()).toBeNull()
+  })
+
+  test('array truthiness follows Python in PGN paths', () => {
+    const game = new pgn.Game()
+    const child = game.addVariation(chess.Move.fromUci('e2e4'))
+    game.variations = []
+    expect(child.isMainline()).toBe(false)
+
+    const parsed = pgn.readGame(new pgn.StringIO('( 1. e4 ) *'))
+    expect(Array.from(parsed!.mainlineMoves(), move => move.uci())).toEqual([
+      'e2e4',
+    ])
+
+    expect(pgn.parseTimeControl('60').parts[0]).toMatchObject({
+      moves: 0,
+      time: 60,
+    })
+    expect(pgn.parseTimeControl('40/300').parts[0]).toMatchObject({
+      moves: 40,
+      time: 300,
+    })
+  })
+
   test('StringExporter output round-trips the mainline and sidelines', () => {
     const game = new pgn.Game()
     const e4 = game.addVariation(chess.Move.fromUci('e2e4'))
