@@ -1,5 +1,9 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import { describe, expect, test } from 'vitest'
 
+import { StringIO } from '../pgn'
 import { PYTHON_ASSERTION_ORACLE } from './python-assertion-oracle.generated'
 import {
   AssertionOracleCatalog,
@@ -16,6 +20,16 @@ type Containment<Member, Container> = (
   member: Member,
 ) => boolean
 const ASSERTION_ORACLES = new AssertionOracleCatalog(PYTHON_ASSERTION_ORACLE)
+
+/** Opens a pinned UTF-8 Python test fixture as the target in-memory stream. */
+export const openTextFixture = (
+  relativePath: string,
+  encoding: BufferEncoding,
+): StringIO => {
+  return new StringIO(
+    readFileSync(resolve(__dirname, '../../python-chess', relativePath), encoding),
+  )
+}
 
 interface InvocationResult {
   readonly didThrow: boolean

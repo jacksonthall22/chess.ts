@@ -212,7 +212,7 @@ class SourceBoundaryTest(unittest.TestCase):
     def test_parses_exact_selection_once_and_preserves_every_comment(self) -> None:
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
-        self.assertEqual(len(unit.methods), 85)
+        self.assertEqual(len(unit.methods), 86)
         self.assertEqual(len(unit.comments), 59)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
@@ -1042,6 +1042,28 @@ self.assertEqual(shadow, "outside")"""
 
         self.assertIn("this.assertRaises(chess.ValueError, () => {", generated)
         self.assertIn("board.setEpd(board.fen())", generated)
+
+    def test_compiles_pinned_utf8_fixture_contexts(self) -> None:
+        generated = compile_fixture(
+            'encoding = "utf-8"\n'
+            'with open("data/pgn/utf8-bom.pgn", encoding=encoding) as pgn:\n'
+            "    game = chess.pgn.read_game(pgn)"
+        )
+
+        self.assertIn(
+            'const pgn = openTextFixture("data/pgn/utf8-bom.pgn", encoding)',
+            generated,
+        )
+        self.assertIn("pgnModule.readGame(pgn)", generated)
+
+        with self.assertRaisesRegex(
+            UnsupportedSyntax,
+            "fixture open\\(\\) requires a proved utf-8 encoding",
+        ):
+            compile_fixture(
+                'with open("data/pgn/utf8-bom.pgn", encoding="ascii") as pgn:\n'
+                "    chess.pgn.read_game(pgn)"
+            )
 
     def test_shape_changing_reassignment_updates_following_contracts(self) -> None:
         with self.assertRaisesRegex(
@@ -2147,7 +2169,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         # compile_suite() fails if any selected semantic AST node or COMMENT token
         # is unclaimed by a lowering rule.
         self.assertEqual(self.first, self.second)
-        self.assertEqual(len(TRANSLATED_TESTS), 85)
+        self.assertEqual(len(TRANSLATED_TESTS), 86)
         for identity in TRANSLATED_TESTS:
             self.assertIn(py_identifier_to_ts(identity.method_name), self.first.typescript)
 
@@ -2156,15 +2178,15 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         self.assertNotIn("python-semantics", self.first.typescript)
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
-        self.assertEqual(self.provenance["translatedMethodCount"], 85)
+        self.assertEqual(self.provenance["translatedMethodCount"], 86)
         self.assertEqual(self.provenance["sourceCommentCount"], 59)
-        self.assertEqual(self.provenance["semanticNodeCount"], 6866)
-        self.assertEqual(self.provenance["assertionCount"], 468)
+        self.assertEqual(self.provenance["semanticNodeCount"], 6921)
+        self.assertEqual(self.provenance["assertionCount"], 471)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
-        self.assertEqual(len(methods), 85)
-        self.assertEqual(len({method["identity"] for method in methods}), 85)
+        self.assertEqual(len(methods), 86)
+        self.assertEqual(len({method["identity"] for method in methods}), 86)
         for method in methods:
             self.assertRegex(method["sourceSha256"], r"^[0-9a-f]{64}$")
             self.assertRegex(method["astSha256"], r"^[0-9a-f]{64}$")

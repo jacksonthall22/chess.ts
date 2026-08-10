@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "7299216641f5bd0434c06111608892617aa39147",
+  "upstreamCommit": "08697b298d87e4fa01842bd82af96d71cb972c90",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 85,
+  "translatedMethodCount": 86,
   "sourceCommentCount": 59,
-  "semanticNodeCount": 6866,
-  "assertionCount": 468,
+  "semanticNodeCount": 6921,
+  "assertionCount": 471,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -2434,14 +2434,33 @@
       "parityGapCases": []
     },
     {
-      "identity": "EngineTestCase.test_score_ordering",
+      "identity": "PgnTestCase.test_utf8_bom",
       "sourceSpan": {
         "start": [
-          2983,
+          2950,
           4
         ],
         "end": [
-          3011,
+          2960,
+          40
+        ]
+      },
+      "sourceSha256": "46156d6b50b57e8044180896d38f62780a8db04e2a4c7458caeb03c64e947458",
+      "astSha256": "e08decc38befe62455b7146980b6a3f83f21c7e57ab2106fc8c87161cc9aae53",
+      "semanticNodeCount": 55,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "EngineTestCase.test_score_ordering",
+      "sourceSpan": {
+        "start": [
+          2995,
+          4
+        ],
+        "end": [
+          3023,
           124
         ]
       },
@@ -2456,11 +2475,11 @@
       "identity": "EngineTestCase.test_wdl_model",
       "sourceSpan": {
         "start": [
-          3042,
+          3054,
           4
         ],
         "end": [
-          3048,
+          3060,
           104
         ]
       },
