@@ -373,6 +373,11 @@ def contains_callback(
             f"({container_name}, {member_name}) => "
             f"{container_name}.contains({member_name})"
         )
+    if container.kind is ShapeKind.HEADERS and member.kind is ShapeKind.STRING:
+        return (
+            f"({container_name}, {member_name}) => "
+            f"{container_name}.includes({member_name})"
+        )
     if container.kind in {ShapeKind.ARRAY, ShapeKind.ITERABLE}:
         if container.element is None:
             raise NativeLoweringError(

@@ -88,6 +88,12 @@ describe('Python assertion oracle', () => {
     expect(values.value(game)).toEqual(['pgn-node', 1])
   })
 
+  test('identifies Headers containment without canonicalizing the mapping', () => {
+    const values = new AssertionValueCanonicalizer()
+
+    expect(values.containerKind(new pgn.Headers())).toBe('headers')
+  })
+
   test('requires exact event order and complete consumption', () => {
     const cursor = new AssertionOracleCursor('Example.testMethod', [
       ['equal', ['int', '1'], ['int', '1']],

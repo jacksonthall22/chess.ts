@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "upstreamCommit": "9c24454dcea4f8a30259d811a2f10b26e911deb4",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 95,
-  "sourceCommentCount": 73,
-  "semanticNodeCount": 7807,
-  "assertionCount": 545,
+  "translatedMethodCount": 101,
+  "sourceCommentCount": 75,
+  "semanticNodeCount": 8351,
+  "assertionCount": 583,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -2497,6 +2497,54 @@
       "parityGapCases": []
     },
     {
+      "identity": "PgnTestCase.test_setup",
+      "sourceSpan": {
+        "start": [
+          2159,
+          4
+        ],
+        "end": [
+          2196,
+          42
+        ]
+      },
+      "sourceSha256": "c54a29139544db477910335816be67d80f16edf49aa48dee3b83259cebf4db16",
+      "astSha256": "83f6c7c61324f4a57ce0e5342be2822d46939015f1ae797ce6e2c8d0cfea564b",
+      "semanticNodeCount": 212,
+      "assertionCount": 21,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              2177,
+              8
+            ],
+            "end": [
+              2177,
+              57
+            ]
+          },
+          "placement": "leading",
+          "text": "# Setup again, while starting FEN is already set."
+        },
+        {
+          "span": {
+            "start": [
+              2188,
+              8
+            ],
+            "end": [
+              2188,
+              42
+            ]
+          },
+          "placement": "leading",
+          "text": "# Chess960 starting position #283."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
       "identity": "PgnTestCase.test_read_game_with_leading_whitespace_before_header",
       "sourceSpan": {
         "start": [
@@ -2636,6 +2684,101 @@
       "astSha256": "5de9f287396e3cf3756ed00fefef7918113c63bb9d939677d8f48dd70c0825e6",
       "semanticNodeCount": 83,
       "assertionCount": 7,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_annotation_symbols",
+      "sourceSpan": {
+        "start": [
+          2389,
+          4
+        ],
+        "end": [
+          2409,
+          43
+        ]
+      },
+      "sourceSha256": "a2337831dc0e31638f0a44753117154a88feaf73a99625e2bdc9618d324720f0",
+      "astSha256": "681b34a6ad6b3f6292aecf4b7dab8c02f133076797511553197f79d3e9152cb9",
+      "semanticNodeCount": 116,
+      "assertionCount": 8,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_black_to_move",
+      "sourceSpan": {
+        "start": [
+          2631,
+          4
+        ],
+        "end": [
+          2652,
+          45
+        ]
+      },
+      "sourceSha256": "05aaef269a41e78a8859b9ff61de8c2cd208635e663096b701b41fbe9b190cda",
+      "astSha256": "1502c5defa225f662510eb97418630fe4acee5b8f296b77079ca6947e8a7db43",
+      "semanticNodeCount": 59,
+      "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_semicolon_comment",
+      "sourceSpan": {
+        "start": [
+          2797,
+          4
+        ],
+        "end": [
+          2802,
+          38
+        ]
+      },
+      "sourceSha256": "8241fab15927c45394905c79f78369a26c94843966475cc26228a98613ed1588",
+      "astSha256": "ff7129fb5179d6e1901b88d4ae5b92bfe86920de8bbf55b7414db69814fcb349",
+      "semanticNodeCount": 37,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_no_movetext",
+      "sourceSpan": {
+        "start": [
+          2809,
+          4
+        ],
+        "end": [
+          2822,
+          57
+        ]
+      },
+      "sourceSha256": "22d42a36ee64ba137534fdfc391bbc92249a278b04fcc043fca05121be98e534",
+      "astSha256": "a3ddea262967c9691c8f61dc4fd627cabaa890cad9851bcf4515f63f772b17bf",
+      "semanticNodeCount": 53,
+      "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_subgame",
+      "sourceSpan": {
+        "start": [
+          2824,
+          4
+        ],
+        "end": [
+          2831,
+          81
+        ]
+      },
+      "sourceSha256": "ca2e19b56c6d71503e97a9f2bac4c6b6a9ba8288e13f550e7d59657bd40f277e",
+      "astSha256": "a545436c4c7db5ae3a74382463bd4536fa184647c255320d368fdc6d5a32a476",
+      "semanticNodeCount": 67,
+      "assertionCount": 3,
       "comments": [],
       "parityGapCases": []
     },

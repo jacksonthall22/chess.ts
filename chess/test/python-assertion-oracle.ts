@@ -28,7 +28,12 @@ export type AssertionTraceEvent =
   | readonly ['raises', AssertionErrorFamily, AssertionErrorFamily]
 
 export type AssertionContainerKind =
-  'string' | 'set' | 'sequence' | 'legal-moves' | 'pseudo-legal-moves'
+  | 'string'
+  | 'set'
+  | 'sequence'
+  | 'headers'
+  | 'legal-moves'
+  | 'pseudo-legal-moves'
 
 export type AssertionErrorFamily =
   | 'Error'
@@ -124,6 +129,7 @@ export class AssertionValueCanonicalizer {
     if (typeof value === 'string') return 'string'
     if (value instanceof Set) return 'set'
     if (Array.isArray(value)) return 'sequence'
+    if (value instanceof pgn.Headers) return 'headers'
     if (value instanceof chess.LegalMoveGenerator) return 'legal-moves'
     if (value instanceof chess.PseudoLegalMoveGenerator)
       return 'pseudo-legal-moves'
