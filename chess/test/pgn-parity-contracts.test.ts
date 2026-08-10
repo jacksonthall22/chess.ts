@@ -19,11 +19,11 @@ describe('TypeScript-native PGN parity contracts', () => {
     expect(
       parsed?.variations[0].variations.map(node => [
         node.move.uci(),
-        node.comment,
+        node.comments,
       ]),
     ).toEqual([
-      ['e7e5', 'open'],
-      ['c7c5', 'sicilian'],
+      ['e7e5', ['open']],
+      ['c7c5', ['sicilian']],
     ])
     expect(parsed?.toString()).toBe(exported)
   })
@@ -51,22 +51,22 @@ describe('TypeScript-native PGN parity contracts', () => {
     expect(
       parsed?.variations.map(node => ({
         move: node.move.uci(),
-        comment: node.comment,
+        comments: node.comments,
         child: node.variations[0]?.move.uci(),
-        childComment: node.variations[0]?.comment,
+        childComments: node.variations[0]?.comments,
       })),
     ).toEqual([
       {
         move: 'e2e4',
-        comment: 'first',
+        comments: ['first'],
         child: 'e7e5',
-        childComment: 'first child',
+        childComments: ['first child'],
       },
       {
         move: 'e2e4',
-        comment: 'second',
+        comments: ['second'],
         child: 'c7c5',
-        childComment: 'second child',
+        childComments: ['second child'],
       },
     ])
   })
@@ -96,13 +96,13 @@ describe('TypeScript-native PGN parity contracts', () => {
     ] as const
 
     for (const [seconds, formatted] of cases) {
-      game.comment = ''
+      game.comments = []
       game.setClock(seconds)
-      expect(game.comment).toBe(`[%clk 0:00:${formatted}]`)
+      expect(game.comments).toEqual([`[%clk 0:00:${formatted}]`])
 
-      game.comment = ''
+      game.comments = []
       game.setEmt(seconds)
-      expect(game.comment).toBe(`[%emt 0:00:${formatted}]`)
+      expect(game.comments).toEqual([`[%emt 0:00:${formatted}]`])
     }
 
     expect(() => game.setClock(Number.POSITIVE_INFINITY)).toThrow(
@@ -117,17 +117,17 @@ describe('TypeScript-native PGN parity contracts', () => {
     const game = new pgn.Game()
     const hours = '9'.repeat(310)
 
-    game.comment = `[%clk ${hours}:00:00]`
+    game.comments = [`[%clk ${hours}:00:00]`]
     expect(() => game.clock()).toThrow(chess.OverflowError)
 
-    game.comment = `[%emt ${hours}:00:00]`
+    game.comments = [`[%emt ${hours}:00:00]`]
     expect(() => game.emt()).toThrow(chess.OverflowError)
   })
 
   test('export wrapping counts Unicode code points', () => {
     const game = new pgn.Game()
     const comment = `${'x'.repeat(72)}😀`
-    game.comment = comment
+    game.comments = [comment]
 
     expect(
       game.accept(new pgn.StringExporter({ headers: false, columns: 80 })),
@@ -136,7 +136,7 @@ describe('TypeScript-native PGN parity contracts', () => {
 
   test('export removes every closing brace from comments', () => {
     const game = new pgn.Game()
-    game.comment = 'a}b}c'
+    game.comments = ['a}b}c']
 
     expect(
       game.accept(new pgn.StringExporter({ headers: false, columns: null })),
@@ -153,9 +153,9 @@ describe('TypeScript-native PGN parity contracts', () => {
     ]
 
     for (const [annotation, remove] of cases) {
-      game.comment = `\ufeff${annotation}\ufefffoo`
+      game.comments = [`\ufeff${annotation}\ufefffoo`]
       remove(game)
-      expect(game.comment).toBe('\ufeff\ufefffoo')
+      expect(game.comments).toEqual(['\ufeff\ufefffoo'])
     }
 
     expect(pgn.TAG_REGEX.test('[Event "x"]\ufeff')).toBe(false)
