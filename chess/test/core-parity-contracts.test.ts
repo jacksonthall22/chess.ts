@@ -22,6 +22,14 @@ describe('TypeScript-native parity contracts', () => {
     expectTypeOf(chess.squareRank).returns.toEqualTypeOf<chess.Rank>()
   })
 
+  test('pieceCount reports occupied board squares after clear', () => {
+    const board = new chess.Board()
+    expect(board.pieceCount()).toBe(32)
+
+    board.clear()
+    expect(board.pieceCount()).toBe(0)
+  })
+
   test('file parsing rejects JavaScript indexOf sentinels', () => {
     for (const invalid of ['', 'A', 'aa', '1', 'i']) {
       expect(() => chess.parseFile(invalid)).toThrow(Error)

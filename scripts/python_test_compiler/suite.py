@@ -27,7 +27,7 @@ GENERATED_TEST = REPOSITORY_ROOT / "chess" / "test" / "python-generated.test.ts"
 GENERATED_PROVENANCE = (
     REPOSITORY_ROOT / "chess" / "test" / "python-generated.provenance.json"
 )
-UPSTREAM_COMMIT = "c0c5cb08436e923c6a925297efe448b907a33480"
+UPSTREAM_COMMIT = "2b2f1497de4131c3b7fb967c0578e063d2b9908d"
 
 
 @dataclass(frozen=True, slots=True)
