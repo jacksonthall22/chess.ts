@@ -63,13 +63,13 @@ describe('TypeScript-native parity contracts', () => {
   test('PGN annotations use Python Unicode decimal digits', () => {
     const node = new pgn.Game()
 
-    node.comment = '[%clk ١:٠٢:٠٣]'
+    node.comments = ['[%clk ١:٠٢:٠٣]']
     expect(node.clock()).toBe(3723)
 
-    node.comment = '[%emt ١:٠٢:٠٣.٥]'
+    node.comments = ['[%emt ١:٠٢:٠٣.٥]']
     expect(node.emt()).toBe(3723.5)
 
-    node.comment = '[%eval #١٢,٣]'
+    node.comments = ['[%eval #١٢,٣]']
     expect(node.eval()?.white().mate()).toBe(12)
     expect(node.evalDepth()).toBe(3)
   })
@@ -88,25 +88,25 @@ describe('TypeScript-native parity contracts', () => {
     const expectedHours = '277777777777777796739760128'
 
     node.setClock(1e30)
-    expect(node.comment).toBe(`[%clk ${expectedHours}:24:16]`)
+    expect(node.comments).toEqual([`[%clk ${expectedHours}:24:16]`])
 
-    node.comment = ''
+    node.comments = []
     node.setEmt(1e30)
-    expect(node.comment).toBe(`[%emt ${expectedHours}:24:16]`)
+    expect(node.comments).toEqual([`[%emt ${expectedHours}:24:16]`])
 
-    node.comment = ''
+    node.comments = []
     node.setClock(2.9816236034477412e19)
-    expect(node.comment).toBe('[%clk 8282287787354836:45:52]')
+    expect(node.comments).toEqual(['[%clk 8282287787354836:45:52]'])
   })
 
   test('PGN clock annotations delay integer conversion until float addition', () => {
     const node = new pgn.Game()
     const annotation = '9778509567454608800:01:55.073'
 
-    node.comment = `[%clk ${annotation}]`
+    node.comments = [`[%clk ${annotation}]`]
     expect(node.clock()).toBe(3.520263444283659e22)
 
-    node.comment = `[%emt ${annotation}]`
+    node.comments = [`[%emt ${annotation}]`]
     expect(node.emt()).toBe(3.520263444283659e22)
   })
 

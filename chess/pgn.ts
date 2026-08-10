@@ -269,6 +269,15 @@ export const _condenseAffix = (
   }
 }
 
+export const _standardizeComments = (
+  comment: string | string[],
+): string[] => {
+  if (comment.length === 0) {
+    return []
+  }
+  return typeof comment === 'string' ? [comment] : comment
+}
+
 export const TAG_ROSTER = [
   'Event',
   'Site',
@@ -378,20 +387,20 @@ export abstract class GameNode {
    * A comment that goes behind the move leading to this node. Comments
    * that occur before any moves are assigned to the root node.
    */
-  comment: string
+  comments: string[]
 
-  startingComment: string
+  startingComments: string[]
   nags: Set<number>
 
-  constructor({ comment = '' }: { comment?: string } = {}) {
+  constructor({ comment = '' }: { comment?: string | string[] } = {}) {
     this.parent = null
     this.move = null
     this.variations = []
-    this.comment = comment
+    this.comments = _standardizeComments(comment)
 
     // Deprecated: These should be properties of ChildNode, but need to
     // remain here for backwards compatibility.
-    this.startingComment = ''
+    this.startingComments = []
     this.nags = new Set<number>()
   }
 
@@ -616,8 +625,8 @@ export abstract class GameNode {
       startingComment = '',
       nags = [],
     }: {
-      comment?: string
-      startingComment?: string
+      comment?: string | string[]
+      startingComment?: string | string[]
       nags?: Iterable<number>
     } = {},
   ): ChildNode {
@@ -676,12 +685,12 @@ export abstract class GameNode {
       startingComment = '',
       nags = [],
     }: {
-      comment?: string
-      startingComment?: string
+      comment?: string | string[]
+      startingComment?: string | string[]
       nags?: Iterable<number>
     } = {},
   ): GameNode {
-    let node: ChildNode = this as GameNode as ChildNode
+    let node: GameNode = this
 
     // Add line.
     for (const move of moves) {
@@ -690,11 +699,8 @@ export abstract class GameNode {
     }
 
     // Merge comment and NAGs.
-    if (node.comment.length !== 0) {
-      node.comment += ' ' + comment
-    } else {
-      node.comment = comment
-    }
+    const comments = _standardizeComments(comment)
+    node.comments.push(...comments)
 
     for (const nag of nags) {
       node.nags.add(nag)
@@ -710,7 +716,7 @@ export abstract class GameNode {
    * Complexity is `O(n)`.
    */
   eval(): PovScore | null {
-    const match = this.comment.match(EVAL_REGEX)
+    const match = this.comments.join(' ').match(EVAL_REGEX)
     if (!match) {
       return null
     }
@@ -748,7 +754,7 @@ export abstract class GameNode {
    * Complexity is `O(1)`.
    */
   evalDepth(): number | null {
-    const match = this.comment.match(EVAL_REGEX)
+    const match = this.comments.join(' ').match(EVAL_REGEX)
     return match && match.groups!['depth']
       ? parseInt(utils.normalizePythonDecimalDigits(match.groups!['depth']))
       : null
@@ -770,20 +776,7 @@ export abstract class GameNode {
       }
     }
 
-    let found: number
-    ;[this.comment, found] = utils.subn(
-      EVAL_REGEX,
-      _condenseAffix(evalStr),
-      this.comment,
-      1,
-    )
-
-    if (!found && evalStr) {
-      if (this.comment && !this.comment.endsWith(' ')) {
-        this.comment += ' '
-      }
-      this.comment += evalStr
-    }
+    this._replaceOrAddAnnotation(evalStr, EVAL_REGEX)
   }
 
   /**
@@ -794,7 +787,9 @@ export abstract class GameNode {
    */
   arrows(): Arrow[] {
     const arrows: Arrow[] = []
-    for (const match of this.comment.matchAll(utils.toGlobal(ARROWS_REGEX))) {
+    for (const match of this.comments
+      .join(' ')
+      .matchAll(utils.toGlobal(ARROWS_REGEX))) {
       for (const group of match.groups!['arrows'].split(',')) {
         arrows.push(Arrow.fromPgn(group))
       }
@@ -819,7 +814,15 @@ export abstract class GameNode {
       ;(arrow.tail === arrow.head ? csl : cal).push(arrow.pgn())
     }
 
-    this.comment = utils.sub(ARROWS_REGEX, _condenseAffix(''), this.comment)
+    for (let index = 0; index < this.comments.length; index++) {
+      this.comments[index] = utils.sub(
+        ARROWS_REGEX,
+        _condenseAffix(''),
+        this.comments[index],
+      )
+    }
+
+    this.comments = this.comments.filter(comment => comment !== '')
 
     let prefix = ''
     if (csl.length !== 0) {
@@ -829,15 +832,8 @@ export abstract class GameNode {
       prefix += `[%cal ${cal.join(',')}]`
     }
 
-    if (
-      prefix &&
-      this.comment &&
-      !this.comment.startsWith(' ') &&
-      !this.comment.startsWith('\n')
-    ) {
-      this.comment = prefix + ' ' + this.comment
-    } else {
-      this.comment = prefix + this.comment
+    if (prefix.length !== 0) {
+      this.comments.unshift(prefix)
     }
   }
 
@@ -849,7 +845,7 @@ export abstract class GameNode {
    * move, in seconds.
    */
   clock(): number | null {
-    const match = this.comment.match(CLOCK_REGEX)
+    const match = this.comments.join(' ').match(CLOCK_REGEX)
     if (match === null) {
       return null
     }
@@ -888,24 +884,7 @@ export abstract class GameNode {
       clk = `[%clk ${BigInt(hours)}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
     }
 
-    let found: number
-    ;[this.comment, found] = utils.subn(
-      CLOCK_REGEX,
-      _condenseAffix(clk),
-      this.comment,
-      1,
-    )
-
-    if (!found && clk) {
-      if (
-        this.comment &&
-        !this.comment.endsWith(' ') &&
-        !this.comment.endsWith('\n')
-      ) {
-        this.comment += ' '
-      }
-      this.comment += clk
-    }
+    this._replaceOrAddAnnotation(clk, CLOCK_REGEX)
   }
 
   /**
@@ -916,7 +895,7 @@ export abstract class GameNode {
    * move, in seconds.
    */
   emt(): number | null {
-    const match = this.comment.match(EMT_REGEX)
+    const match = this.comments.join(' ').match(EMT_REGEX)
     if (match === null) {
       return null
     }
@@ -955,23 +934,27 @@ export abstract class GameNode {
       emt = `[%emt ${BigInt(hours)}:${minutes.toString().padStart(2, '0')}:${secondsPart}]`
     }
 
-    let found: number
-    ;[this.comment, found] = utils.subn(
-      EMT_REGEX,
-      _condenseAffix(emt),
-      this.comment,
-      1,
-    )
+    this._replaceOrAddAnnotation(emt, EMT_REGEX)
+  }
 
-    if (!found && emt) {
-      if (
-        this.comment &&
-        !this.comment.endsWith(' ') &&
-        !this.comment.endsWith('\n')
-      ) {
-        this.comment += ' '
+  _replaceOrAddAnnotation(text: string, regex: RegExp): void {
+    let found = 0
+    for (let index = 0; index < this.comments.length; index++) {
+      ;[this.comments[index], found] = utils.subn(
+        regex,
+        _condenseAffix(text),
+        this.comments[index],
+        1,
+      )
+      if (found !== 0) {
+        break
       }
-      this.comment += emt
+    }
+
+    this.comments = this.comments.filter(comment => comment !== '')
+
+    if (found === 0 && text.length !== 0) {
+      this.comments.push(text)
     }
   }
 
@@ -1041,7 +1024,7 @@ export class ChildNode extends GameNode {
    * checks this) can have a starting comment. The root node can not have
    * a starting comment.
    */
-  startingComment: string
+  startingComments: string[]
 
   /**
    * A set of NAGs as integers. NAGs always go behind a move, so the root
@@ -1057,8 +1040,8 @@ export class ChildNode extends GameNode {
       startingComment = '',
       nags = [],
     }: {
-      comment?: string
-      startingComment?: string
+      comment?: string | string[]
+      startingComment?: string | string[]
       nags?: Iterable<number>
     } = {},
   ) {
@@ -1071,7 +1054,7 @@ export class ChildNode extends GameNode {
     for (const nag of nags) {
       this.nags.add(nag)
     }
-    this.startingComment = startingComment
+    this.startingComments = _standardizeComments(startingComment)
   }
 
   board(): Board {
@@ -1139,8 +1122,8 @@ export class ChildNode extends GameNode {
     parentBoard: Board,
     visitor: BaseVisitor<ResultT>,
   ): void {
-    if (this.startingComment) {
-      visitor.visitComment(this.startingComment)
+    if (this.startingComments.length !== 0) {
+      visitor.visitComment(this.startingComments)
     }
 
     visitor.visitMove(parentBoard, this.move)
@@ -1153,8 +1136,8 @@ export class ChildNode extends GameNode {
       visitor.visitNag(nag)
     }
 
-    if (this.comment) {
-      visitor.visitComment(this.comment)
+    if (this.comments.length !== 0) {
+      visitor.visitComment(this.comments)
     }
   }
 
@@ -1317,8 +1300,8 @@ export class Game extends GameNode {
         const board = this.board()
         visitor.visitBoard(board)
 
-        if (this.comment) {
-          visitor.visitComment(this.comment)
+        if (this.comments.length !== 0) {
+          visitor.visitComment(this.comments)
         }
 
         if (this.variations.length !== 0) {
@@ -1706,7 +1689,7 @@ export abstract class BaseVisitor<ResultT> {
   /**
    * Called for each comment.
    */
-  visitComment(comment: string): void {
+  visitComment(comment: string | string[]): void {
     // pass
   }
 
@@ -1766,7 +1749,7 @@ export class GameBuilder extends BaseVisitor<Game> {
   Game_: typeof Game
   game: Game = null!
   variationStack: GameNode[] = null!
-  startingComment: string = null!
+  startingComments: string[] = null!
   inVariation: boolean = null!
 
   constructor()
@@ -1780,7 +1763,7 @@ export class GameBuilder extends BaseVisitor<Game> {
     this.game = new this.Game_()
 
     this.variationStack = [this.game]
-    this.startingComment = ''
+    this.startingComments = []
     this.inVariation = false
   }
 
@@ -1817,8 +1800,8 @@ export class GameBuilder extends BaseVisitor<Game> {
     }
   }
 
-  visitComment(comment: string): void {
-    let newComment: [string, string]
+  visitComment(comment: string | string[]): void {
+    const comments = _standardizeComments(comment)
     if (
       this.inVariation ||
       (this.variationStack.at(-1)!.parent === null &&
@@ -1827,14 +1810,16 @@ export class GameBuilder extends BaseVisitor<Game> {
       // Add as a comment for the current node if in the middle of
       // a variation. Add as a comment for the game if the comment
       // starts before any move.
-      newComment = [this.variationStack.at(-1)!.comment, comment]
-      this.variationStack.at(-1)!.comment = newComment
-        .filter(utils.bool)
-        .join(' ')
+      this.variationStack.at(-1)!.comments.push(...comments)
+      this.variationStack.at(-1)!.comments = this.variationStack
+        .at(-1)!
+        .comments.filter(comment => comment !== '')
     } else {
       // Otherwise, it is a starting comment.
-      newComment = [this.startingComment, comment]
-      this.startingComment = newComment.filter(utils.bool).join(' ')
+      this.startingComments.push(...comments)
+      this.startingComments = this.startingComments.filter(
+        comment => comment !== '',
+      )
     }
   }
 
@@ -1842,8 +1827,8 @@ export class GameBuilder extends BaseVisitor<Game> {
     this.variationStack[this.variationStack.length - 1] = this.variationStack
       .at(-1)!
       .addVariation(move) // TODO this type of indexing doesn't work
-    this.variationStack.at(-1)!.startingComment = this.startingComment
-    this.startingComment = ''
+    this.variationStack.at(-1)!.startingComments = this.startingComments
+    this.startingComments = []
     this.inVariation = true
   }
 
@@ -2095,16 +2080,20 @@ export abstract class StringExporterMixin<
     }
   }
 
-  visitComment(comment: string): void {
+  visitComment(comment: string | string[]): void {
     if (this.comments && (this.variations || this.variationDepth === 0)) {
-      this.writeToken(
-        '{ ' +
-          comment
-            .replaceAll('}', '')
-            .replace(utils.PYTHON_LEADING_WHITESPACE, '')
-            .replace(utils.PYTHON_TRAILING_WHITESPACE, '') +
-          ' } ',
-      )
+      const pgnFormat = (comments: string[]): string => {
+        const edit = comments.map(comment =>
+          comment.replaceAll('{', '').replaceAll('}', ''),
+        )
+        return edit
+          .filter(comment => comment !== '')
+          .map(comment => `{ ${comment} }`)
+          .join(' ')
+      }
+
+      const comments = _standardizeComments(comment)
+      this.writeToken(pgnFormat(comments) + ' ')
       this.forceMovenumber = true
     }
   }
@@ -2735,6 +2724,7 @@ export default {
   EVAL_REGEX,
   ARROWS_REGEX,
   _condenseAffix,
+  _standardizeComments,
   TAG_ROSTER,
   SkipType,
   SKIP,

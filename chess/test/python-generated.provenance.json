@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "08697b298d87e4fa01842bd82af96d71cb972c90",
+  "upstreamCommit": "d4b31904675d83325883b4e24f45f786689f8f8f",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 86,
+  "translatedMethodCount": 87,
   "sourceCommentCount": 59,
-  "semanticNodeCount": 6921,
-  "assertionCount": 471,
+  "semanticNodeCount": 7010,
+  "assertionCount": 473,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -2129,9 +2129,9 @@
           63
         ]
       },
-      "sourceSha256": "17fc34e7d41d65ba49076ae2598a8d7b6a590527e961e8e8472e030f7219395a",
-      "astSha256": "d35d2caf092ae348fa93f71e518641cedef4ac9395688daaabdaf9d9a7922810",
-      "semanticNodeCount": 231,
+      "sourceSha256": "9fbf0be778d616df576e37b0c75fb5b618e84871d888ea83f433da83f4c65433",
+      "astSha256": "ca51c303d168aae9680b042402d118802766f4c862e66bc460ba7c52c8b1d137",
+      "semanticNodeCount": 238,
       "assertionCount": 4,
       "comments": [
         {
@@ -2166,6 +2166,25 @@
       "parityGapCases": []
     },
     {
+      "identity": "PgnTestCase.test_read_game_with_multicomment_move",
+      "sourceSpan": {
+        "start": [
+          2228,
+          4
+        ],
+        "end": [
+          2234,
+          92
+        ]
+      },
+      "sourceSha256": "c79d8d6874fffbcf63495db2a3bb84c232b25a5f10014b6fb44c3ee5017875ce",
+      "astSha256": "6aa24bc16ce00acc241d3a56089b488574e5b9d5a9087def15bd2b3d033b2dc6",
+      "semanticNodeCount": 43,
+      "assertionCount": 2,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
       "identity": "PgnTestCase.test_promote_to_main",
       "sourceSpan": {
         "start": [
@@ -2188,27 +2207,27 @@
       "identity": "PgnTestCase.test_comment_at_eol",
       "sourceSpan": {
         "start": [
-          2228,
+          2236,
           4
         ],
         "end": [
-          2242,
-          58
+          2250,
+          61
         ]
       },
-      "sourceSha256": "0af535eb916f1437cb49009865b5a3607c69b6011b87d59d8358691339db7921",
-      "astSha256": "e24c91e026450777990f16fc6257958ecc998c375586e4f3f4e8fb763bb2a676",
-      "semanticNodeCount": 56,
+      "sourceSha256": "b1795c3d79d3c8bf16685b74dfc7d23a638fb23b75687d130d60a59634d79a9e",
+      "astSha256": "46e08ee7d43a397640f606d40e666717f3fc11fc35c718fc23e211f5a80e1747",
+      "semanticNodeCount": 57,
       "assertionCount": 2,
       "comments": [
         {
           "span": {
             "start": [
-              2235,
+              2243,
               8
             ],
             "end": [
-              2235,
+              2243,
               55
             ]
           },
@@ -2218,11 +2237,11 @@
         {
           "span": {
             "start": [
-              2240,
+              2248,
               8
             ],
             "end": [
-              2240,
+              2248,
               66
             ]
           },
@@ -2236,17 +2255,17 @@
       "identity": "PgnTestCase.test_game_starting_comment",
       "sourceSpan": {
         "start": [
-          2327,
+          2335,
           4
         ],
         "end": [
-          2335,
-          71
+          2343,
+          74
         ]
       },
-      "sourceSha256": "2bf253d6e8c6da48aea541ce64e029a467396b7c9846778b4e4447bebbfc13b7",
-      "astSha256": "fd2e5958f919bca9326533e7c8d5185f7ada353f184048cd7a85c7b4ccf8d023",
-      "semanticNodeCount": 51,
+      "sourceSha256": "e9dddad4bcc96ab34bed3a1fbaf3ed09a063846e70c47c7f3eed5dd19f7150e5",
+      "astSha256": "6c267df6f94362b7ff5844a10d54b59f49b0f0be6eb894f3e834319ca21e1e1a",
+      "semanticNodeCount": 53,
       "assertionCount": 3,
       "comments": [],
       "parityGapCases": []
@@ -2255,17 +2274,17 @@
       "identity": "PgnTestCase.test_game_starting_variation",
       "sourceSpan": {
         "start": [
-          2337,
+          2345,
           4
         ],
         "end": [
-          2353,
-          69
+          2361,
+          72
         ]
       },
-      "sourceSha256": "acb709a06944b13b17ba1e162160069e68610e3162aae02893ccaf23dc4a7fc8",
-      "astSha256": "4aa07c2bddc3d2129ef75c735a9520ae590709f9e125be5e23d3be887f0e960d",
-      "semanticNodeCount": 81,
+      "sourceSha256": "7a1159093cf121b5545d2332637baaeeeeab4dd1779503c7d20bf01079808f78",
+      "astSha256": "5de9f287396e3cf3756ed00fefef7918113c63bb9d939677d8f48dd70c0825e6",
+      "semanticNodeCount": 83,
       "assertionCount": 7,
       "comments": [],
       "parityGapCases": []
@@ -2274,11 +2293,11 @@
       "identity": "PgnTestCase.test_tree_traversal",
       "sourceSpan": {
         "start": [
-          2377,
+          2385,
           4
         ],
         "end": [
-          2406,
+          2414,
           42
         ]
       },
@@ -2293,11 +2312,11 @@
       "identity": "PgnTestCase.test_promote_demote",
       "sourceSpan": {
         "start": [
-          2408,
+          2416,
           4
         ],
         "end": [
-          2433,
+          2441,
           36
         ]
       },
@@ -2312,17 +2331,17 @@
       "identity": "PgnTestCase.test_add_line",
       "sourceSpan": {
         "start": [
-          2689,
+          2697,
           4
         ],
         "end": [
-          2704,
+          2712,
           36
         ]
       },
-      "sourceSha256": "3a9ebb9bf6654fac4604697583241db8187ecb4146eae7201cf1125aa293c457",
-      "astSha256": "672cd4677ffc09db9ef27fe67d04bae6b0b2fd70c69217fdaa476c9bf81786f0",
-      "semanticNodeCount": 103,
+      "sourceSha256": "e08f6d1c215ffdb2ceb6dc8a207c3dfc292f2e0ae175f9fafd5888b3cad5cfd9",
+      "astSha256": "c53791e8bb02e7077d7dde354c6f14058b9e18f6f164567312b3c80fb0310b67",
+      "semanticNodeCount": 105,
       "assertionCount": 7,
       "comments": [],
       "parityGapCases": []
@@ -2331,11 +2350,11 @@
       "identity": "PgnTestCase.test_mainline",
       "sourceSpan": {
         "start": [
-          2706,
+          2714,
           4
         ],
         "end": [
-          2715,
+          2723,
           71
         ]
       },
@@ -2350,17 +2369,17 @@
       "identity": "PgnTestCase.test_annotations",
       "sourceSpan": {
         "start": [
-          2831,
+          2839,
           4
         ],
         "end": [
-          2874,
-          56
+          2882,
+          59
         ]
       },
-      "sourceSha256": "90995bceb0de714f8d0abbef7b8a80ec5f9f76b32f9852bb429e8ced2e51c3ff",
-      "astSha256": "4181f298cec596dfff6c967a0ca37eb6d2c6ffd90fc915fc0374b103f429c7af",
-      "semanticNodeCount": 294,
+      "sourceSha256": "2bd827429707973ecfb78cd2311001a4d212df0684de35bd0ceda699a750cf30",
+      "astSha256": "8047d96c00952838c03a7d628d1b69e306bb1d4662b2538e5a4fa7440326430e",
+      "semanticNodeCount": 320,
       "assertionCount": 22,
       "comments": [],
       "parityGapCases": []
@@ -2369,28 +2388,28 @@
       "identity": "PgnTestCase.test_float_emt",
       "sourceSpan": {
         "start": [
-          2882,
+          2890,
           4
         ],
         "end": [
-          2893,
+          2901,
           39
         ]
       },
-      "sourceSha256": "855bb858c0d65bfc342cb8aeb2f537872cc370e24e75944a4f01a7c611e65911",
-      "astSha256": "223ef77e2bf9759fc9f652ff48784442cae8975f98fbc8da6c0e0392c0f2799c",
-      "semanticNodeCount": 60,
+      "sourceSha256": "f1391129f54e58c8bf742600b2cf746e1709a7b011e2a8eb8a5c876dfdb2bc56",
+      "astSha256": "82ab91d920e521903fb43aa07224565b0879708780fc6e8a811da7e94695b0d2",
+      "semanticNodeCount": 63,
       "assertionCount": 5,
       "comments": [
         {
           "span": {
             "start": [
-              2892,
-              58
+              2900,
+              61
             ],
             "end": [
-              2892,
-              67
+              2900,
+              70
             ]
           },
           "placement": "inline",
@@ -2403,28 +2422,28 @@
       "identity": "PgnTestCase.test_float_clk",
       "sourceSpan": {
         "start": [
-          2895,
+          2903,
           4
         ],
         "end": [
-          2906,
+          2914,
           41
         ]
       },
-      "sourceSha256": "dd4a084c2ba7c3b2dfd59205eeb267f7bdfcd4a481671924ebee65b316c59de3",
-      "astSha256": "56bb6fd26eabbbafd2b2720848576742dfaeb8518e07264b26c2c9f9a2540fcd",
-      "semanticNodeCount": 60,
+      "sourceSha256": "6ebd7e6d9b104d695bc3eae37f66a81dbf61bb3f01a566ce37ceb37fa3927e7f",
+      "astSha256": "8ab796310b7bdac90a3003f722491460a07736b641418a14fc690c52d12aafe7",
+      "semanticNodeCount": 63,
       "assertionCount": 5,
       "comments": [
         {
           "span": {
             "start": [
-              2905,
-              58
+              2913,
+              61
             ],
             "end": [
-              2905,
-              67
+              2913,
+              70
             ]
           },
           "placement": "inline",
@@ -2437,11 +2456,11 @@
       "identity": "PgnTestCase.test_utf8_bom",
       "sourceSpan": {
         "start": [
-          2950,
+          2958,
           4
         ],
         "end": [
-          2960,
+          2968,
           40
         ]
       },
@@ -2456,11 +2475,11 @@
       "identity": "EngineTestCase.test_score_ordering",
       "sourceSpan": {
         "start": [
-          2995,
+          3003,
           4
         ],
         "end": [
-          3023,
+          3031,
           124
         ]
       },
@@ -2475,11 +2494,11 @@
       "identity": "EngineTestCase.test_wdl_model",
       "sourceSpan": {
         "start": [
-          3054,
+          3062,
           4
         ],
         "end": [
-          3060,
+          3068,
           104
         ]
       },
