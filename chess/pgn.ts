@@ -18,10 +18,6 @@ const pythonRegex = (source: string, flags?: string): RegExp =>
     flags,
   )
 
-/** Direct equivalent of Python's ordered `max()`, including NaN behavior. */
-const max = (first: number, second: number): number =>
-  second > first ? second : first
-
 /** Direct equivalent of CPython's float `divmod()`. */
 const floatDivmod = (dividend: number, divisor: number): [number, number] => {
   if (!Number.isFinite(dividend) || !Number.isFinite(divisor)) {
@@ -874,7 +870,7 @@ export abstract class GameNode {
   setClock(seconds: number | null): void {
     let clk = ''
     if (seconds !== null) {
-      seconds = max(0, seconds)
+      seconds = utils.max(0, seconds)
       const [hours, remainingHourSeconds] = floatDivmod(seconds, 3600)
       const [minutes, remainingMinuteSeconds] = floatDivmod(
         remainingHourSeconds,
@@ -941,7 +937,7 @@ export abstract class GameNode {
   setEmt(seconds: number | null): void {
     let emt = ''
     if (seconds !== null) {
-      seconds = max(0, seconds)
+      seconds = utils.max(0, seconds)
       const [hours, remainingHourSeconds] = floatDivmod(seconds, 3600)
       const [minutes, remainingMinuteSeconds] = floatDivmod(
         remainingHourSeconds,

@@ -1,5 +1,11 @@
 import { ValueError } from './errors'
 
+/** Direct equivalents of Python's ordered `min()` and `max()`, including NaN behavior. */
+export const min = (first: number, second: number): number =>
+  second < first ? second : first
+export const max = (first: number, second: number): number =>
+  second > first ? second : first
+
 /** Python 3.12 / Unicode 15.0 whitespace used by `str` and `re`. */
 export const PYTHON_WHITESPACE_SOURCE =
   '[\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]'

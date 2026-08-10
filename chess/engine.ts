@@ -1,4 +1,4 @@
-import { bool as utilsBool } from './utils'
+import { bool as utilsBool, max, min } from './utils'
 import { WHITE, BLACK, Color } from './index'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
@@ -346,12 +346,12 @@ export const _sf161Wins = (cp: number, { ply }: { ply: number }): number => {
   // https://github.com/official-stockfish/Stockfish/blob/sf_16.1/src/uci.cpp#L48
   const NormalizeToPawnValue = 356
   // https://github.com/official-stockfish/Stockfish/blob/sf_16.1/src/uci.cpp#L383-L384
-  const m = Math.min(120, Math.max(8, ply / 2 + 1)) / 32
+  const m = min(120, max(8, ply / 2 + 1)) / 32
   const a =
     ((-1.06249702 * m + 7.42016937) * m + 0.89425629) * m + 348.60356174
   const b =
     ((-5.3312219 * m + 39.57831533) * m + -90.84473771) * m + 123.40620748
-  const x = Math.min(4000, Math.max((cp * NormalizeToPawnValue) / 100, -4000))
+  const x = min(4000, max((cp * NormalizeToPawnValue) / 100, -4000))
   return Math.floor(0.5 + 1000 / (1 + Math.exp((a - x) / b)))
 }
 
