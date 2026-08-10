@@ -1730,8 +1730,8 @@ export class BaseBoard {
     ;[n, bb] = divmod(n, 4)
     ;[n, q] = divmod(n, 6)
 
-    let n1!: number
-    let n2!: number
+    let n1: number = 0
+    let n2: number = 0
     for (n1 of range(0, 4)) {
       n2 = n + Math.floor(((3 - n1) * (4 - n1)) / 2) - 5
       if (n1 < n2 && 1 <= n2 && n2 <= 4) {
@@ -3219,7 +3219,7 @@ export class Board extends BaseBoard {
       ) {
         // Remove pawns captured en passant.
         const down = this.turn === WHITE ? -8 : 8
-        captureSquare = epSquare + down
+        captureSquare = move.toSquare + down
         capturedPieceType = this._removePieceAt(captureSquare)
       }
     }
@@ -4316,8 +4316,8 @@ export class Board extends BaseBoard {
 
     // Filter by original square.
     let fromMask = BB_ALL
-    let fromFile!: RankOrFileIndex | null
-    let fromRank!: RankOrFileIndex | null
+    let fromFile: RankOrFileIndex | null = null
+    let fromRank: RankOrFileIndex | null = null
     if (match[2]) {
       fromFile = FILE_NAMES.indexOf(match[2]) as RankOrFileIndex
       fromMask &= BB_FILES[fromFile]
@@ -4331,11 +4331,11 @@ export class Board extends BaseBoard {
     if (match[1]) {
       const pieceType = PIECE_SYMBOLS.indexOf(match[1].toLowerCase())
       fromMask &= this.piecesMask(pieceType, this.turn)
-    } else if (match[2] && match[3]) {
+    } else if (fromFile !== null && fromRank !== null) {
       // Allow fully specified moves, even if they are not pawn moves,
       // including castling moves.
       const move = this.findMove(
-        square(fromFile as RankOrFileIndex, fromRank as RankOrFileIndex),
+        square(fromFile, fromRank),
         toSquare,
         promotion,
       )
@@ -4350,7 +4350,7 @@ export class Board extends BaseBoard {
       fromMask &= this.pawns
 
       // Do not allow pawn captures if file is not specified.
-      if (!match[2]) {
+      if (fromFile === null) {
         fromMask &= BB_FILES[squareFile(toSquare)]
       }
     }
