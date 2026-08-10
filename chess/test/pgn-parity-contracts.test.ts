@@ -5,6 +5,15 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
+  test('next returns null when a node has no mainline child', () => {
+    const game = new pgn.Game()
+    expect(game.next()).toBeNull()
+
+    const child = game.addVariation(chess.Move.fromUci('e2e4'))
+    expect(game.next()).toBe(child)
+    expect(child.next()).toBeNull()
+  })
+
   test('StringExporter output round-trips the mainline and sidelines', () => {
     const game = new pgn.Game()
     const e4 = game.addVariation(chess.Move.fromUci('e2e4'))

@@ -657,7 +657,7 @@ export abstract class GameNode {
    * Complexity is `O(1)`.
    */
   next(): ChildNode | null {
-    return this.variations ? this.variations[0] : null
+    return this.variations.length !== 0 ? this.variations[0] : null
   }
 
   /**
