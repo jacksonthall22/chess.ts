@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "aa98f31961275818f829168de696eceac2c2f916",
+  "upstreamCommit": "78c765b4dd1741df3a569c3cd96a079d06298823",
   "sourcePath": "python-chess/test.py",
   "translatedMethodCount": 87,
   "sourceCommentCount": 59,
