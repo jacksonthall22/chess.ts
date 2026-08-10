@@ -1,8 +1,22 @@
-# python-chess baseline
+# python-chess synchronization
 
 `chess.ts` is a mechanical TypeScript translation of
 [`python-chess`](https://github.com/niklasf/python-chess). The `python-chess/`
-submodule pins this selected upstream baseline:
+gitlink is the authoritative current upstream pin. Inspect it directly with:
+
+```sh
+git submodule status -- python-chess
+git -C python-chess describe --tags --long --always
+```
+
+Synchronization commits advance that gitlink together with the corresponding
+supported TypeScript source changes and regenerated verification artifacts.
+When an upstream state changes only unsupported modules or Python-only build or
+typing metadata, its commit records that target no-op explicitly.
+
+## Original baseline provenance
+
+The original selected upstream baseline is:
 
 ```text
 cd7f5958289dd08156436a1f84b9ea03cb1f75a1
@@ -81,16 +95,17 @@ Run the complete check from the repository root with:
 npm --prefix chess test
 ```
 
-The current boundary translates 84 of the 282 methods in the frozen upstream
-suite: all Square, Move, Piece, LegalMoveGenerator, BaseBoard, and SquareSet
-tests; 36 Board tests; 12 PGN tests; and 2 engine score tests. The generated
-`chess/test/upstream-todos.test.ts` ledger keeps the other 198 methods visible.
+The selected methods are declared in
+`scripts/python_test_compiler/selection.py`. The generated
+`chess/test/python-generated.provenance.json` records the exact selection,
+source comments, semantic nodes, and assertion calls for the current pin. The
+generated `chess/test/upstream-todos.test.ts` ledger accounts for every method
+outside that selection.
 
-All 84 upstream bodies are emitted into
+Every selected upstream body is emitted into
 `chess/test/python-generated.test.ts` by the deterministic compiler in
-`scripts/python_test_compiler/`. None is maintained as a hand-written
-TypeScript test. The compiler also carries all 57 Python comments and all 465
-upstream assertion calls in those methods into the generated file.
+`scripts/python_test_compiler/`; none is maintained as a hand-written
+TypeScript test.
 
 The other Vitest files are explicitly not translations:
 
@@ -165,10 +180,10 @@ form. For example, moves use UCI, boards use FEN, integers use exact decimal
 strings, and non-integral numbers use their IEEE-754 bits. Unsupported values
 fail generation rather than falling back to object internals or display text.
 
-There are 465 assertion calls in the 84 selected source methods but 5,060
-runtime oracle events because many calls execute repeatedly inside loops. These
-figures describe one test selection at the pinned commit; they are integrity
-counts, not separate tests written by hand.
+The generated provenance records static assertion-call totals, while
+`chess/test/python-assertion-oracle.generated.ts` records runtime event totals.
+The event total can be larger because assertions inside loops execute more than
+once. These are integrity counts, not separate tests written by hand.
 
 The three generated artifacts are
 `chess/test/python-generated.test.ts`,
@@ -181,7 +196,7 @@ The three generated artifacts are
 The compiler is deliberately built from small, composable rules:
 
 1. `source.py` parses the frozen file once into Python's AST, tokenizes it once,
-   validates the exact 84-method selection, and assigns every comment token to
+   validates the declared method selection, and assigns every comment token to
    its method.
 2. `target.py` defines immutable target shapes such as `BIGINT`, `MOVE`,
    `array_of(MOVE)`, nullable values, and finite domain shapes such as
@@ -197,9 +212,9 @@ The compiler is deliberately built from small, composable rules:
    time, lowers its children, and assembles the result. It has no textual or
    coercive fallback. Generation fails unless every semantic AST node and every
    comment token is claimed.
-6. `gaps.py` owns the source-addressed expected-divergence mechanism. Its
-   current manifest is empty: all 84 selected methods execute normally. It
-   contains no replacement TypeScript or copied assertion operands.
+6. `gaps.py` owns the source-addressed expected-divergence mechanism. The
+   manifest is validated against the selected methods and contains no
+   replacement TypeScript or copied assertion operands.
 7. `assertion_oracle.py` produces the golden assertion trace described above:
    it executes every selected method against the frozen Python implementation
    and records its runtime assertions. The TypeScript harness consumes those
@@ -212,8 +227,8 @@ The compiler is deliberately built from small, composable rules:
 Generated tests use native TypeScript operations such as `.length`,
 `Array.from()`, `Set`, bigint operators, and production `.equals()` methods.
 They do not import a Python-semantics runtime or emit `py.*` compatibility
-calls. The assertion oracle compares all 5,060 runtime observations from all
-84 selected methods with the frozen Python run; `excludedMethods` is empty.
+calls. The assertion oracle compares every recorded runtime observation with
+the frozen Python run; its generated artifact records any excluded methods.
 
 Integral oracle values compare by exact mathematical value across TypeScript
 `number`, TypeScript `bigint`, and Python `int`. Non-integral binary64 values
@@ -254,7 +269,7 @@ from a test identity.
 | Python exception family to chess.ts constructor | The target exposes the Python-named error hierarchy. | A registered constructor and explicit message capability. |
 | `SquareSet(number)` to `SquareSet(BigInt(number))` | The target mask representation is bigint. | A proved safe integral-number shape. |
 | Bitboard transform of `SquareSet` to `transform(value.int())` | Python's type is an `int` subclass; TypeScript uses a wrapper. | A registered transform and `SquareSet` operand. |
-| Local legal-move board to concrete `Board` | Python uses a structural protocol; the target constructor is concrete. | A local object with the required zero-argument generator method. This is the sole current marked type escape. |
+| Local legal-move board to concrete `Board` | Python uses a structural protocol; the target constructor is concrete. | A local object with the required zero-argument generator method and an adjacent type-escape marker. |
 | `StringIO.getvalue()` to `StringIO.getValue()` | The equivalent target helper has a different name. | A `StringIO` receiver and exact zero-argument contract. |
 | Non-empty `Game.add_line()` to `ChildNode` | Python guarantees the last added child; the target declaration is broad. | Exact positive sequence length plus a runtime `ChildNode` guard. |
 | Nullable member access | Python fails on `None`; TypeScript exposes `null`. | A nullable proved shape; bind once, check, then expose the required shape. |
@@ -274,15 +289,14 @@ then relying on exhaustive AST/comment claiming, deterministic regeneration,
 target typechecking, the independent Python assertion oracle, and native
 contract tests.
 
-Generated type assertions are inventoried. The sole current escape is the
-adjacent `protocol-adapter: legal-move-generator-board` marker. Generated code
-has no parity-gap casts, missing-capability casts, unmarked assertions, or
-postfix non-null assertions.
+Generated type assertions are inventoried and must carry an adjacent marker;
+the inventory test rejects parity-gap casts, missing-capability casts, unmarked
+assertions, and postfix non-null assertions.
 
-## Resolved parity pass
+## Resolved parity examples
 
-The current empty gap manifest is the result of fixing production root causes
-together with their selected upstream tests:
+Production root causes already covered together with selected upstream tests
+include:
 
 - Piece value equality and Python-compatible representation.
 - Complete EPD fifth-field parsing, Python whitespace splitting for move
@@ -296,7 +310,7 @@ together with their selected upstream tests:
   binary-float rounding, Unicode code-point wrapping, and comment sanitization.
 - Engine Score ordering/equality and WDL value equality.
 
-The TypeScript-native contract files cover cases outside the 84 selected
+The TypeScript-native contract files cover cases not represented by selected
 bodies, including malformed EPD numeric suffixes, multi-whitespace move lists,
 subclass-preserving factories, duplicate PGN variations, Unicode wrapping, and
 round-half-even boundaries.
@@ -318,7 +332,7 @@ live in `test_transpilation_helper.py` and run as part of
 
 ## Frozen upstream verification
 
-The selected upstream commit was run directly under Python 3.14.5:
+The original selected baseline was run directly under Python 3.14.5:
 
 ```text
 Ran 282 tests

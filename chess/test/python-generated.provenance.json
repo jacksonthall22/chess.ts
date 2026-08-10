@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "cd7f5958289dd08156436a1f84b9ea03cb1f75a1",
+  "upstreamCommit": "315052c0105ea1e0d0b4e1cbee70577fd9349f2d",
   "sourcePath": "python-chess/test.py",
   "translatedMethodCount": 84,
   "sourceCommentCount": 57,
-  "semanticNodeCount": 6805,
-  "assertionCount": 465,
+  "semanticNodeCount": 6826,
+  "assertionCount": 466,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -2397,9 +2397,9 @@
           124
         ]
       },
-      "sourceSha256": "cb5973eb635346bff14a03de350a61a8ed5863eefe3f2852aa1daf59f60b963d",
-      "astSha256": "86d0dbe96a0368e64b471c5fcee17e1033c02a8a23cc6c1f95d5a888cc6fa917",
-      "semanticNodeCount": 242,
+      "sourceSha256": "044dbfbf2a2826c11edc93f6ade7fd849592fb9bd6ea35e253c722a4039828e2",
+      "astSha256": "a781c8eabd433afaaa900168cf7a89245d498a9096c0f86a4be701eed71bdca5",
+      "semanticNodeCount": 243,
       "assertionCount": 10,
       "comments": [],
       "parityGapCases": []
@@ -2412,14 +2412,14 @@
           4
         ],
         "end": [
-          3037,
-          102
+          3038,
+          104
         ]
       },
-      "sourceSha256": "505e7c66d7ab48eeac8e99ae2279e242a78b9a5da9a97ea5fd7106aaa1aa97e2",
-      "astSha256": "1c10569f5a03a7a7f5087a78f2bf475d92eb7ab901f43e543957e4c98b5ac2c7",
-      "semanticNodeCount": 102,
-      "assertionCount": 5,
+      "sourceSha256": "dcd8687d98778bb08a9209d37c27f604b643840c5640b96df0d1e5881b969c79",
+      "astSha256": "c95aa49dbdb8d9a18252c9d6088581cabf17fa2ad9dd8e7fe4d46c37f7617b2a",
+      "semanticNodeCount": 122,
+      "assertionCount": 6,
       "comments": [],
       "parityGapCases": []
     }

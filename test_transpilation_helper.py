@@ -282,7 +282,7 @@ class RecursiveLoweringTest(unittest.TestCase):
             "scores = [chess.engine.Cp(0), chess.engine.Mate(1)]\n"
             "for index, score in enumerate(scores):\n"
             "    self.assertEqual(index < 1, score < chess.engine.MateGiven)\n"
-            '    for model in ["sf12", "sf16"]:\n'
+            '    for model in ["sf12", "sf16", "sf16.1"]:\n'
             "        self.assertTrue(score.wdl(model=model).expectation() <= 1)"
         )
 
@@ -2148,8 +2148,8 @@ class WholeSuiteCompilationTest(unittest.TestCase):
     def test_emits_machine_checkable_source_provenance(self) -> None:
         self.assertEqual(self.provenance["translatedMethodCount"], 84)
         self.assertEqual(self.provenance["sourceCommentCount"], 57)
-        self.assertEqual(self.provenance["semanticNodeCount"], 6805)
-        self.assertEqual(self.provenance["assertionCount"], 465)
+        self.assertEqual(self.provenance["semanticNodeCount"], 6826)
+        self.assertEqual(self.provenance["assertionCount"], 466)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]

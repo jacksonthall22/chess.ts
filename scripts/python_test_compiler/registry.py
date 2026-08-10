@@ -676,6 +676,7 @@ BOOLEAN_RULE = exact(BOOLEAN)
 STRING_RULE = exact(STRING, WDL_MODEL, description="string")
 WDL_MODEL_VALUES = (
     "sf",
+    "sf16.1",
     "sf16",
     "sf15.1",
     "sf15",

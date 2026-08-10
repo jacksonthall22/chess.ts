@@ -60,6 +60,15 @@ describe('TypeScript-native parity contracts', () => {
     expect(nanWdl.equals(new engine.Wdl(Number.NaN, 2, 3))).toBe(false)
   })
 
+  test('Stockfish 16.1 clamps NaN with Python operand ordering', () => {
+    expect(
+      new engine.Cp(51).wdl({ model: 'sf16.1', ply: Number.NaN }),
+    ).toEqual(new engine.Wdl(164, 830, 6))
+    expect(new engine.Cp(Number.NaN).wdl({ model: 'sf16.1' })).toEqual(
+      new engine.Wdl(1000, -1000, 1000),
+    )
+  })
+
   test('PGN annotations use Python Unicode decimal digits', () => {
     const node = new pgn.Game()
 
