@@ -162,8 +162,46 @@ export const UNICODE_PIECE_SYMBOLS: { [key: string]: string } = {
   p: '♟',
 }
 
+export type File = RankOrFileIndex
+export const FILE_A: File = 0
+export const FILE_B: File = 1
+export const FILE_C: File = 2
+export const FILE_D: File = 3
+export const FILE_E: File = 4
+export const FILE_F: File = 5
+export const FILE_G: File = 6
+export const FILE_H: File = 7
+export const FILES: File[] = [
+  FILE_A,
+  FILE_B,
+  FILE_C,
+  FILE_D,
+  FILE_E,
+  FILE_F,
+  FILE_G,
+  FILE_H,
+]
 export const FILE_NAMES: string[] = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 
+export type Rank = RankOrFileIndex
+export const RANK_1: Rank = 0
+export const RANK_2: Rank = 1
+export const RANK_3: Rank = 2
+export const RANK_4: Rank = 3
+export const RANK_5: Rank = 4
+export const RANK_6: Rank = 5
+export const RANK_7: Rank = 6
+export const RANK_8: Rank = 7
+export const RANKS: Rank[] = [
+  RANK_1,
+  RANK_2,
+  RANK_3,
+  RANK_4,
+  RANK_5,
+  RANK_6,
+  RANK_7,
+  RANK_8,
+]
 export const RANK_NAMES: string[] = ['1', '2', '3', '4', '5', '6', '7', '8']
 
 /** The FEN for the standard chess starting position. */
@@ -410,24 +448,62 @@ export const squareName = (square: Square): string => {
  * Gets a square number by file and rank index.
  */
 export const square = (
-  fileIndex: RankOrFileIndex,
-  rankIndex: RankOrFileIndex,
+  fileIndex: File,
+  rankIndex: Rank,
 ): Square => {
   return (rankIndex * 8 + fileIndex) as Square
 }
 
 /**
+ * Gets the file index for the given file *name*
+ * (e.g., ``a`` returns ``0``).
+ *
+ * @throws :exc:`ValueError` if the file name is invalid.
+ */
+export const parseFile = (name: string): File => {
+  const file = FILE_NAMES.indexOf(name)
+  if (file === -1) {
+    throw new ValueError('list.index(x): x not in list')
+  }
+  return file as File
+}
+
+/** Gets the name of the file, like ``a``. */
+export const fileName = (file: File): string => {
+  return FILE_NAMES[file]
+}
+
+/**
+ * Gets the rank index for the given rank *name*
+ * (e.g., ``1`` returns ``0``).
+ *
+ * @throws :exc:`ValueError` if the rank name is invalid.
+ */
+export const parseRank = (name: string): File => {
+  const rank = FILE_NAMES.indexOf(name)
+  if (rank === -1) {
+    throw new ValueError('list.index(x): x not in list')
+  }
+  return rank as File
+}
+
+/** Gets the name of the rank, like ``1``. */
+export const rankName = (rank: Rank): string => {
+  return FILE_NAMES[rank]
+}
+
+/**
  * Gets the file index of the square where ``0`` is the a-file.
  */
-export const squareFile = (square: Square): RankOrFileIndex => {
-  return (square & 7) as RankOrFileIndex
+export const squareFile = (square: Square): File => {
+  return (square & 7) as File
 }
 
 /**
  * Gets the rank index of the square where ``0`` is the first rank.
  */
-export const squareRank = (square: Square): RankOrFileIndex => {
-  return (square >> 3) as RankOrFileIndex
+export const squareRank = (square: Square): Rank => {
+  return (square >> 3) as Rank
 }
 
 /**
@@ -559,14 +635,22 @@ export const BB_CENTER: Bitboard = BB_D4 | BB_E4 | BB_D5 | BB_E5
 export const BB_LIGHT_SQUARES: Bitboard = 0x55aa_55aa_55aa_55aan
 export const BB_DARK_SQUARES: Bitboard = 0xaa55_aa55_aa55_aa55n
 
-export const BB_FILE_A: Bitboard = 0x0101_0101_0101_0101n << 0n
-export const BB_FILE_B: Bitboard = 0x0101_0101_0101_0101n << 1n
-export const BB_FILE_C: Bitboard = 0x0101_0101_0101_0101n << 2n
-export const BB_FILE_D: Bitboard = 0x0101_0101_0101_0101n << 3n
-export const BB_FILE_E: Bitboard = 0x0101_0101_0101_0101n << 4n
-export const BB_FILE_F: Bitboard = 0x0101_0101_0101_0101n << 5n
-export const BB_FILE_G: Bitboard = 0x0101_0101_0101_0101n << 6n
-export const BB_FILE_H: Bitboard = 0x0101_0101_0101_0101n << 7n
+export const BB_FILE_A: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_A)
+export const BB_FILE_B: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_B)
+export const BB_FILE_C: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_C)
+export const BB_FILE_D: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_D)
+export const BB_FILE_E: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_E)
+export const BB_FILE_F: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_F)
+export const BB_FILE_G: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_G)
+export const BB_FILE_H: Bitboard =
+  0x0101_0101_0101_0101n << BigInt(FILE_H)
 export const BB_FILES: Bitboard[] = [
   BB_FILE_A,
   BB_FILE_B,
@@ -578,14 +662,14 @@ export const BB_FILES: Bitboard[] = [
   BB_FILE_H,
 ]
 
-export const BB_RANK_1: Bitboard = 0xffn << 0n
-export const BB_RANK_2: Bitboard = 0xffn << 8n
-export const BB_RANK_3: Bitboard = 0xffn << 16n
-export const BB_RANK_4: Bitboard = 0xffn << 24n
-export const BB_RANK_5: Bitboard = 0xffn << 32n
-export const BB_RANK_6: Bitboard = 0xffn << 40n
-export const BB_RANK_7: Bitboard = 0xffn << 48n
-export const BB_RANK_8: Bitboard = 0xffn << 56n
+export const BB_RANK_1: Bitboard = 0xffn << BigInt(8 * RANK_1)
+export const BB_RANK_2: Bitboard = 0xffn << BigInt(8 * RANK_2)
+export const BB_RANK_3: Bitboard = 0xffn << BigInt(8 * RANK_3)
+export const BB_RANK_4: Bitboard = 0xffn << BigInt(8 * RANK_4)
+export const BB_RANK_5: Bitboard = 0xffn << BigInt(8 * RANK_5)
+export const BB_RANK_6: Bitboard = 0xffn << BigInt(8 * RANK_6)
+export const BB_RANK_7: Bitboard = 0xffn << BigInt(8 * RANK_7)
+export const BB_RANK_8: Bitboard = 0xffn << BigInt(8 * RANK_8)
 export const BB_RANKS: Bitboard[] = [
   BB_RANK_1,
   BB_RANK_2,
@@ -2514,7 +2598,7 @@ export class Board extends BaseBoard {
         toMask
 
       for (const toSquare of scanReversed(targets)) {
-        if ([0, 7].includes(squareRank(toSquare))) {
+        if ([RANK_1, RANK_8].includes(squareRank(toSquare))) {
           yield new Move(fromSquare, toSquare, { promotion: QUEEN })
           yield new Move(fromSquare, toSquare, { promotion: ROOK })
           yield new Move(fromSquare, toSquare, { promotion: BISHOP })
@@ -2545,7 +2629,7 @@ export class Board extends BaseBoard {
     for (let toSquare of scanReversed(singleMoves)) {
       let fromSquare = toSquare + (this.turn === BLACK ? 8 : -8)
 
-      if ([0, 7].includes(squareRank(toSquare))) {
+      if ([RANK_1, RANK_8].includes(squareRank(toSquare))) {
         yield new Move(fromSquare, toSquare, { promotion: QUEEN })
         yield new Move(fromSquare, toSquare, { promotion: ROOK })
         yield new Move(fromSquare, toSquare, { promotion: BISHOP })
@@ -2584,7 +2668,7 @@ export class Board extends BaseBoard {
       this.occupiedCo[colorIdx(this.turn)] &
       fromMask &
       BB_PAWN_ATTACKS[colorIdx(!this.turn)][this.epSquare] &
-      BB_RANKS[this.turn ? 4 : 3]
+      BB_RANKS[this.turn ? RANK_5 : RANK_4]
 
     for (const capturer of scanReversed(capturers)) {
       yield new Move(capturer, this.epSquare)
@@ -2693,9 +2777,9 @@ export class Board extends BaseBoard {
         return false
       }
 
-      if (this.turn === WHITE && squareRank(move.toSquare) !== 7) {
+      if (this.turn === WHITE && squareRank(move.toSquare) !== RANK_8) {
         return false
-      } else if (this.turn === BLACK && squareRank(move.toSquare) !== 0) {
+      } else if (this.turn === BLACK && squareRank(move.toSquare) !== RANK_1) {
         return false
       }
     }
@@ -3219,9 +3303,9 @@ export class Board extends BaseBoard {
         this.castlingRights &= ~BB_RANK_8
       }
     } else if (capturedPieceType === KING && !(this.promoted & toBb)) {
-      if (this.turn === WHITE && squareRank(move.toSquare) === 7) {
+      if (this.turn === WHITE && squareRank(move.toSquare) === RANK_8) {
         this.castlingRights &= ~BB_RANK_8
-      } else if (this.turn === BLACK && squareRank(move.toSquare) === 0) {
+      } else if (this.turn === BLACK && squareRank(move.toSquare) === RANK_1) {
         this.castlingRights &= ~BB_RANK_1
       }
     }
@@ -3230,9 +3314,9 @@ export class Board extends BaseBoard {
     if (pieceType === PAWN) {
       const diff = move.toSquare - move.fromSquare
 
-      if (diff === 16 && squareRank(move.fromSquare) === 1) {
+      if (diff === 16 && squareRank(move.fromSquare) === RANK_2) {
         this.epSquare = move.fromSquare + 8
-      } else if (diff === -16 && squareRank(move.fromSquare) === 6) {
+      } else if (diff === -16 && squareRank(move.fromSquare) === RANK_7) {
         this.epSquare = move.fromSquare - 8
       } else if (
         move.toSquare === epSquare &&
@@ -4931,15 +5015,15 @@ export class Board extends BaseBoard {
       return null
     }
 
-    let epRank: RankOrFileIndex
+    let epRank: Rank
     let pawnMask: Bitboard
     let seventhRankMask: Bitboard
     if (this.turn === WHITE) {
-      epRank = 5
+      epRank = RANK_6
       pawnMask = shiftDown(BB_SQUARES[this.epSquare])
       seventhRankMask = shiftUp(BB_SQUARES[this.epSquare])
     } else {
-      epRank = 2
+      epRank = RANK_3
       pawnMask = shiftUp(BB_SQUARES[this.epSquare])
       seventhRankMask = shiftDown(BB_SQUARES[this.epSquare])
     }
@@ -5953,7 +6037,25 @@ export default {
   pieceSymbol,
   pieceName,
   UNICODE_PIECE_SYMBOLS,
+  FILE_A,
+  FILE_B,
+  FILE_C,
+  FILE_D,
+  FILE_E,
+  FILE_F,
+  FILE_G,
+  FILE_H,
+  FILES,
   FILE_NAMES,
+  RANK_1,
+  RANK_2,
+  RANK_3,
+  RANK_4,
+  RANK_5,
+  RANK_6,
+  RANK_7,
+  RANK_8,
+  RANKS,
   RANK_NAMES,
   STARTING_FEN,
   STARTING_BOARD_FEN,
@@ -6052,6 +6154,10 @@ export default {
   parseSquare,
   squareName,
   square,
+  parseFile,
+  fileName,
+  parseRank,
+  rankName,
   squareFile,
   squareRank,
   squareDistance,

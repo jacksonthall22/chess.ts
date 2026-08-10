@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 
 import * as chess from '../index'
 import * as engine from '../engine'
@@ -6,6 +6,34 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('rank and file constants expose the pinned public API', () => {
+    expect(chess.FILES).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+    expect(chess.RANKS).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+
+    for (const [index, name] of chess.FILE_NAMES.entries()) {
+      const file = chess.FILES[index]
+      expect(chess.fileName(file)).toBe(name)
+      expect(chess.parseFile(name)).toBe(file)
+    }
+
+    expectTypeOf(chess.square(chess.FILE_A, chess.RANK_1)).toEqualTypeOf<
+      chess.Square
+    >()
+    expectTypeOf(chess.square).parameter(0).toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.square).parameter(1).toEqualTypeOf<chess.Rank>()
+    expectTypeOf(
+      chess.square(0 as chess.File, 0 as chess.Rank),
+    ).toEqualTypeOf<chess.Square>()
+    expectTypeOf(chess.squareFile).returns.toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.squareRank).returns.toEqualTypeOf<chess.Rank>()
+  })
+
+  test('file parsing rejects JavaScript indexOf sentinels', () => {
+    for (const invalid of ['', 'A', 'aa', '1', 'i']) {
+      expect(() => chess.parseFile(invalid)).toThrow(chess.ValueError)
+    }
+  })
+
   test('mirrored python-chess version is independent of the npm package version', () => {
     expect(chess.__version__).toBe('1.11.2')
   })
