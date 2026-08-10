@@ -6,6 +6,10 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('mirrored python-chess version is independent of the npm package version', () => {
+    expect(chess.__version__).toBe('1.11.1')
+  })
+
   test('lc0-style a1a1 is the null move, but other same-square moves are invalid', () => {
     const move = chess.Move.fromUci('a1a1')
 
