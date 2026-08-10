@@ -32,10 +32,10 @@ TYPESCRIPT_METADATA_EXTRACTOR = (
     REPOSITORY_ROOT / "scripts" / "extract_typescript_test_metadata.mjs"
 )
 
-UPSTREAM_COMMIT = "b3c1f62c82b5fc40b14fa33bc9edd31cef68a944"
+UPSTREAM_COMMIT = "ffa04827e325de5b4d39a67eee3528474b814285"
 
 EXPECTED_GIT_BLOBS = {
-    "chess/__init__.py": "268f91cd596491cabb7621bca4e87e0ed1a1df52",
+    "chess/__init__.py": "28bcad0cde553c561eea222b58949982f340a2b5",
     "chess/engine.py": "b979b278f6e8ef3a1b45eae4513623ab5dd53307",
     "chess/gaviota.py": "281df836b551b1e21b5a94a5ef2783ae2359379f",
     "chess/pgn.py": "f40980d4889ac7436f42711267c16c2af32d1155",
