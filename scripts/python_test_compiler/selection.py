@@ -118,9 +118,11 @@ TRANSLATED_TESTS = (
         "test_game_starting_variation",
         "test_annotation_symbols",
         "test_black_to_move",
+        "test_game_from_board",
         "test_semicolon_comment",
         "test_no_movetext",
         "test_subgame",
+        "test_recursion",
         "test_tree_traversal",
         "test_promote_demote",
         "test_add_line",
@@ -134,7 +136,7 @@ TRANSLATED_TESTS = (
 )
 
 
-if len(TRANSLATED_TESTS) != 101:
+if len(TRANSLATED_TESTS) != 103:
     raise RuntimeError(
-        f"translation selection must contain 101 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 103 methods, got {len(TRANSLATED_TESTS)}"
     )

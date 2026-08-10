@@ -836,6 +836,7 @@ def named_call_contract(name: str | None) -> CallContract | None:
             GAME_BUILDER,
             invocation=InvocationKind.CONSTRUCT,
         ),
+        "chess.pgn.Game.from_board": call_contract(GAME, exact(BOARD)),
         "chess.pgn.StringExporter": call_contract(
             STRING_EXPORTER,
             keywords=EXPORTER_KEYWORDS,
@@ -1220,6 +1221,9 @@ def method_call_contract(
             STRING,
             target_member="getValue" if method == "getvalue" else None,
         )
+
+    if kind is ShapeKind.STRING and method == "endswith":
+        return call_contract(BOOLEAN, STRING_RULE, target_member="endsWith")
 
     if kind is ShapeKind.SET and receiver.element is not None:
         element_rule = exact(receiver.element)

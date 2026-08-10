@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "upstreamCommit": "9c24454dcea4f8a30259d811a2f10b26e911deb4",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 101,
+  "translatedMethodCount": 103,
   "sourceCommentCount": 75,
-  "semanticNodeCount": 8351,
-  "assertionCount": 583,
+  "semanticNodeCount": 8499,
+  "assertionCount": 588,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -2726,6 +2726,25 @@
       "parityGapCases": []
     },
     {
+      "identity": "PgnTestCase.test_game_from_board",
+      "sourceSpan": {
+        "start": [
+          2694,
+          4
+        ],
+        "end": [
+          2707,
+          55
+        ]
+      },
+      "sourceSha256": "ba767c1b817ce6f4013887451b746de03cee237b663d448a5b4146251a616c51",
+      "astSha256": "f0c3ae4a0efb06b16310bc7c1ebcca0de42034ed0761ba08c7d5e23d8db2eed2",
+      "semanticNodeCount": 74,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
       "identity": "PgnTestCase.test_semicolon_comment",
       "sourceSpan": {
         "start": [
@@ -2779,6 +2798,25 @@
       "astSha256": "a545436c4c7db5ae3a74382463bd4536fa184647c255320d368fdc6d5a32a476",
       "semanticNodeCount": 67,
       "assertionCount": 3,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_recursion",
+      "sourceSpan": {
+        "start": [
+          2855,
+          4
+        ],
+        "end": [
+          2863,
+          68
+        ]
+      },
+      "sourceSha256": "22bdf571f4bb301cb79b25544c92cb74da0727473e34bc1bfc87b23e249d6c77",
+      "astSha256": "65dbd2ae4a921fbae90147f67390d8ef8f8a955d648f1f4bb76d6cd47c4b33e8",
+      "semanticNodeCount": 74,
+      "assertionCount": 1,
       "comments": [],
       "parityGapCases": []
     },

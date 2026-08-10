@@ -2555,8 +2555,11 @@ export class Board extends BaseBoard {
   root<T extends typeof Board>(this: InstanceType<T>): InstanceType<T> {
     if (this._stack.length > 0) {
       const board = new (this.constructor as {
-        new (chess960: boolean): InstanceType<T>
-      })(this.chess960)
+        new (
+          fen?: string | null,
+          options?: { chess960?: boolean },
+        ): InstanceType<T>
+      })(null, { chess960: this.chess960 })
       this._stack[0].restore(board)
       return board
     } else {
