@@ -2377,7 +2377,7 @@ export function readGame<ResultT>(
   }
 
   let board: Board
-  let boardStack: Board[]
+  let boardStack: Board[] = []
   if (!skippingGame) {
     // Chess variant.
     const headers =
