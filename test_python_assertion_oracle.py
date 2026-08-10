@@ -77,9 +77,9 @@ class AssertionOracleTest(unittest.TestCase):
         # Frozen-baseline pins: these change only when the selected source or
         # exact parity-gap manifest changes, and expose a tracer that silently
         # stops observing assertions.
-        self.assertEqual(first.traced_method_count, 84)
+        self.assertEqual(first.traced_method_count, 85)
         self.assertEqual(len(first.excluded_methods), 0)
-        self.assertEqual(first.event_count, 5424)
+        self.assertEqual(first.event_count, 5425)
 
     def test_trace_preserves_exact_python_error_families(self):
         compiled = compile_assertion_oracle()

@@ -92,7 +92,8 @@ export const __transpiledVersion__ = '0.0.1'
 export type EnPassantSpec = 'legal' | 'fen' | 'xfen'
 
 export type Color = boolean
-export const [WHITE, BLACK] = [true, false]
+export const WHITE: Color = true
+export const BLACK: Color = false
 export const COLORS: Color[] = [WHITE, BLACK]
 export type ColorName = 'white' | 'black'
 export const COLOR_NAMES: ColorName[] = ['black', 'white']
@@ -105,11 +106,20 @@ export const enum PieceType {
   QUEEN,
   KING,
 }
-export const PIECE_TYPES: PieceType[] = Array.from(
-  { length: 6 },
-  (_, i) => i + 1,
-)
-export const [PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING] = PIECE_TYPES
+export const PAWN: PieceType = PieceType.PAWN
+export const KNIGHT: PieceType = PieceType.KNIGHT
+export const BISHOP: PieceType = PieceType.BISHOP
+export const ROOK: PieceType = PieceType.ROOK
+export const QUEEN: PieceType = PieceType.QUEEN
+export const KING: PieceType = PieceType.KING
+export const PIECE_TYPES: PieceType[] = [
+  PAWN,
+  KNIGHT,
+  BISHOP,
+  ROOK,
+  QUEEN,
+  KING,
+]
 export const PIECE_SYMBOLS: (string | null)[] = [
   null,
   'p',
@@ -297,9 +307,72 @@ export const enum Square { // Instead of `Square = number`
   A7, B7, C7, D7, E7, F7, G7, H7,
   A8, B8, C8, D8, E8, F8, G8, H8,
 }
-export const SQUARES = Array.from(range(64)) as Square[]
+export const A1: Square = Square.A1
+export const B1: Square = Square.B1
+export const C1: Square = Square.C1
+export const D1: Square = Square.D1
+export const E1: Square = Square.E1
+export const F1: Square = Square.F1
+export const G1: Square = Square.G1
+export const H1: Square = Square.H1
+export const A2: Square = Square.A2
+export const B2: Square = Square.B2
+export const C2: Square = Square.C2
+export const D2: Square = Square.D2
+export const E2: Square = Square.E2
+export const F2: Square = Square.F2
+export const G2: Square = Square.G2
+export const H2: Square = Square.H2
+export const A3: Square = Square.A3
+export const B3: Square = Square.B3
+export const C3: Square = Square.C3
+export const D3: Square = Square.D3
+export const E3: Square = Square.E3
+export const F3: Square = Square.F3
+export const G3: Square = Square.G3
+export const H3: Square = Square.H3
+export const A4: Square = Square.A4
+export const B4: Square = Square.B4
+export const C4: Square = Square.C4
+export const D4: Square = Square.D4
+export const E4: Square = Square.E4
+export const F4: Square = Square.F4
+export const G4: Square = Square.G4
+export const H4: Square = Square.H4
+export const A5: Square = Square.A5
+export const B5: Square = Square.B5
+export const C5: Square = Square.C5
+export const D5: Square = Square.D5
+export const E5: Square = Square.E5
+export const F5: Square = Square.F5
+export const G5: Square = Square.G5
+export const H5: Square = Square.H5
+export const A6: Square = Square.A6
+export const B6: Square = Square.B6
+export const C6: Square = Square.C6
+export const D6: Square = Square.D6
+export const E6: Square = Square.E6
+export const F6: Square = Square.F6
+export const G6: Square = Square.G6
+export const H6: Square = Square.H6
+export const A7: Square = Square.A7
+export const B7: Square = Square.B7
+export const C7: Square = Square.C7
+export const D7: Square = Square.D7
+export const E7: Square = Square.E7
+export const F7: Square = Square.F7
+export const G7: Square = Square.G7
+export const H7: Square = Square.H7
+export const A8: Square = Square.A8
+export const B8: Square = Square.B8
+export const C8: Square = Square.C8
+export const D8: Square = Square.D8
+export const E8: Square = Square.E8
+export const F8: Square = Square.F8
+export const G8: Square = Square.G8
+export const H8: Square = Square.H8
 // prettier-ignore
-export const [
+export const SQUARES: Square[] = [
   A1, B1, C1, D1, E1, F1, G1, H1,
   A2, B2, C2, D2, E2, F2, G2, H2,
   A3, B3, C3, D3, E3, F3, G3, H3,
@@ -308,7 +381,7 @@ export const [
   A6, B6, C6, D6, E6, F6, G6, H6,
   A7, B7, C7, D7, E7, F7, G7, H7,
   A8, B8, C8, D8, E8, F8, G8, H8,
-] = SQUARES;
+]
 
 export const SQUARE_NAMES = RANK_NAMES.flatMap(r => FILE_NAMES.map(f => f + r))
 
@@ -406,35 +479,95 @@ export const squareMirror = (square: Square): Square => {
   return square ^ (0x38 as Square)
 }
 
-export const SQUARES_180 = SQUARES.map(squareMirror)
+export const SQUARES_180: Square[] = SQUARES.map(squareMirror)
 
 export type Bitboard = bigint
-export const BB_EMPTY = 0n
-export const BB_ALL = 0xffff_ffff_ffff_ffffn
+export const BB_EMPTY: Bitboard = 0n
+export const BB_ALL: Bitboard = 0xffff_ffff_ffff_ffffn
 
-export const BB_SQUARES = SQUARES.map(s => 1n << BigInt(s))
-// prettier-ignore
-export const [
-  BB_A1, BB_B1, BB_C1, BB_D1, BB_E1, BB_F1, BB_G1, BB_H1,
-  BB_A2, BB_B2, BB_C2, BB_D2, BB_E2, BB_F2, BB_G2, BB_H2,
-  BB_A3, BB_B3, BB_C3, BB_D3, BB_E3, BB_F3, BB_G3, BB_H3,
-  BB_A4, BB_B4, BB_C4, BB_D4, BB_E4, BB_F4, BB_G4, BB_H4,
-  BB_A5, BB_B5, BB_C5, BB_D5, BB_E5, BB_F5, BB_G5, BB_H5,
-  BB_A6, BB_B6, BB_C6, BB_D6, BB_E6, BB_F6, BB_G6, BB_H6,
-  BB_A7, BB_B7, BB_C7, BB_D7, BB_E7, BB_F7, BB_G7, BB_H7,
-  BB_A8, BB_B8, BB_C8, BB_D8, BB_E8, BB_F8, BB_G8, BB_H8,
-] = BB_SQUARES;
-
-export const BB_CORNERS = BB_A1 | BB_H1 | BB_A8 | BB_H8
-export const BB_CENTER = BB_D4 | BB_E4 | BB_D5 | BB_E5
-
-export const BB_LIGHT_SQUARES = 0x55aa_55aa_55aa_55aan
-export const BB_DARK_SQUARES = 0xaa55_aa55_aa55_aa55n
-
-export const BB_FILES = Array.from(range(8)).map(
-  i => 0x0101_0101_0101_0101n << BigInt(i),
+export const BB_A1: Bitboard = 1n << BigInt(A1)
+export const BB_B1: Bitboard = 1n << BigInt(B1)
+export const BB_C1: Bitboard = 1n << BigInt(C1)
+export const BB_D1: Bitboard = 1n << BigInt(D1)
+export const BB_E1: Bitboard = 1n << BigInt(E1)
+export const BB_F1: Bitboard = 1n << BigInt(F1)
+export const BB_G1: Bitboard = 1n << BigInt(G1)
+export const BB_H1: Bitboard = 1n << BigInt(H1)
+export const BB_A2: Bitboard = 1n << BigInt(A2)
+export const BB_B2: Bitboard = 1n << BigInt(B2)
+export const BB_C2: Bitboard = 1n << BigInt(C2)
+export const BB_D2: Bitboard = 1n << BigInt(D2)
+export const BB_E2: Bitboard = 1n << BigInt(E2)
+export const BB_F2: Bitboard = 1n << BigInt(F2)
+export const BB_G2: Bitboard = 1n << BigInt(G2)
+export const BB_H2: Bitboard = 1n << BigInt(H2)
+export const BB_A3: Bitboard = 1n << BigInt(A3)
+export const BB_B3: Bitboard = 1n << BigInt(B3)
+export const BB_C3: Bitboard = 1n << BigInt(C3)
+export const BB_D3: Bitboard = 1n << BigInt(D3)
+export const BB_E3: Bitboard = 1n << BigInt(E3)
+export const BB_F3: Bitboard = 1n << BigInt(F3)
+export const BB_G3: Bitboard = 1n << BigInt(G3)
+export const BB_H3: Bitboard = 1n << BigInt(H3)
+export const BB_A4: Bitboard = 1n << BigInt(A4)
+export const BB_B4: Bitboard = 1n << BigInt(B4)
+export const BB_C4: Bitboard = 1n << BigInt(C4)
+export const BB_D4: Bitboard = 1n << BigInt(D4)
+export const BB_E4: Bitboard = 1n << BigInt(E4)
+export const BB_F4: Bitboard = 1n << BigInt(F4)
+export const BB_G4: Bitboard = 1n << BigInt(G4)
+export const BB_H4: Bitboard = 1n << BigInt(H4)
+export const BB_A5: Bitboard = 1n << BigInt(A5)
+export const BB_B5: Bitboard = 1n << BigInt(B5)
+export const BB_C5: Bitboard = 1n << BigInt(C5)
+export const BB_D5: Bitboard = 1n << BigInt(D5)
+export const BB_E5: Bitboard = 1n << BigInt(E5)
+export const BB_F5: Bitboard = 1n << BigInt(F5)
+export const BB_G5: Bitboard = 1n << BigInt(G5)
+export const BB_H5: Bitboard = 1n << BigInt(H5)
+export const BB_A6: Bitboard = 1n << BigInt(A6)
+export const BB_B6: Bitboard = 1n << BigInt(B6)
+export const BB_C6: Bitboard = 1n << BigInt(C6)
+export const BB_D6: Bitboard = 1n << BigInt(D6)
+export const BB_E6: Bitboard = 1n << BigInt(E6)
+export const BB_F6: Bitboard = 1n << BigInt(F6)
+export const BB_G6: Bitboard = 1n << BigInt(G6)
+export const BB_H6: Bitboard = 1n << BigInt(H6)
+export const BB_A7: Bitboard = 1n << BigInt(A7)
+export const BB_B7: Bitboard = 1n << BigInt(B7)
+export const BB_C7: Bitboard = 1n << BigInt(C7)
+export const BB_D7: Bitboard = 1n << BigInt(D7)
+export const BB_E7: Bitboard = 1n << BigInt(E7)
+export const BB_F7: Bitboard = 1n << BigInt(F7)
+export const BB_G7: Bitboard = 1n << BigInt(G7)
+export const BB_H7: Bitboard = 1n << BigInt(H7)
+export const BB_A8: Bitboard = 1n << BigInt(A8)
+export const BB_B8: Bitboard = 1n << BigInt(B8)
+export const BB_C8: Bitboard = 1n << BigInt(C8)
+export const BB_D8: Bitboard = 1n << BigInt(D8)
+export const BB_E8: Bitboard = 1n << BigInt(E8)
+export const BB_F8: Bitboard = 1n << BigInt(F8)
+export const BB_G8: Bitboard = 1n << BigInt(G8)
+export const BB_H8: Bitboard = 1n << BigInt(H8)
+export const BB_SQUARES: Bitboard[] = SQUARES.map(
+  square => 1n << BigInt(square),
 )
-export const [
+
+export const BB_CORNERS: Bitboard = BB_A1 | BB_H1 | BB_A8 | BB_H8
+export const BB_CENTER: Bitboard = BB_D4 | BB_E4 | BB_D5 | BB_E5
+
+export const BB_LIGHT_SQUARES: Bitboard = 0x55aa_55aa_55aa_55aan
+export const BB_DARK_SQUARES: Bitboard = 0xaa55_aa55_aa55_aa55n
+
+export const BB_FILE_A: Bitboard = 0x0101_0101_0101_0101n << 0n
+export const BB_FILE_B: Bitboard = 0x0101_0101_0101_0101n << 1n
+export const BB_FILE_C: Bitboard = 0x0101_0101_0101_0101n << 2n
+export const BB_FILE_D: Bitboard = 0x0101_0101_0101_0101n << 3n
+export const BB_FILE_E: Bitboard = 0x0101_0101_0101_0101n << 4n
+export const BB_FILE_F: Bitboard = 0x0101_0101_0101_0101n << 5n
+export const BB_FILE_G: Bitboard = 0x0101_0101_0101_0101n << 6n
+export const BB_FILE_H: Bitboard = 0x0101_0101_0101_0101n << 7n
+export const BB_FILES: Bitboard[] = [
   BB_FILE_A,
   BB_FILE_B,
   BB_FILE_C,
@@ -443,10 +576,17 @@ export const [
   BB_FILE_F,
   BB_FILE_G,
   BB_FILE_H,
-] = BB_FILES
+]
 
-export const BB_RANKS = Array.from(range(8)).map(i => 0xffn << BigInt(8 * i))
-export const [
+export const BB_RANK_1: Bitboard = 0xffn << 0n
+export const BB_RANK_2: Bitboard = 0xffn << 8n
+export const BB_RANK_3: Bitboard = 0xffn << 16n
+export const BB_RANK_4: Bitboard = 0xffn << 24n
+export const BB_RANK_5: Bitboard = 0xffn << 32n
+export const BB_RANK_6: Bitboard = 0xffn << 40n
+export const BB_RANK_7: Bitboard = 0xffn << 48n
+export const BB_RANK_8: Bitboard = 0xffn << 56n
+export const BB_RANKS: Bitboard[] = [
   BB_RANK_1,
   BB_RANK_2,
   BB_RANK_3,
@@ -455,9 +595,9 @@ export const [
   BB_RANK_6,
   BB_RANK_7,
   BB_RANK_8,
-] = BB_RANKS
+]
 
-export const BB_BACKRANKS = BB_RANK_1 | BB_RANK_8
+export const BB_BACKRANKS: Bitboard = BB_RANK_1 | BB_RANK_8
 
 export const lsb = (bb: Bitboard): Square => {
   return bitLength(bb & -bb) - 1
@@ -612,13 +752,13 @@ export const _stepAttacks = (square: Square, deltas: number[]): Bitboard => {
   return _slidingAttacks(square, BB_ALL, deltas)
 }
 
-export const BB_KNIGHT_ATTACKS = SQUARES.map(sq =>
+export const BB_KNIGHT_ATTACKS: Bitboard[] = SQUARES.map(sq =>
   _stepAttacks(sq, [17, 15, 10, 6, -17, -15, -10, -6]),
 )
-export const BB_KING_ATTACKS = SQUARES.map(sq =>
+export const BB_KING_ATTACKS: Bitboard[] = SQUARES.map(sq =>
   _stepAttacks(sq, [9, 8, 7, 1, -9, -8, -7, -1]),
 )
-export const BB_PAWN_ATTACKS = [
+export const BB_PAWN_ATTACKS: Bitboard[][] = [
   [-7, -9],
   [7, 9],
 ].map(deltas => SQUARES.map(sq => _stepAttacks(sq, deltas)))
@@ -3538,16 +3678,7 @@ export class Board extends BaseBoard {
     let firstOp = true
 
     operations.forEach((operand, opcode) => {
-      if (opcode === '-') {
-        throw new Error('dash (-) is not a valid epd opcode')
-      }
-      ;[' ', '\n', '\t', '\r'].forEach(blacklisted => {
-        if (opcode.includes(blacklisted)) {
-          throw new Error(
-            `invalid character ${blacklisted} in epd opcode: ${opcode}`,
-          )
-        }
-      })
+      this._validateEpdOpcode(opcode)
 
       if (!firstOp) {
         epd.push(' ')
@@ -3673,6 +3804,27 @@ export class Board extends BaseBoard {
     return epd.join(' ')
   }
 
+  _validateEpdOpcode(opcode: string): void {
+    if (!opcode) {
+      throw new ValueError('empty string is not a valid epd opcode')
+    }
+    if (opcode === '-') {
+      throw new ValueError('dash (-) is not a valid epd opcode')
+    }
+    if (!/^\p{L}$/u.test(Array.from(opcode)[0]!)) {
+      throw new ValueError(
+        `expected epd opcode to start with a letter, got: ${opcode}`,
+      )
+    }
+    for (const blacklisted of [' ', '\n', '\t', '\r']) {
+      if (opcode.includes(blacklisted)) {
+        throw new ValueError(
+          `invalid character ${blacklisted} in epd opcode: ${opcode}`,
+        )
+      }
+    }
+  }
+
   _parseEpdOps<T extends Board>(
     operationPart: string,
     makeBoard: () => T,
@@ -3692,6 +3844,7 @@ export class Board extends BaseBoard {
             if (opcode === '-') {
               opcode = ''
             } else if (opcode) {
+              this._validateEpdOpcode(opcode)
               state = 'after_opcode'
             }
           } else if (ch === null || ch === ';') {
