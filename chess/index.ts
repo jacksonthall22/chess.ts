@@ -84,7 +84,7 @@ class EpdOperations<T> extends Map<string, T> {
 
 export const __author__ = 'Niklas Fiekas'
 export const __email__ = 'niklas.fiekas@backscattering.de'
-export const __version__ = '1.10.0'
+export const __version__ = '1.11.0'
 
 export const __transpilerAuthor__ = 'Jackson Thurner Hall'
 export const __transpiledVersion__ = '0.0.1'
