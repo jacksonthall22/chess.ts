@@ -1,4 +1,4 @@
-"""The deliberate 84-method translation boundary through PR #11."""
+"""The deliberate generated-test translation boundary."""
 
 from __future__ import annotations
 
@@ -71,6 +71,7 @@ TRANSLATED_TESTS = (
         "test_move_stack_usage",
         "test_is_legal_move",
         "test_move_count",
+        "test_set_fen_as_epd",
     ),
     *_tests(
         "LegalMoveGeneratorTestCase",
@@ -117,7 +118,7 @@ TRANSLATED_TESTS = (
 )
 
 
-if len(TRANSLATED_TESTS) != 84:
+if len(TRANSLATED_TESTS) != 85:
     raise RuntimeError(
-        f"translation selection must contain 84 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 85 methods, got {len(TRANSLATED_TESTS)}"
     )

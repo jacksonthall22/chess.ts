@@ -212,8 +212,8 @@ class SourceBoundaryTest(unittest.TestCase):
     def test_parses_exact_selection_once_and_preserves_every_comment(self) -> None:
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
-        self.assertEqual(len(unit.methods), 84)
-        self.assertEqual(len(unit.comments), 57)
+        self.assertEqual(len(unit.methods), 85)
+        self.assertEqual(len(unit.comments), 58)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
 
@@ -1032,6 +1032,16 @@ self.assertEqual(shadow, "outside")"""
         )
         self.assertIn('let callbackOnly = "outside"', generated)
         self.assertIn("this.assertEqualUsing(callbackOnly", generated)
+
+    def test_compiles_board_set_epd_with_its_exact_error_contract(self) -> None:
+        generated = compile_fixture(
+            "board = chess.Board()\n"
+            "with self.assertRaises(ValueError):\n"
+            "    board.set_epd(board.fen())"
+        )
+
+        self.assertIn("this.assertRaises(chess.ValueError, () => {", generated)
+        self.assertIn("board.setEpd(board.fen())", generated)
 
     def test_shape_changing_reassignment_updates_following_contracts(self) -> None:
         with self.assertRaisesRegex(
@@ -2137,7 +2147,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         # compile_suite() fails if any selected semantic AST node or COMMENT token
         # is unclaimed by a lowering rule.
         self.assertEqual(self.first, self.second)
-        self.assertEqual(len(TRANSLATED_TESTS), 84)
+        self.assertEqual(len(TRANSLATED_TESTS), 85)
         for identity in TRANSLATED_TESTS:
             self.assertIn(py_identifier_to_ts(identity.method_name), self.first.typescript)
 
@@ -2146,15 +2156,15 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         self.assertNotIn("python-semantics", self.first.typescript)
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
-        self.assertEqual(self.provenance["translatedMethodCount"], 84)
-        self.assertEqual(self.provenance["sourceCommentCount"], 57)
-        self.assertEqual(self.provenance["semanticNodeCount"], 6826)
-        self.assertEqual(self.provenance["assertionCount"], 466)
+        self.assertEqual(self.provenance["translatedMethodCount"], 85)
+        self.assertEqual(self.provenance["sourceCommentCount"], 58)
+        self.assertEqual(self.provenance["semanticNodeCount"], 6844)
+        self.assertEqual(self.provenance["assertionCount"], 467)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
-        self.assertEqual(len(methods), 84)
-        self.assertEqual(len({method["identity"] for method in methods}), 84)
+        self.assertEqual(len(methods), 85)
+        self.assertEqual(len({method["identity"] for method in methods}), 85)
         for method in methods:
             self.assertRegex(method["sourceSha256"], r"^[0-9a-f]{64}$")
             self.assertRegex(method["astSha256"], r"^[0-9a-f]{64}$")
@@ -2205,7 +2215,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
 
     def test_preserves_finite_python_error_families(self) -> None:
         generated = self.first.typescript
-        self.assertEqual(generated.count("this.assertRaises(chess.ValueError"), 2)
+        self.assertEqual(generated.count("this.assertRaises(chess.ValueError"), 3)
         self.assertEqual(generated.count("this.assertRaises(chess.KeyError"), 2)
         self.assertNotIn("assertRaisesPython", generated)
 

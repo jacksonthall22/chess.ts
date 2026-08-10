@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "6af0ff4c8947486e3e3fa8e83ca88815301aaa37",
+  "upstreamCommit": "716a0b9459480b852b5169a0f1b0b3dbecd3be31",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 84,
-  "sourceCommentCount": 57,
-  "semanticNodeCount": 6826,
-  "assertionCount": 466,
+  "translatedMethodCount": 85,
+  "sourceCommentCount": 58,
+  "semanticNodeCount": 6844,
+  "assertionCount": 467,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -1660,14 +1660,48 @@
       "parityGapCases": []
     },
     {
-      "identity": "LegalMoveGeneratorTestCase.test_list_conversion",
+      "identity": "BoardTestCase.test_set_fen_as_epd",
       "sourceSpan": {
         "start": [
-          1716,
+          1146,
           4
         ],
         "end": [
-          1717,
+          1149,
+          76
+        ]
+      },
+      "sourceSha256": "031d6a2b69db26927baa9b68d4803df76cdf22986fa288e451c59dad659f79d8",
+      "astSha256": "8f6eb4389700e5ed98016f20f2af28009e5f86218fecfa2426d1eb24f08af981",
+      "semanticNodeCount": 18,
+      "assertionCount": 1,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              1149,
+              40
+            ],
+            "end": [
+              1149,
+              76
+            ]
+          },
+          "placement": "inline",
+          "text": "# Move numbers are not valid opcodes"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "LegalMoveGeneratorTestCase.test_list_conversion",
+      "sourceSpan": {
+        "start": [
+          1721,
+          4
+        ],
+        "end": [
+          1722,
           66
         ]
       },
@@ -1682,11 +1716,11 @@
       "identity": "LegalMoveGeneratorTestCase.test_nonzero",
       "sourceSpan": {
         "start": [
-          1719,
+          1724,
           4
         ],
         "end": [
-          1725,
+          1730,
           58
         ]
       },
@@ -1701,11 +1735,11 @@
       "identity": "LegalMoveGeneratorTestCase.test_string_conversion",
       "sourceSpan": {
         "start": [
-          1727,
+          1732,
           4
         ],
         "end": [
-          1736,
+          1741,
           61
         ]
       },
@@ -1720,11 +1754,11 @@
       "identity": "LegalMoveGeneratorTestCase.test_traverse_once",
       "sourceSpan": {
         "start": [
-          1738,
+          1743,
           4
         ],
         "end": [
-          1751,
+          1756,
           45
         ]
       },
@@ -1739,11 +1773,11 @@
       "identity": "BaseBoardTestCase.test_set_piece_map",
       "sourceSpan": {
         "start": [
-          1756,
+          1761,
           4
         ],
         "end": [
-          1762,
+          1767,
           33
         ]
       },
@@ -1758,11 +1792,11 @@
       "identity": "SquareSetTestCase.test_equality",
       "sourceSpan": {
         "start": [
-          1767,
+          1772,
           4
         ],
         "end": [
-          1787,
+          1792,
           66
         ]
       },
@@ -1777,11 +1811,11 @@
       "identity": "SquareSetTestCase.test_string_conversion",
       "sourceSpan": {
         "start": [
-          1789,
+          1794,
           4
         ],
         "end": [
-          1801,
+          1806,
           43
         ]
       },
@@ -1796,11 +1830,11 @@
       "identity": "SquareSetTestCase.test_iter",
       "sourceSpan": {
         "start": [
-          1803,
+          1808,
           4
         ],
         "end": [
-          1805,
+          1810,
           56
         ]
       },
@@ -1815,11 +1849,11 @@
       "identity": "SquareSetTestCase.test_reversed",
       "sourceSpan": {
         "start": [
-          1807,
+          1812,
           4
         ],
         "end": [
-          1809,
+          1814,
           86
         ]
       },
@@ -1834,11 +1868,11 @@
       "identity": "SquareSetTestCase.test_arithmetic",
       "sourceSpan": {
         "start": [
-          1811,
+          1816,
           4
         ],
         "end": [
-          1831,
+          1836,
           41
         ]
       },
@@ -1853,11 +1887,11 @@
       "identity": "SquareSetTestCase.test_immutable_set_operations",
       "sourceSpan": {
         "start": [
-          1833,
+          1838,
           4
         ],
         "end": [
-          1857,
+          1862,
           101
         ]
       },
@@ -1872,11 +1906,11 @@
       "identity": "SquareSetTestCase.test_mutable_set_operations",
       "sourceSpan": {
         "start": [
-          1859,
+          1864,
           4
         ],
         "end": [
-          1895,
+          1900,
           49
         ]
       },
@@ -1891,11 +1925,11 @@
       "identity": "SquareSetTestCase.test_from_square",
       "sourceSpan": {
         "start": [
-          1897,
+          1902,
           4
         ],
         "end": [
-          1899,
+          1904,
           76
         ]
       },
@@ -1910,11 +1944,11 @@
       "identity": "SquareSetTestCase.test_carry_rippler",
       "sourceSpan": {
         "start": [
-          1901,
+          1906,
           4
         ],
         "end": [
-          1903,
+          1908,
           98
         ]
       },
@@ -1929,11 +1963,11 @@
       "identity": "SquareSetTestCase.test_mirror",
       "sourceSpan": {
         "start": [
-          1905,
+          1910,
           4
         ],
         "end": [
-          1907,
+          1912,
           96
         ]
       },
@@ -1948,11 +1982,11 @@
       "identity": "SquareSetTestCase.test_flip",
       "sourceSpan": {
         "start": [
-          1909,
+          1914,
           4
         ],
         "end": [
-          1919,
+          1924,
           76
         ]
       },
@@ -1964,11 +1998,11 @@
         {
           "span": {
             "start": [
-              1915,
+              1920,
               52
             ],
             "end": [
-              1915,
+              1920,
               62
             ]
           },
@@ -1982,11 +2016,11 @@
       "identity": "SquareSetTestCase.test_len_of_complenent",
       "sourceSpan": {
         "start": [
-          1921,
+          1926,
           4
         ],
         "end": [
-          1926,
+          1931,
           42
         ]
       },
@@ -2001,11 +2035,11 @@
       "identity": "SquareSetTestCase.test_int_conversion",
       "sourceSpan": {
         "start": [
-          1928,
+          1933,
           4
         ],
         "end": [
-          1931,
+          1936,
           106
         ]
       },
@@ -2020,11 +2054,11 @@
       "identity": "SquareSetTestCase.test_tolist",
       "sourceSpan": {
         "start": [
-          1933,
+          1938,
           4
         ],
         "end": [
-          1934,
+          1939,
           90
         ]
       },
@@ -2039,11 +2073,11 @@
       "identity": "SquareSetTestCase.test_flip_ducktyping",
       "sourceSpan": {
         "start": [
-          1936,
+          1941,
           4
         ],
         "end": [
-          1941,
+          1946,
           61
         ]
       },
@@ -2055,11 +2089,11 @@
         {
           "span": {
             "start": [
-              1941,
+              1946,
               48
             ],
             "end": [
-              1941,
+              1946,
               61
             ]
           },
@@ -2073,11 +2107,11 @@
       "identity": "PgnTestCase.test_exporter",
       "sourceSpan": {
         "start": [
-          2079,
+          2084,
           4
         ],
         "end": [
-          2135,
+          2140,
           63
         ]
       },
@@ -2089,11 +2123,11 @@
         {
           "span": {
             "start": [
-              2105,
+              2110,
               8
             ],
             "end": [
-              2105,
+              2110,
               52
             ]
           },
@@ -2103,11 +2137,11 @@
         {
           "span": {
             "start": [
-              2131,
+              2136,
               8
             ],
             "end": [
-              2131,
+              2136,
               29
             ]
           },
@@ -2121,11 +2155,11 @@
       "identity": "PgnTestCase.test_promote_to_main",
       "sourceSpan": {
         "start": [
-          2180,
+          2185,
           4
         ],
         "end": [
-          2190,
+          2195,
           89
         ]
       },
@@ -2140,11 +2174,11 @@
       "identity": "PgnTestCase.test_comment_at_eol",
       "sourceSpan": {
         "start": [
-          2218,
+          2223,
           4
         ],
         "end": [
-          2232,
+          2237,
           58
         ]
       },
@@ -2156,11 +2190,11 @@
         {
           "span": {
             "start": [
-              2225,
+              2230,
               8
             ],
             "end": [
-              2225,
+              2230,
               55
             ]
           },
@@ -2170,11 +2204,11 @@
         {
           "span": {
             "start": [
-              2230,
+              2235,
               8
             ],
             "end": [
-              2230,
+              2235,
               66
             ]
           },
@@ -2188,11 +2222,11 @@
       "identity": "PgnTestCase.test_game_starting_comment",
       "sourceSpan": {
         "start": [
-          2317,
+          2322,
           4
         ],
         "end": [
-          2325,
+          2330,
           71
         ]
       },
@@ -2207,11 +2241,11 @@
       "identity": "PgnTestCase.test_game_starting_variation",
       "sourceSpan": {
         "start": [
-          2327,
+          2332,
           4
         ],
         "end": [
-          2343,
+          2348,
           69
         ]
       },
@@ -2226,11 +2260,11 @@
       "identity": "PgnTestCase.test_tree_traversal",
       "sourceSpan": {
         "start": [
-          2367,
+          2372,
           4
         ],
         "end": [
-          2396,
+          2401,
           42
         ]
       },
@@ -2245,11 +2279,11 @@
       "identity": "PgnTestCase.test_promote_demote",
       "sourceSpan": {
         "start": [
-          2398,
+          2403,
           4
         ],
         "end": [
-          2423,
+          2428,
           36
         ]
       },
@@ -2264,11 +2298,11 @@
       "identity": "PgnTestCase.test_add_line",
       "sourceSpan": {
         "start": [
-          2679,
+          2684,
           4
         ],
         "end": [
-          2694,
+          2699,
           36
         ]
       },
@@ -2283,11 +2317,11 @@
       "identity": "PgnTestCase.test_mainline",
       "sourceSpan": {
         "start": [
-          2696,
+          2701,
           4
         ],
         "end": [
-          2705,
+          2710,
           71
         ]
       },
@@ -2302,11 +2336,11 @@
       "identity": "PgnTestCase.test_annotations",
       "sourceSpan": {
         "start": [
-          2821,
+          2826,
           4
         ],
         "end": [
-          2864,
+          2869,
           56
         ]
       },
@@ -2321,11 +2355,11 @@
       "identity": "PgnTestCase.test_float_emt",
       "sourceSpan": {
         "start": [
-          2872,
+          2877,
           4
         ],
         "end": [
-          2883,
+          2888,
           39
         ]
       },
@@ -2337,11 +2371,11 @@
         {
           "span": {
             "start": [
-              2882,
+              2887,
               58
             ],
             "end": [
-              2882,
+              2887,
               67
             ]
           },
@@ -2355,11 +2389,11 @@
       "identity": "PgnTestCase.test_float_clk",
       "sourceSpan": {
         "start": [
-          2885,
+          2890,
           4
         ],
         "end": [
-          2896,
+          2901,
           41
         ]
       },
@@ -2371,11 +2405,11 @@
         {
           "span": {
             "start": [
-              2895,
+              2900,
               58
             ],
             "end": [
-              2895,
+              2900,
               67
             ]
           },
@@ -2389,11 +2423,11 @@
       "identity": "EngineTestCase.test_score_ordering",
       "sourceSpan": {
         "start": [
-          2973,
+          2978,
           4
         ],
         "end": [
-          3001,
+          3006,
           124
         ]
       },
@@ -2408,11 +2442,11 @@
       "identity": "EngineTestCase.test_wdl_model",
       "sourceSpan": {
         "start": [
-          3032,
+          3037,
           4
         ],
         "end": [
-          3038,
+          3043,
           104
         ]
       },
