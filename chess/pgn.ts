@@ -138,6 +138,29 @@ export class StringIO implements TextIO {
   }
 }
 
+/** Bridge Python's nominal `Type[GameT]` constructors to TypeScript's structural types. */
+type GameClass<GameT extends Game> = Omit<typeof Game, 'prototype'> & {
+  new (): GameT
+  readonly prototype: GameT
+}
+
+type GameBuilderArguments<GameT extends Game> = Game extends GameT
+  ? [] | [options: { Game_?: GameClass<GameT> }]
+  : [options: { Game_: GameClass<GameT> }]
+
+type HeadersClass<HeadersT extends Headers> = Omit<
+  typeof Headers,
+  'prototype'
+> & {
+  new (data: Map<string, string>): HeadersT
+  readonly prototype: HeadersT
+}
+
+type HeadersBuilderArguments<HeadersT extends Headers> =
+  Headers extends HeadersT
+    ? [] | [options: { Headers_?: HeadersClass<HeadersT> }]
+    : [options: { Headers_: HeadersClass<HeadersT> }]
+
 /** ========== Direct transpilation ========== */
 
 export const LOGGER = {
@@ -368,15 +391,6 @@ export class _AcceptFrame {
 }
 
 export abstract class GameNode {
-  /** The parent node or `null` if this is the root node of the game. */
-  parent: GameNode | null
-
-  /**
-   * The move leading to this node or `null` if this is the root node of the
-   * game.
-   */
-  move: Move | null
-
   /** A list of child nodes. */
   variations: ChildNode[]
 
@@ -390,8 +404,6 @@ export abstract class GameNode {
   nags: Set<number>
 
   constructor({ comment = '' }: { comment?: string | string[] } = {}) {
-    this.parent = null
-    this.move = null
     this.variations = []
     this.comments = _standardizeComments(comment)
 
@@ -400,6 +412,15 @@ export abstract class GameNode {
     this.startingComments = []
     this.nags = new Set<number>()
   }
+
+  /** The parent node or `null` if this is the root node of the game. */
+  abstract get parent(): GameNode | null
+
+  /**
+   * The move leading to this node or `null` if this is the root node of the
+   * game.
+   */
+  abstract get move(): Move | null
 
   /**
    * Gets a board with the position of the node.
@@ -1009,11 +1030,8 @@ export abstract class GameNode {
  * Extends :class:`~pgn.GameNode`.
  */
 export class ChildNode extends GameNode {
-  /** The parent node. */
-  parent: GameNode
-
-  /** The move leading to this node. */
-  move: Move
+  private readonly _parent: GameNode
+  private readonly _move: Move
 
   /**
    * A comment for the start of a variation. Only nodes that
@@ -1043,8 +1061,8 @@ export class ChildNode extends GameNode {
     } = {},
   ) {
     super({ comment })
-    this.parent = parent
-    this.move = move
+    this._parent = parent
+    this._move = move
     this.parent.variations.push(this)
 
     this.nags = new Set<number>()
@@ -1054,7 +1072,17 @@ export class ChildNode extends GameNode {
     this.startingComments = _standardizeComments(startingComment)
   }
 
-  board(): Board {
+  /** The parent node. */
+  get parent(): GameNode {
+    return this._parent
+  }
+
+  /** The move leading to this node. */
+  get move(): Move {
+    return this._move
+  }
+
+  override board(): Board {
     let stack: Move[] = []
     let node: GameNode = this
 
@@ -1072,7 +1100,7 @@ export class ChildNode extends GameNode {
     return board
   }
 
-  ply(): number {
+  override ply(): number {
     let ply = 0
     let node: GameNode = this
     while (node.parent !== null) {
@@ -1111,7 +1139,7 @@ export class ChildNode extends GameNode {
    *
    * Complexity is `O(n)`.
    */
-  end(): ChildNode {
+  override end(): ChildNode {
     return super.end() as ChildNode
   }
 
@@ -1189,7 +1217,7 @@ export class ChildNode extends GameNode {
     }
   }
 
-  accept<ResultT>(visitor: BaseVisitor<ResultT>): ResultT {
+  override accept<ResultT>(visitor: BaseVisitor<ResultT>): ResultT {
     this._accept(this.parent.board(), visitor, { sidelines: false })
     return visitor.result()
   }
@@ -1233,6 +1261,14 @@ export class Game extends GameNode {
     super()
     this.headers = new Headers(headers)
     this.errors = []
+  }
+
+  get parent(): null {
+    return null
+  }
+
+  get move(): null {
+    return null
   }
 
   board(): Board {
@@ -1350,7 +1386,9 @@ export class Game extends GameNode {
     return new this(new Map<string, string>()) as InstanceType<T>
   }
 
-  static builder<GameT extends typeof Game>(this: GameT): GameBuilder {
+  static builder<GameT extends Game>(
+    this: GameClass<GameT>,
+  ): GameBuilder<GameT> {
     return new GameBuilder({ Game_: this })
   }
 
@@ -1498,9 +1536,9 @@ export class Headers {
     return this.toRepr()
   }
 
-  static builder<HeadersT extends typeof Headers>(
-    this: HeadersT,
-  ): HeadersBuilder {
+  static builder<HeadersT extends Headers>(
+    this: HeadersClass<HeadersT>,
+  ): HeadersBuilder<HeadersT> {
     return new HeadersBuilder({ Headers_: this })
   }
 
@@ -1725,21 +1763,20 @@ export abstract class BaseVisitor<ResultT> {
 /**
  * Creates a game model. Default visitor for :func:`~pgn.readGame()`.
  */
-export class GameBuilder extends BaseVisitor<Game> {
-  Game_: typeof Game
-  game: Game = null!
+export class GameBuilder<GameT extends Game = Game> extends BaseVisitor<GameT> {
+  Game_: GameClass<GameT>
+  game: GameT = null!
   variationStack: GameNode[] = null!
   startingComments: string[] = null!
   inVariation: boolean = null!
 
-  constructor()
-  constructor({ Game_ }: { Game_: typeof Game })
-  constructor({ Game_ = Game }: { Game_?: typeof Game } = {}) {
+  constructor(...args: GameBuilderArguments<GameT>) {
     super()
-    this.Game_ = Game_
+    const { Game_ = Game } = args[0] ?? {}
+    this.Game_ = Game_ as GameClass<GameT>
   }
 
-  beginGame(): void {
+  override beginGame(): void {
     this.game = new this.Game_()
 
     this.variationStack = [this.game]
@@ -1747,19 +1784,19 @@ export class GameBuilder extends BaseVisitor<Game> {
     this.inVariation = false
   }
 
-  beginHeaders(): Headers {
+  override beginHeaders(): Headers {
     return this.game.headers
   }
 
-  visitHeader(tagname: string, tagvalue: string): void {
+  override visitHeader(tagname: string, tagvalue: string): void {
     this.game.headers.set(tagname, tagvalue)
   }
 
-  visitNag(nag: number): void {
+  override visitNag(nag: number): void {
     this.variationStack.at(-1)?.nags.add(nag)
   }
 
-  beginVariation(): void {
+  override beginVariation(): void {
     const parent = this.variationStack.at(-1)!.parent
     if (parent === null) {
       throw new Error(
@@ -1770,17 +1807,17 @@ export class GameBuilder extends BaseVisitor<Game> {
     this.inVariation = false
   }
 
-  endVariation(): void {
+  override endVariation(): void {
     this.variationStack.pop()
   }
 
-  visitResult(result: string): void {
+  override visitResult(result: string): void {
     if ((this.game.headers.get('Result') || '*') === '*') {
       this.game.headers.set('Result', result)
     }
   }
 
-  visitComment(comment: string | string[]): void {
+  override visitComment(comment: string | string[]): void {
     const comments = _standardizeComments(comment)
     if (
       this.inVariation ||
@@ -1803,7 +1840,7 @@ export class GameBuilder extends BaseVisitor<Game> {
     }
   }
 
-  visitMove(board: Board, move: Move): void {
+  override visitMove(board: Board, move: Move): void {
     this.variationStack[this.variationStack.length - 1] = this.variationStack
       .at(-1)!
       .addVariation(move) // TODO this type of indexing doesn't work
@@ -1841,7 +1878,7 @@ export class GameBuilder extends BaseVisitor<Game> {
    * >>>
    * >>> game = pgn.readGame(pgn, Visitor=MyGameBuilder)
    */
-  handleError(error: Error): void {
+  override handleError(error: Error): void {
     LOGGER.error(`${error} while parsing ${this.game}`)
     this.game.errors.push(error)
   }
@@ -1849,7 +1886,7 @@ export class GameBuilder extends BaseVisitor<Game> {
   /**
    * Returns the visited :class:`~pgn.Game()`.
    */
-  result(): Game {
+  override result(): GameT {
     return this.game
   }
 }
@@ -1857,31 +1894,32 @@ export class GameBuilder extends BaseVisitor<Game> {
 /**
  * Collects headers into a dictionary.
  */
-export class HeadersBuilder extends BaseVisitor<Headers> {
-  Headers_: typeof Headers
-  headers: Headers = null!
+export class HeadersBuilder<
+  HeadersT extends Headers = Headers,
+> extends BaseVisitor<HeadersT> {
+  Headers_: HeadersClass<HeadersT>
+  headers: HeadersT = null!
 
-  constructor()
-  constructor({ Headers_ }: { Headers_: typeof Headers })
-  constructor({ Headers_ = Headers }: { Headers_?: typeof Headers } = {}) {
+  constructor(...args: HeadersBuilderArguments<HeadersT>) {
     super()
-    this.Headers_ = Headers_
+    const { Headers_ = Headers } = args[0] ?? {}
+    this.Headers_ = Headers_ as HeadersClass<HeadersT>
   }
 
-  beginHeaders(): Headers {
+  override beginHeaders(): HeadersT {
     this.headers = new this.Headers_(new Map<string, string>())
     return this.headers
   }
 
-  visitHeader(tagname: string, tagvalue: string): void {
+  override visitHeader(tagname: string, tagvalue: string): void {
     this.headers.set(tagname, tagvalue)
   }
 
-  endHeaders(): SkipType {
+  override endHeaders(): SkipType {
     return SKIP
   }
 
-  result(): Headers {
+  override result(): HeadersT {
     return this.headers
   }
 }
@@ -1894,26 +1932,26 @@ export class BoardBuilder extends BaseVisitor<Board> {
   skipVariationDepth: number = null!
   board: Board = null!
 
-  beginGame(): void {
+  override beginGame(): void {
     this.skipVariationDepth = 0
   }
 
-  beginVariation(): SkipType {
+  override beginVariation(): SkipType {
     this.skipVariationDepth += 1
     return SKIP
   }
 
-  endVariation(): void {
+  override endVariation(): void {
     this.skipVariationDepth = Math.max(this.skipVariationDepth - 1, 0)
   }
 
-  visitBoard(board: Board): void {
+  override visitBoard(board: Board): void {
     if (!this.skipVariationDepth) {
       this.board = board
     }
   }
 
-  result(): Board {
+  override result(): Board {
     return this.board
   }
 }
@@ -1922,19 +1960,19 @@ export class BoardBuilder extends BaseVisitor<Board> {
  * Skips a game.
  */
 export class SkipVisitor extends BaseVisitor<true> {
-  beginGame(): SkipType {
+  override beginGame(): SkipType {
     return SKIP
   }
 
-  endHeaders(): SkipType {
+  override endHeaders(): SkipType {
     return SKIP
   }
 
-  beginVariation(): SkipType {
+  override beginVariation(): SkipType {
     return SKIP
   }
 
-  result(): true {
+  override result(): true {
     return true
   }
 }
@@ -2136,7 +2174,7 @@ export class StringExporter extends StringExporterMixin<string> {
     super({ columns, headers, comments, variations })
   }
 
-  result(): string {
+  override result(): string {
     if (this.currentLine) {
       return Array.from(
         utils.iterChain(this.lines, [
@@ -2193,7 +2231,7 @@ export class FileExporter extends StringExporterMixin<number> {
     this.handle = handle
   }
 
-  beginGame(): void {
+  override beginGame(): void {
     this.written = 0
     super.beginGame()
   }
@@ -2216,7 +2254,7 @@ export class FileExporter extends StringExporterMixin<number> {
     this.written += this.handle.write('\n')
   }
 
-  result(): number {
+  override result(): number {
     return this.written
   }
 
@@ -2294,6 +2332,7 @@ export function readGame<ResultT>(
   let skippingGame = false
   let managedHeaders: Headers | null = null
   let unmanagedHeaders: Headers | null = null
+  let boardStack: Board[] = []
 
   // Ignore leading empty lines and comments.
   let line: string = handle.readline().replace(/^\ufeff/, '')
@@ -2361,7 +2400,6 @@ export function readGame<ResultT>(
   }
 
   let board: Board
-  let boardStack: Board[]
   if (!skippingGame) {
     // Chess variant.
     const headers =

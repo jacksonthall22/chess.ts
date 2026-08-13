@@ -1,10 +1,138 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 
 import * as chess from '../index'
 import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
+  test('parent and move identity are getter-only', () => {
+    const game = new pgn.Game()
+    const move = chess.Move.fromUci('e2e4')
+    const child = game.addVariation(move)
+
+    if (false) {
+      // @ts-expect-error The root identity is immutable.
+      game.parent = child
+      // @ts-expect-error Child ancestry is immutable.
+      child.parent = game
+      // @ts-expect-error The move identifying a child node is immutable.
+      child.move = chess.Move.fromUci('d2d4')
+    }
+
+    expect(() => {
+      ;(child as unknown as { parent: pgn.GameNode | null }).parent = null
+    }).toThrow(TypeError)
+    expect(() => {
+      ;(child as unknown as { move: chess.Move | null }).move = null
+    }).toThrow(TypeError)
+    expect(child.parent).toBe(game)
+    expect(child.move).toBe(move)
+  })
+
+  test('builders preserve concrete Game and Headers subclasses', () => {
+    class CustomGame extends pgn.Game {
+      gameMarker = 'custom game'
+    }
+
+    class OptionalGame extends pgn.Game {
+      constructor(readonly theme = 'standard') {
+        super()
+      }
+    }
+
+    class CustomHeaders extends pgn.Headers {
+      headersMarker = 'custom headers'
+    }
+
+    class RequiredHeaders extends pgn.Headers {
+      constructor(data: Map<string, string>) {
+        super(data)
+      }
+    }
+
+    if (false) {
+      // A specialized builder must be told which concrete class to create.
+      // @ts-expect-error CustomGame cannot use the base Game default.
+      new pgn.GameBuilder<CustomGame>()
+      // @ts-expect-error CustomHeaders cannot use the base Headers default.
+      new pgn.HeadersBuilder<CustomHeaders>()
+    }
+
+    const gameBuilder = new pgn.GameBuilder({ Game_: CustomGame })
+    gameBuilder.beginGame()
+    const game = gameBuilder.result()
+    expectTypeOf(game).toEqualTypeOf<CustomGame>()
+    expect(game).toBeInstanceOf(CustomGame)
+    expect(game.gameMarker).toBe('custom game')
+
+    const emptyCustomGame = gameBuilder.Game_.withoutTagRoster()
+    expectTypeOf(emptyCustomGame).toEqualTypeOf<CustomGame>()
+    expect(emptyCustomGame).toBeInstanceOf(CustomGame)
+
+    const staticGameBuilder = CustomGame.builder()
+    expectTypeOf(staticGameBuilder).toEqualTypeOf<
+      pgn.GameBuilder<CustomGame>
+    >()
+    staticGameBuilder.beginGame()
+    expect(staticGameBuilder.result()).toBeInstanceOf(CustomGame)
+
+    const optionalGameBuilder = new pgn.GameBuilder({ Game_: OptionalGame })
+    optionalGameBuilder.beginGame()
+    expect(optionalGameBuilder.result()).toBeInstanceOf(OptionalGame)
+    expect(optionalGameBuilder.result().theme).toBe('standard')
+
+    const staticOptionalGameBuilder = OptionalGame.builder()
+    staticOptionalGameBuilder.beginGame()
+    expect(staticOptionalGameBuilder.result()).toBeInstanceOf(OptionalGame)
+
+    const headersBuilder = new pgn.HeadersBuilder({
+      Headers_: CustomHeaders,
+    })
+    headersBuilder.beginHeaders()
+    const headers = headersBuilder.result()
+    expectTypeOf(headers).toEqualTypeOf<CustomHeaders>()
+    expect(headers).toBeInstanceOf(CustomHeaders)
+    expect(headers.headersMarker).toBe('custom headers')
+
+    const nestedHeadersBuilder = headersBuilder.Headers_.builder()
+    expectTypeOf(nestedHeadersBuilder).toEqualTypeOf<
+      pgn.HeadersBuilder<CustomHeaders>
+    >()
+
+    const staticHeadersBuilder = CustomHeaders.builder()
+    expectTypeOf(staticHeadersBuilder).toEqualTypeOf<
+      pgn.HeadersBuilder<CustomHeaders>
+    >()
+    staticHeadersBuilder.beginHeaders()
+    expect(staticHeadersBuilder.result()).toBeInstanceOf(CustomHeaders)
+
+    const requiredHeadersBuilder = new pgn.HeadersBuilder({
+      Headers_: RequiredHeaders,
+    })
+    requiredHeadersBuilder.beginHeaders()
+    expect(requiredHeadersBuilder.result()).toBeInstanceOf(RequiredHeaders)
+
+    const staticRequiredHeadersBuilder = RequiredHeaders.builder()
+    staticRequiredHeadersBuilder.beginHeaders()
+    expect(staticRequiredHeadersBuilder.result()).toBeInstanceOf(
+      RequiredHeaders,
+    )
+  })
+
+  test('builders default their classes when options omit them', () => {
+    for (const options of [{}, { Game_: undefined }]) {
+      const builder = new pgn.GameBuilder(options)
+      builder.beginGame()
+      expect(builder.result()).toBeInstanceOf(pgn.Game)
+    }
+
+    for (const options of [{}, { Headers_: undefined }]) {
+      const builder = new pgn.HeadersBuilder(options)
+      builder.beginHeaders()
+      expect(builder.result()).toBeInstanceOf(pgn.Headers)
+    }
+  })
+
   test('next returns null when a node has no mainline child', () => {
     const game = new pgn.Game()
     expect(game.next()).toBeNull()

@@ -86,6 +86,41 @@ preferred method name. A `number`, `boolean`, or `null` remains a native
 primitive when its native operation is faithful; exceptional element behavior
 belongs inside the smallest containing value adapter that actually needs it.
 
+### Preserve synchronization history and member order
+
+Review and translate each first-parent upstream state, not only the final
+source snapshot. If the port already contains a form introduced by a later
+upstream change, restore the prior source-shaped state before its introducing
+pin, then reproduce that hunk in the matching synchronization commit. Do not
+omit a hunk because the current TypeScript is already behaviorally equivalent.
+
+Preserve source order among members that have a source counterpart. Place
+target-only declarations according to the target language's normal structure;
+do not use them to reshape or fragment the mirrored source order.
+
+For example, if Python accepts values in `__init__`, stores them as dynamically
+created private attributes, and later exposes them through properties, the
+TypeScript translation should store and expose those values in the same
+constructor/property order. Because TypeScript requires private readonly
+backing fields to be declared in the class body, group them at the top of the
+class, the conventional TypeScript location. Keep the translated property
+getters together at the later position where Python defines its properties.
+
+### Preserve Python function-local bindings
+
+Python assignments make one function-local name even when the assignments are
+inside separate blocks. When translating such a name, declare one `let` in the
+smallest TypeScript scope enclosing every corresponding assignment and use, and
+keep each assignment at its Python position. Do not replace those assignments
+with separate block-local `const` declarations.
+
+For example, `read_game()` assigns `board` while creating the initial position
+and later reassigns `board` while starting a variation. TypeScript therefore
+declares `let board: Board` in `readGame()` and assigns it in both source-shaped
+blocks. Without that binding, a later upstream use outside either block could
+resolve to a same-named enclosing or module variable. That is valid TypeScript,
+so typechecking could pass while the port silently uses the wrong `board`.
+
 Default whitespace operations are one proved language boundary. Python
 `str.strip()` and whitespace `str.split()` include `U+001C` but exclude
 `U+FEFF`; JavaScript `trim()` and `\s` do the opposite for those characters.
