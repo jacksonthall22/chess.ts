@@ -6,6 +6,22 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('Board parses and reverses a null move', () => {
+    const board = new chess.Board()
+    board.pushSan('e4')
+    const before = board.fen({ enPassant: 'fen' })
+
+    expect(board.parseUci('0000').equals(chess.Move.null())).toBe(true)
+
+    const move = board.pushUci('0000')
+    expect(move.equals(chess.Move.null())).toBe(true)
+    expect(board.turn).toBe(chess.WHITE)
+    expect(board.epSquare).toBeNull()
+
+    expect(board.pop().equals(chess.Move.null())).toBe(true)
+    expect(board.fen({ enPassant: 'fen' })).toBe(before)
+  })
+
   test('inline Python whitespace translations preserve the exact source character set', () => {
     expect(
       '\u001cvalue\u001c'

@@ -4437,6 +4437,10 @@ export class Board extends BaseBoard {
   parseUci(uci: string): Move {
     let move = Move.fromUci(uci)
 
+    if (!move.bool()) {
+      return move
+    }
+
     move = this._toChess960(move)
     move = this._fromChess960(
       this.chess960,
