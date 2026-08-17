@@ -6,6 +6,52 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('mirrored python-chess version is independent of the npm package version', () => {
+    expect(chess.__version__).toBe('1.11.1')
+  })
+
+  test('Board parses and reverses a null move', () => {
+    const board = new chess.Board()
+    board.pushSan('e4')
+    const before = board.fen({ enPassant: 'fen' })
+
+    expect(board.parseUci('0000').equals(chess.Move.null())).toBe(true)
+
+    const move = board.pushUci('0000')
+    expect(move.equals(chess.Move.null())).toBe(true)
+    expect(board.turn).toBe(chess.WHITE)
+    expect(board.epSquare).toBeNull()
+
+    expect(board.pop().equals(chess.Move.null())).toBe(true)
+    expect(board.fen({ enPassant: 'fen' })).toBe(before)
+  })
+
+  test('lc0-style a1a1 is the null move, but other same-square moves are invalid', () => {
+    const move = chess.Move.fromUci('a1a1')
+
+    expect(move.equals(chess.Move.null())).toBe(true)
+    expect(move.bool()).toBe(false)
+    expect(move.uci()).toBe('0000')
+    expect(() => chess.Move.fromUci('b1b1')).toThrow(chess.InvalidMoveError)
+    expect(() => chess.Move.fromUci('h8h8')).toThrow(chess.InvalidMoveError)
+  })
+
+  test('Board parses a1a1 as a null move', () => {
+    expect(new chess.Board().parseUci('a1a1').equals(chess.Move.null())).toBe(
+      true,
+    )
+  })
+
+  test('a1a1q remains non-null raw UCI and is illegal on a board', () => {
+    const raw = chess.Move.fromUci('a1a1q')
+
+    expect(raw.uci()).toBe('a1a1q')
+    expect(raw.bool()).toBe(true)
+    expect(() => new chess.Board().parseUci('a1a1q')).toThrow(
+      chess.IllegalMoveError,
+    )
+  })
+
   test('inline Python whitespace translations preserve the exact source character set', () => {
     expect(
       '\u001cvalue\u001c'
