@@ -50,10 +50,13 @@ needs evidence, not as an ordinary refactoring tool. Use this order:
 2. If a short composition of native TypeScript operations has the same
    semantics, keep it inline. Do not extract a one-use helper merely to give
    that expression a name.
-3. Use the repository's established exact target representation before
-   rejecting an input or inventing an adapter. In particular, Python integers
-   outside JavaScript's safe `number` range become TypeScript `bigint`; a
-   narrower `number` API is not evidence that the Python value is invalid.
+3. Identify an operation's semantic input domain from its source invariants,
+   named domain types, and callers—not merely from the values Python's runtime
+   annotation permits. Preserve every Python/JavaScript difference reachable
+   through that domain. Do not emulate Python behavior reachable only through
+   values outside it; express a known bounded domain with a TypeScript type and
+   use the direct native operation. For an actually unbounded Python integer,
+   use TypeScript `bigint` outside JavaScript's safe `number` range.
 4. Reuse an established language adapter when one already exists. General
    Python primitive bridges belong with the repository's existing helpers in
    `chess/utils.ts`; a file-local adapter should represent a gap specific to
@@ -61,6 +64,20 @@ needs evidence, not as an ordinary refactoring tool. Use this order:
 5. Add a new adapter only after identifying a concrete valid input for which
    the direct JavaScript operation differs from pinned Python. Document that
    mismatch and cover it with a parity test.
+
+For example, `File` and `Rank` mean the eight chess indices even though their
+Python aliases are `int`, so direct `FILE_NAMES[file]` indexing is sufficient
+in TypeScript. Conversely, a parsed file name is an arbitrary string; Python
+`FILE_NAMES.index(name)` raises for a missing name while JavaScript `indexOf()`
+returns `-1`, so the translation keeps that small `ValueError` bridge inline.
+
+When upstream distinguishes named domains with the same target representation,
+use those names in source-mapped public signatures. Do not collapse them into
+an older convenience union merely because TypeScript treats the aliases as
+structurally equal: the names preserve the source roles and make later upstream
+type changes mechanical. Do not add nominal brands just to make the aliases
+incompatible, or migrate untouched generic code solely to remove the older
+union.
 
 For example, JavaScript and Python disagree about the truthiness of `NaN`, but
 the fixed `Score._score_tuple()` expression does not need a separate
@@ -421,7 +438,8 @@ Arrow functions in TS are comparable to a Python `lambda` function, but
 they also behave in some ways more like a regular `def` function[^2].
 
 When choosing which syntax to transpile to, here is my general rule:
-- For top-level functions, use the arrow syntax
+- For top-level functions, use the arrow syntax unless faithful typing requires
+  overloads; use regular function overloads in that case
 - For methods inside classes or generators, use the regular syntax
 
 I have adopted this rule primarily for two reasons[^2] which you don't need

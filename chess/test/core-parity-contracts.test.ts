@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, expectTypeOf, test } from 'vitest'
 
 import * as chess from '../index'
 import * as engine from '../engine'
@@ -6,6 +6,42 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('rank and file constants expose the pinned public API', () => {
+    expect(chess.FILES).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+    expect(chess.RANKS).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
+
+    for (const [index, name] of chess.FILE_NAMES.entries()) {
+      const file = chess.FILES[index]
+      expect(chess.fileName(file)).toBe(name)
+      expect(chess.parseFile(name)).toBe(file)
+    }
+
+    expectTypeOf(chess.square(chess.FILE_A, chess.RANK_1)).toEqualTypeOf<
+      chess.Square
+    >()
+    expectTypeOf(chess.square).parameter(0).toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.square).parameter(1).toEqualTypeOf<chess.Rank>()
+    expectTypeOf(
+      chess.square(0 as chess.File, 0 as chess.Rank),
+    ).toEqualTypeOf<chess.Square>()
+    expectTypeOf(chess.squareFile).returns.toEqualTypeOf<chess.File>()
+    expectTypeOf(chess.squareRank).returns.toEqualTypeOf<chess.Rank>()
+  })
+
+  test('file parsing rejects JavaScript indexOf sentinels', () => {
+    for (const invalid of ['', 'A', 'aa', '1', 'i']) {
+      expect(() => chess.parseFile(invalid)).toThrow(chess.ValueError)
+    }
+  })
+
+  test('rank helpers correct the pinned upstream FILE_NAMES bug', () => {
+    expectTypeOf(chess.parseRank).returns.toEqualTypeOf<chess.Rank>()
+    expectTypeOf(chess.rankName).parameter(0).toEqualTypeOf<chess.Rank>()
+    expect(chess.parseRank('1')).toBe(chess.RANK_1)
+    expect(chess.rankName(chess.RANK_1)).toBe('1')
+    expect(() => chess.parseRank('a')).toThrow(chess.ValueError)
+  })
+
   test('mirrored python-chess version is independent of the npm package version', () => {
     expect(chess.__version__).toBe('1.11.2')
   })
@@ -50,6 +86,48 @@ describe('TypeScript-native parity contracts', () => {
     expect(() => new chess.Board().parseUci('a1a1q')).toThrow(
       chess.IllegalMoveError,
     )
+  })
+
+  test('givesCheckmate identifies mate and restores the board', () => {
+    const board = new chess.Board()
+    for (const san of ['e4', 'e5', 'Qf3', 'Nc6', 'Bc4', 'Rb8']) {
+      board.pushSan(san)
+    }
+    const beforeFen = board.fen({ enPassant: 'fen' })
+    const beforeStack = board.moveStack.map(move => move.uci())
+
+    expect(board.givesCheckmate(chess.Move.fromUci('f3f7'))).toBe(true)
+    expect(board.fen({ enPassant: 'fen' })).toBe(beforeFen)
+    expect(board.moveStack.map(move => move.uci())).toEqual(beforeStack)
+  })
+
+  test('givesCheckmate returns false for non-mating moves', () => {
+    const board = new chess.Board()
+    const before = board.fen({ enPassant: 'fen' })
+
+    expect(board.givesCheckmate(chess.Move.fromUci('e2e4'))).toBe(false)
+    expect(board.fen({ enPassant: 'fen' })).toBe(before)
+    expect(board.moveStack).toEqual([])
+  })
+
+  test('givesCheckmate restores the board when the probe throws', () => {
+    const expected = new Error('isCheckmate failed')
+    class ThrowingBoard extends chess.Board {
+      isCheckmate(): boolean {
+        throw expected
+      }
+    }
+
+    const board = new ThrowingBoard()
+    board.pushSan('e4')
+    const beforeFen = board.fen({ enPassant: 'fen' })
+    const beforeStack = board.moveStack.map(move => move.uci())
+
+    expect(() => board.givesCheckmate(chess.Move.fromUci('e7e5'))).toThrow(
+      expected,
+    )
+    expect(board.fen({ enPassant: 'fen' })).toBe(beforeFen)
+    expect(board.moveStack.map(move => move.uci())).toEqual(beforeStack)
   })
 
   test('inline Python whitespace translations preserve the exact source character set', () => {
