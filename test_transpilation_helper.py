@@ -212,7 +212,7 @@ class SourceBoundaryTest(unittest.TestCase):
     def test_parses_exact_selection_once_and_preserves_every_comment(self) -> None:
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
-        self.assertEqual(len(unit.methods), 89)
+        self.assertEqual(len(unit.methods), 90)
         self.assertEqual(len(unit.comments), 59)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
@@ -1863,11 +1863,13 @@ class TargetAlgebraTest(unittest.TestCase):
         cases = (
             (BOOLEAN, "value"),
             (NUMBER, "value !== 0"),
+            (NUMBER.optional(), "value !== null && value !== 0"),
             (BIGINT, "value !== 0n"),
             (STRING, "value.length !== 0"),
             (array_of(NUMBER), "value.length !== 0"),
             (set_of(STRING), "value.size !== 0"),
             (SQUARE_SET, "value.bool()"),
+            (PIECE.optional(), "value !== null"),
             (LEGAL_MOVE_GENERATOR, "value.bool()"),
             (LEGAL_MOVE_ITERATOR, "value.bool()"),
             (NULL, "false"),
@@ -2169,7 +2171,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         # compile_suite() fails if any selected semantic AST node or COMMENT token
         # is unclaimed by a lowering rule.
         self.assertEqual(self.first, self.second)
-        self.assertEqual(len(TRANSLATED_TESTS), 89)
+        self.assertEqual(len(TRANSLATED_TESTS), 90)
         for identity in TRANSLATED_TESTS:
             self.assertIn(py_identifier_to_ts(identity.method_name), self.first.typescript)
 
@@ -2178,15 +2180,15 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         self.assertNotIn("python-semantics", self.first.typescript)
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
-        self.assertEqual(self.provenance["translatedMethodCount"], 89)
+        self.assertEqual(self.provenance["translatedMethodCount"], 90)
         self.assertEqual(self.provenance["sourceCommentCount"], 59)
-        self.assertEqual(self.provenance["semanticNodeCount"], 7057)
-        self.assertEqual(self.provenance["assertionCount"], 475)
+        self.assertEqual(self.provenance["semanticNodeCount"], 7120)
+        self.assertEqual(self.provenance["assertionCount"], 482)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
-        self.assertEqual(len(methods), 89)
-        self.assertEqual(len({method["identity"] for method in methods}), 89)
+        self.assertEqual(len(methods), 90)
+        self.assertEqual(len({method["identity"] for method in methods}), 90)
         for method in methods:
             self.assertRegex(method["sourceSha256"], r"^[0-9a-f]{64}$")
             self.assertRegex(method["astSha256"], r"^[0-9a-f]{64}$")

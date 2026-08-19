@@ -72,6 +72,7 @@ TRANSLATED_TESTS = (
         "test_is_legal_move",
         "test_move_count",
         "test_set_fen_as_epd",
+        "test_clear",
         "test_promoted_comparison",
         "test_multiple_kings",
     ),
@@ -122,7 +123,7 @@ TRANSLATED_TESTS = (
 )
 
 
-if len(TRANSLATED_TESTS) != 89:
+if len(TRANSLATED_TESTS) != 90:
     raise RuntimeError(
-        f"translation selection must contain 89 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 90 methods, got {len(TRANSLATED_TESTS)}"
     )

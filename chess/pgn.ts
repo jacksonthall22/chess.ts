@@ -648,7 +648,7 @@ export abstract class GameNode {
       nags?: Iterable<number>
     } = {},
   ): ChildNode {
-    // Instanciate ChildNode only in this method.
+    // Instantiate ChildNode only in this method.
     return new ChildNode(this, move, { comment, startingComment, nags })
   }
 
