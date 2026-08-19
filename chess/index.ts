@@ -479,17 +479,19 @@ export const fileName = (file: File): string => {
  *
  * @throws :exc:`ValueError` if the rank name is invalid.
  */
-export const parseRank = (name: string): File => {
-  const rank = FILE_NAMES.indexOf(name)
+export const parseRank = (name: string): Rank => {
+  // Pinned upstream incorrectly uses FILE_NAMES here despite this being a function to parse the rank. Fixing here rather than waiting for upstream to correct it.
+  const rank = RANK_NAMES.indexOf(name)
   if (rank === -1) {
     throw new ValueError('list.index(x): x not in list')
   }
-  return rank as File
+  return rank as Rank
 }
 
 /** Gets the name of the rank, like ``1``. */
 export const rankName = (rank: Rank): string => {
-  return FILE_NAMES[rank]
+  // Pinned upstream has the same bug here; see parseRank().
+  return RANK_NAMES[rank]
 }
 
 /**

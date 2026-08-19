@@ -34,6 +34,14 @@ describe('TypeScript-native parity contracts', () => {
     }
   })
 
+  test('rank helpers correct the pinned upstream FILE_NAMES bug', () => {
+    expectTypeOf(chess.parseRank).returns.toEqualTypeOf<chess.Rank>()
+    expectTypeOf(chess.rankName).parameter(0).toEqualTypeOf<chess.Rank>()
+    expect(chess.parseRank('1')).toBe(chess.RANK_1)
+    expect(chess.rankName(chess.RANK_1)).toBe('1')
+    expect(() => chess.parseRank('a')).toThrow(chess.ValueError)
+  })
+
   test('mirrored python-chess version is independent of the npm package version', () => {
     expect(chess.__version__).toBe('1.11.2')
   })
