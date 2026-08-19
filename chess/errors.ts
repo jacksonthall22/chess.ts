@@ -19,6 +19,14 @@ export class KeyError extends Error {
   }
 }
 
+/** The runtime equivalent of Python's `OSError`. */
+export class OSError extends Error {
+  constructor(message?: string) {
+    super(message)
+    this.name = 'OSError'
+  }
+}
+
 /** The runtime equivalent of Python's `OverflowError`. */
 export class OverflowError extends Error {
   constructor(message?: string) {

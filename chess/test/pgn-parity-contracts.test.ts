@@ -213,6 +213,24 @@ describe('TypeScript-native PGN parity contracts', () => {
     }
   })
 
+  test('StringIO preserves Python character offsets and cursor writes', () => {
+    const stream = new pgn.StringIO('a♞c\n')
+
+    expect(stream.read(2)).toBe('a♞')
+    expect(stream.tell()).toBe(2)
+    stream.seek(1)
+    expect(stream.readline()).toBe('♞c\n')
+
+    stream.seek(6)
+    expect(stream.read()).toBe('')
+    expect(stream.tell()).toBe(6)
+    expect(stream.write('Z')).toBe(1)
+    expect(stream.getValue()).toBe('a♞c\n\0\0Z')
+
+    expect(() => stream.read(1e100)).toThrow(chess.OverflowError)
+    expect(() => stream.seek(1, 1)).toThrow(chess.OSError)
+  })
+
   test('readGame strips every leading BOM like Python lstrip', () => {
     const game = pgn.readGame(
       new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n*'),
