@@ -163,6 +163,33 @@ describe('TypeScript-native PGN parity contracts', () => {
     })
   })
 
+  test('parseTimeControl preserves Python numeric boundaries', () => {
+    expect(Number.isNaN(pgn.parseTimeControl('300+NaN').parts[0].increment)).toBe(
+      true,
+    )
+    expect(pgn.parseTimeControl('300+Infinity').parts[0].increment).toBe(
+      Infinity,
+    )
+    expect(pgn.parseTimeControl('300+Infinityd').parts[0].delay).toBe(Infinity)
+    expect(pgn.parseTimeControl('9007199254740993').parts[0].time).toBe(
+      9007199254740993n,
+    )
+    expect(pgn.parseTimeControl('9007199254740993/60').parts[0].moves).toBe(
+      9007199254740993n,
+    )
+    const enormousTime = '1' + '0'.repeat(400)
+    expect(pgn.parseTimeControl(enormousTime).type).toBe(
+      pgn.TimeControlType.STANDARD,
+    )
+    expect(() => pgn.parseTimeControl(`${enormousTime}+0`)).toThrow(
+      chess.OverflowError,
+    )
+    expect(() => pgn.parseTimeControl('\u001c300')).toThrow(chess.ValueError)
+    expect(() => pgn.parseTimeControl('9'.repeat(4301))).toThrow(
+      chess.ValueError,
+    )
+  })
+
   test('readGame accepts explicit visitor factories', () => {
     class CustomGame extends pgn.Game {
       marker = 'custom'

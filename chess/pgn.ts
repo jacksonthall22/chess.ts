@@ -49,6 +49,26 @@ const floatDivmod = (dividend: number, divisor: number): [number, number] => {
   return [quotient, remainder]
 }
 
+/** Tracks `float()` output without exposing a target-only TimeControlPart field. */
+const pythonFloatIncrements = new WeakSet<object>()
+
+/** Direct equivalent of Python's `base_time + 60 * increment` numeric coercion. */
+const pythonTimeControlTotal = (
+  baseTime: number | bigint,
+  increment: number,
+  incrementIsPythonFloat: boolean,
+): number | bigint => {
+  if (typeof baseTime === 'bigint' && !incrementIsPythonFloat) {
+    return baseTime + BigInt(60 * increment)
+  }
+
+  const floatBaseTime = Number(baseTime)
+  if (!Number.isFinite(floatBaseTime)) {
+    throw new OverflowError('int too large to convert to float')
+  }
+  return floatBaseTime + 60 * increment
+}
+
 /** Formats a JavaScript binary float with Python's round-half-even `f` rules. */
 const formatFixed = (value: number, fractionDigits: number): string => {
   if (!Number.isFinite(value)) {
@@ -326,14 +346,14 @@ export enum TimeControlType {
 }
 
 export class TimeControlPart {
-  moves: number
-  time: number
+  moves: number | bigint
+  time: number | bigint
   increment: number
   delay: number
 
   constructor(
-    moves: number = 0,
-    time: number = 0,
+    moves: number | bigint = 0,
+    time: number | bigint = 0,
     increment: number = 0,
     delay: number = 0,
   ) {
@@ -2664,19 +2684,20 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
     if (bonus.length !== 0) {
       const _bonus = bonus[0]
       if (_bonus.toLowerCase().endsWith('d')) {
-        tcp.delay = parseFloat(_bonus.slice(0, -1))
+        tcp.delay = utils.parsePythonFloat(_bonus.slice(0, -1))
       } else {
-        tcp.increment = parseFloat(_bonus)
+        tcp.increment = utils.parsePythonFloat(_bonus)
+        pythonFloatIncrements.add(tcp)
       }
     }
 
     const [moves, ...time] = movesTime.split('/')
     if (time.length !== 0) {
-      tcp.moves = parseInt(moves)
-      tcp.time = parseInt(time[0])
+      tcp.moves = utils.parsePythonInt(moves)
+      tcp.time = utils.parsePythonInt(time[0])
     } else {
       tcp.moves = 0
-      tcp.time = parseInt(moves)
+      tcp.time = utils.parsePythonInt(moves)
     }
 
     return tcp
@@ -2694,13 +2715,35 @@ export const parseTimeControl = (timeControl: string): TimeControl => {
 
   // Classification according to https://www.fide.com/FIDE/handbook/LawsOfpdf
   // (Bullet added)
-  const baseTime = tc.parts[0].time
-  const increment = tc.parts[0].increment
-  if (baseTime + 60 * increment < 3 * 60) {
+  const firstPart = tc.parts[0]
+  const baseTime = firstPart.time
+  const increment = firstPart.increment
+  if (
+    pythonTimeControlTotal(
+      baseTime,
+      increment,
+      pythonFloatIncrements.has(firstPart),
+    ) <
+    3 * 60
+  ) {
     tc.type = TimeControlType.BULLET
-  } else if (baseTime + 60 * increment < 15 * 60) {
+  } else if (
+    pythonTimeControlTotal(
+      baseTime,
+      increment,
+      pythonFloatIncrements.has(firstPart),
+    ) <
+    15 * 60
+  ) {
     tc.type = TimeControlType.BLITZ
-  } else if (baseTime + 60 * increment < 60 * 60) {
+  } else if (
+    pythonTimeControlTotal(
+      baseTime,
+      increment,
+      pythonFloatIncrements.has(firstPart),
+    ) <
+    60 * 60
+  ) {
     tc.type = TimeControlType.RAPID
   } else {
     tc.type = TimeControlType.STANDARD
