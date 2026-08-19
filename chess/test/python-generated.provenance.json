@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "76cbe9843b7be94676cf19ea2a446e4eb3ac4291",
+  "upstreamCommit": "312f3bf07758628e4ee9befbd9e3df7dd5eccea6",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 88,
+  "translatedMethodCount": 89,
   "sourceCommentCount": 59,
-  "semanticNodeCount": 7027,
-  "assertionCount": 474,
+  "semanticNodeCount": 7057,
+  "assertionCount": 475,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -1705,6 +1705,25 @@
           "text": "# Move numbers are not valid opcodes"
         }
       ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_promoted_comparison",
+      "sourceSpan": {
+        "start": [
+          1375,
+          4
+        ],
+        "end": [
+          1381,
+          43
+        ]
+      },
+      "sourceSha256": "da4e7b9da4d82ff9c928196cf3dd2d94434f6ebff99877585139e05bb5301a36",
+      "astSha256": "fbe5623101c13a8e4500ab0225a2c0af3e5133833ebd733d0060f4289c0e7aa6",
+      "semanticNodeCount": 30,
+      "assertionCount": 1,
+      "comments": [],
       "parityGapCases": []
     },
     {

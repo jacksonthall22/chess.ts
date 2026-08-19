@@ -23,7 +23,6 @@ describe('BoardTestCase — translation pending', () => {
   test.todo('test_fivefold_repetition (python-chess test.py:1278)',)
   test.todo('test_trivial_is_repetition (python-chess test.py:1337)',)
   test.todo('test_fifty_moves (python-chess test.py:1340)',)
-  test.todo('test_promoted_comparison (python-chess test.py:1375)',)
   test.todo('test_ep_legality (python-chess test.py:1383)',)
   test.todo('test_pseudo_legality (python-chess test.py:1400)',)
   test.todo('test_pseudo_legal_castling_masks (python-chess test.py:1441)',)
@@ -250,7 +249,7 @@ describe('GiveawayTestCase — translation pending', () => {
   test.todo('test_antichess_pgn (python-chess test.py:4940)',)
 })
 
-// Baseline: python-chess 76cbe9843b7be94676cf19ea2a446e4eb3ac4291
+// Baseline: python-chess 312f3bf07758628e4ee9befbd9e3df7dd5eccea6
 // Total upstream tests: 291
-// Translated tests: 88
-// Pending tests: 203
+// Translated tests: 89
+// Pending tests: 202
