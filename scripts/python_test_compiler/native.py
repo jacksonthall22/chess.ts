@@ -38,6 +38,10 @@ def _local_name_allocator() -> FreshName:
 
 def truthy_code(code: str, shape: TargetShape) -> str:
     if shape.nullable:
+        if shape.kind is ShapeKind.NUMBER:
+            return f"{code} !== null && {code} !== 0"
+        if shape.kind is ShapeKind.PIECE:
+            return f"{code} !== null"
         raise NativeLoweringError(
             f"truthiness is not defined for nullable {shape.kind.value}"
         )

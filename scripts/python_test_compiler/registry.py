@@ -584,8 +584,12 @@ def attribute_shape(attribute: str, receiver: TargetShape) -> TargetShape:
     if kind is ShapeKind.BOARD:
         if attribute in {"turn", "chess960"}:
             return BOOLEAN
+        if attribute in {"fullmove_number", "halfmove_clock"}:
+            return NUMBER
         if attribute == "castling_rights":
             return BIGINT
+        if attribute == "ep_square":
+            return NUMBER.optional()
         if attribute == "legal_moves":
             return LEGAL_MOVE_GENERATOR
         if attribute == "pseudo_legal_moves":
@@ -965,6 +969,8 @@ def method_call_contract(
             "generate_pseudo_legal_moves": iterable_of(MOVE),
             "generate_legal_moves": iterable_of(MOVE),
             "piece_map": map_of(NUMBER, PIECE),
+            "piece_count": NUMBER,
+            "clear": VOID,
             "clear_stack": VOID,
         }
         if method in no_arg:

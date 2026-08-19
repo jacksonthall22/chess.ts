@@ -6,6 +6,14 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native parity contracts', () => {
+  test('pieceCount reports occupied board squares after clear', () => {
+    const board = new chess.Board()
+    expect(board.pieceCount()).toBe(32)
+
+    board.clear()
+    expect(board.pieceCount()).toBe(0)
+  })
+
   test('rank and file constants expose the pinned public API', () => {
     expect(chess.FILES).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
     expect(chess.RANKS).toEqual([0, 1, 2, 3, 4, 5, 6, 7])
