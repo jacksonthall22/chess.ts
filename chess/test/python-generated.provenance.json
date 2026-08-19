@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "24c2d5a231ecd79e2ba0b11cb87514f69da2e927",
+  "upstreamCommit": "e88e7f0531b39b70fcd42e000d472f26a39ed847",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 90,
+  "translatedMethodCount": 91,
   "sourceCommentCount": 59,
-  "semanticNodeCount": 7120,
-  "assertionCount": 482,
+  "semanticNodeCount": 7172,
+  "assertionCount": 486,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -2242,14 +2242,33 @@
       "parityGapCases": []
     },
     {
-      "identity": "PgnTestCase.test_read_game_with_multicomment_move",
+      "identity": "PgnTestCase.test_read_game_with_leading_whitespace_before_header",
       "sourceSpan": {
         "start": [
           2236,
           4
         ],
         "end": [
-          2242,
+          2252,
+          41
+        ]
+      },
+      "sourceSha256": "5d5c7f75764de980aad9b9d3504bb79d259c82427ca7af335021a05ae85318f5",
+      "astSha256": "4cd9de4353545d884cb2a5a73edff2c14ab438c189c51bf66ad074539fd9fcd7",
+      "semanticNodeCount": 52,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "PgnTestCase.test_read_game_with_multicomment_move",
+      "sourceSpan": {
+        "start": [
+          2254,
+          4
+        ],
+        "end": [
+          2260,
           92
         ]
       },
@@ -2264,11 +2283,11 @@
       "identity": "PgnTestCase.test_comment_at_eol",
       "sourceSpan": {
         "start": [
-          2244,
+          2262,
           4
         ],
         "end": [
-          2258,
+          2276,
           61
         ]
       },
@@ -2280,11 +2299,11 @@
         {
           "span": {
             "start": [
-              2251,
+              2269,
               8
             ],
             "end": [
-              2251,
+              2269,
               55
             ]
           },
@@ -2294,11 +2313,11 @@
         {
           "span": {
             "start": [
-              2256,
+              2274,
               8
             ],
             "end": [
-              2256,
+              2274,
               66
             ]
           },
@@ -2312,11 +2331,11 @@
       "identity": "PgnTestCase.test_game_starting_comment",
       "sourceSpan": {
         "start": [
-          2343,
+          2361,
           4
         ],
         "end": [
-          2351,
+          2369,
           74
         ]
       },
@@ -2331,11 +2350,11 @@
       "identity": "PgnTestCase.test_game_starting_variation",
       "sourceSpan": {
         "start": [
-          2353,
+          2371,
           4
         ],
         "end": [
-          2369,
+          2387,
           72
         ]
       },
@@ -2350,11 +2369,11 @@
       "identity": "PgnTestCase.test_tree_traversal",
       "sourceSpan": {
         "start": [
-          2393,
+          2411,
           4
         ],
         "end": [
-          2422,
+          2440,
           42
         ]
       },
@@ -2369,11 +2388,11 @@
       "identity": "PgnTestCase.test_promote_demote",
       "sourceSpan": {
         "start": [
-          2424,
+          2442,
           4
         ],
         "end": [
-          2449,
+          2467,
           36
         ]
       },
@@ -2388,11 +2407,11 @@
       "identity": "PgnTestCase.test_add_line",
       "sourceSpan": {
         "start": [
-          2705,
+          2723,
           4
         ],
         "end": [
-          2720,
+          2738,
           36
         ]
       },
@@ -2407,11 +2426,11 @@
       "identity": "PgnTestCase.test_mainline",
       "sourceSpan": {
         "start": [
-          2722,
+          2740,
           4
         ],
         "end": [
-          2731,
+          2749,
           71
         ]
       },
@@ -2426,11 +2445,11 @@
       "identity": "PgnTestCase.test_annotations",
       "sourceSpan": {
         "start": [
-          2847,
+          2865,
           4
         ],
         "end": [
-          2890,
+          2908,
           59
         ]
       },
@@ -2445,11 +2464,11 @@
       "identity": "PgnTestCase.test_float_emt",
       "sourceSpan": {
         "start": [
-          2898,
+          2916,
           4
         ],
         "end": [
-          2909,
+          2927,
           39
         ]
       },
@@ -2461,11 +2480,11 @@
         {
           "span": {
             "start": [
-              2908,
+              2926,
               61
             ],
             "end": [
-              2908,
+              2926,
               70
             ]
           },
@@ -2479,11 +2498,11 @@
       "identity": "PgnTestCase.test_float_clk",
       "sourceSpan": {
         "start": [
-          2911,
+          2929,
           4
         ],
         "end": [
-          2922,
+          2940,
           41
         ]
       },
@@ -2495,11 +2514,11 @@
         {
           "span": {
             "start": [
-              2921,
+              2939,
               61
             ],
             "end": [
-              2921,
+              2939,
               70
             ]
           },
@@ -2513,11 +2532,11 @@
       "identity": "PgnTestCase.test_utf8_bom",
       "sourceSpan": {
         "start": [
-          2966,
+          2984,
           4
         ],
         "end": [
-          2976,
+          2994,
           40
         ]
       },
@@ -2532,11 +2551,11 @@
       "identity": "EngineTestCase.test_score_ordering",
       "sourceSpan": {
         "start": [
-          3011,
+          3029,
           4
         ],
         "end": [
-          3039,
+          3057,
           124
         ]
       },
@@ -2551,11 +2570,11 @@
       "identity": "EngineTestCase.test_wdl_model",
       "sourceSpan": {
         "start": [
-          3070,
+          3088,
           4
         ],
         "end": [
-          3076,
+          3094,
           104
         ]
       },
