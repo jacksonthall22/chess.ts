@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "upstreamCommit": "9c24454dcea4f8a30259d811a2f10b26e911deb4",
   "sourcePath": "python-chess/test.py",
-  "translatedMethodCount": 91,
-  "sourceCommentCount": 59,
-  "semanticNodeCount": 7172,
-  "assertionCount": 486,
+  "translatedMethodCount": 96,
+  "sourceCommentCount": 73,
+  "semanticNodeCount": 7870,
+  "assertionCount": 552,
   "parityGapRootCount": 0,
   "parityGapCaseCount": 0,
   "methods": [
@@ -1674,6 +1674,25 @@
       "parityGapCases": []
     },
     {
+      "identity": "BoardTestCase.test_equality",
+      "sourceSpan": {
+        "start": [
+          971,
+          4
+        ],
+        "end": [
+          980,
+          32
+        ]
+      },
+      "sourceSha256": "8b621646f38385a20a402db5e1db8a7a102a5b9bed5871d403bcbe543bf756b3",
+      "astSha256": "5d62c248abca758d220fbfc4c5735ce45927876b469df353f9758c9cedf0686c",
+      "semanticNodeCount": 55,
+      "assertionCount": 4,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
       "identity": "BoardTestCase.test_set_fen_as_epd",
       "sourceSpan": {
         "start": [
@@ -1708,6 +1727,25 @@
       "parityGapCases": []
     },
     {
+      "identity": "BoardTestCase.test_null_moves",
+      "sourceSpan": {
+        "start": [
+          1160,
+          4
+        ],
+        "end": [
+          1172,
+          42
+        ]
+      },
+      "sourceSha256": "d987c62029a491d97caa3b8b9b0a742e589be163f6e2d7039182518886273337",
+      "astSha256": "2d0ca42bc51acc4b5d53dd0b660c1382b0f570b541de2ecda0258f997ab8e9a4",
+      "semanticNodeCount": 80,
+      "assertionCount": 7,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
       "identity": "BoardTestCase.test_clear",
       "sourceSpan": {
         "start": [
@@ -1727,6 +1765,242 @@
       "parityGapCases": []
     },
     {
+      "identity": "BoardTestCase.test_threefold_repetition",
+      "sourceSpan": {
+        "start": [
+          1229,
+          4
+        ],
+        "end": [
+          1280,
+          68
+        ]
+      },
+      "sourceSha256": "11817099292b320a9d52c9f03eb3f60b43525f23bd7ae66307d2769fbacd0f4e",
+      "astSha256": "b81e154c80e97c81bf8c33ea298ceb6615298484882d8c0ff03b88cf7e03630d",
+      "semanticNodeCount": 227,
+      "assertionCount": 23,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              1232,
+              8
+            ],
+            "end": [
+              1232,
+              75
+            ]
+          },
+          "placement": "leading",
+          "text": "# Go back and forth with the knights to reach the starting position"
+        },
+        {
+          "span": {
+            "start": [
+              1233,
+              8
+            ],
+            "end": [
+              1233,
+              28
+            ]
+          },
+          "placement": "leading",
+          "text": "# for a second time."
+        },
+        {
+          "span": {
+            "start": [
+              1247,
+              8
+            ],
+            "end": [
+              1247,
+              20
+            ]
+          },
+          "placement": "leading",
+          "text": "# Once more."
+        },
+        {
+          "span": {
+            "start": [
+              1258,
+              8
+            ],
+            "end": [
+              1258,
+              76
+            ]
+          },
+          "placement": "leading",
+          "text": "# Now black can go back to the starting position (thus reaching it a"
+        },
+        {
+          "span": {
+            "start": [
+              1259,
+              8
+            ],
+            "end": [
+              1259,
+              22
+            ]
+          },
+          "placement": "leading",
+          "text": "# third time)."
+        },
+        {
+          "span": {
+            "start": [
+              1264,
+              8
+            ],
+            "end": [
+              1264,
+              55
+            ]
+          },
+          "placement": "leading",
+          "text": "# They indeed do it. Also, white can now claim."
+        },
+        {
+          "span": {
+            "start": [
+              1268,
+              8
+            ],
+            "end": [
+              1268,
+              41
+            ]
+          },
+          "placement": "leading",
+          "text": "# But not after a different move."
+        },
+        {
+          "span": {
+            "start": [
+              1273,
+              8
+            ],
+            "end": [
+              1273,
+              61
+            ]
+          },
+          "placement": "leading",
+          "text": "# Undo moves and check if everything works backwards."
+        },
+        {
+          "span": {
+            "start": [
+              1274,
+              21
+            ],
+            "end": [
+              1274,
+              25
+            ]
+          },
+          "placement": "inline",
+          "text": "# e4"
+        },
+        {
+          "span": {
+            "start": [
+              1276,
+              21
+            ],
+            "end": [
+              1276,
+              26
+            ]
+          },
+          "placement": "inline",
+          "text": "# Ng8"
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_fifty_moves",
+      "sourceSpan": {
+        "start": [
+          1344,
+          4
+        ],
+        "end": [
+          1377,
+          48
+        ]
+      },
+      "sourceSha256": "536e6d0589fa86cd1e7197f599ccbce3daae2208a31b31ef33386b978d8ed14b",
+      "astSha256": "1dc90dc208e7fd544532300fc30199dd5cd515f9d8f7c7379233ae421b81e24b",
+      "semanticNodeCount": 181,
+      "assertionCount": 19,
+      "comments": [
+        {
+          "span": {
+            "start": [
+              1345,
+              8
+            ],
+            "end": [
+              1345,
+              69
+            ]
+          },
+          "placement": "leading",
+          "text": "# Test positions from Jan Timman vs. Christopher Lutz (1995)."
+        },
+        {
+          "span": {
+            "start": [
+              1365,
+              8
+            ],
+            "end": [
+              1365,
+              51
+            ]
+          },
+          "placement": "leading",
+          "text": "# Once checkmated, it is too late to claim."
+        },
+        {
+          "span": {
+            "start": [
+              1370,
+              8
+            ],
+            "end": [
+              1370,
+              79
+            ]
+          },
+          "placement": "leading",
+          "text": "# A stalemate is a draw, but you can not and do not need to claim it by"
+        },
+        {
+          "span": {
+            "start": [
+              1371,
+              8
+            ],
+            "end": [
+              1371,
+              30
+            ]
+          },
+          "placement": "leading",
+          "text": "# the fifty-move rule."
+        }
+      ],
+      "parityGapCases": []
+    },
+    {
       "identity": "BoardTestCase.test_promoted_comparison",
       "sourceSpan": {
         "start": [
@@ -1742,6 +2016,25 @@
       "astSha256": "fbe5623101c13a8e4500ab0225a2c0af3e5133833ebd733d0060f4289c0e7aa6",
       "semanticNodeCount": 30,
       "assertionCount": 1,
+      "comments": [],
+      "parityGapCases": []
+    },
+    {
+      "identity": "BoardTestCase.test_is_irreversible",
+      "sourceSpan": {
+        "start": [
+          1693,
+          4
+        ],
+        "end": [
+          1709,
+          66
+        ]
+      },
+      "sourceSha256": "cb13781b4970a8d6fadac0d3f723fa03b3742adb3e0c03b4d5b6d019a2d2e10c",
+      "astSha256": "9df592d03b948ee7cc4b14f9fc5e3101e900a3570e3a39b43a53c3e5469e378f",
+      "semanticNodeCount": 155,
+      "assertionCount": 13,
       "comments": [],
       "parityGapCases": []
     },
