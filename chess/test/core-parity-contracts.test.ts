@@ -91,6 +91,16 @@ describe('TypeScript-native parity contracts', () => {
     )
   })
 
+  test('SAN separator matching does not accept a backslash', () => {
+    expect(chess.SAN_REGEX.test('e2-e4')).toBe(true)
+    expect(chess.SAN_REGEX.test('e2\\e4')).toBe(false)
+    expect(
+      new chess.Board()
+        .parseSan('e2-e4')
+        .equals(chess.Move.fromUci('e2e4')),
+    ).toBe(true)
+  })
+
   test('a1a1q remains non-null raw UCI and is illegal on a board', () => {
     const raw = chess.Move.fromUci('a1a1q')
 

@@ -9,6 +9,8 @@ export const max = (first: number, second: number): number =>
 /** Python 3.12 / Unicode 15.0 whitespace used by `str` and `re`. */
 export const PYTHON_WHITESPACE_SOURCE =
   '[\\u0009-\\u000d\\u001c-\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]'
+const PYTHON_NUMERIC_WHITESPACE_SOURCE =
+  '[\\u0009-\\u000d\\u0020\\u0085\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000]'
 
 const PYTHON_WHITESPACE_ONLY = new RegExp(
   `^(?:${PYTHON_WHITESPACE_SOURCE})+$`,
@@ -26,10 +28,17 @@ const PYTHON_WHITESPACE_RUNS = new RegExp(
   `${PYTHON_WHITESPACE_SOURCE}+`,
   'g',
 )
+const PYTHON_NUMERIC_LEADING_WHITESPACE = new RegExp(
+  `^(?:${PYTHON_NUMERIC_WHITESPACE_SOURCE})+`,
+)
+const PYTHON_NUMERIC_TRAILING_WHITESPACE = new RegExp(
+  `(?:${PYTHON_NUMERIC_WHITESPACE_SOURCE})+$`,
+)
 
 const PYTHON_INTEGER = /^[+-]?[0-9](?:_?[0-9])*$/
+const PYTHON_INT_MAX_STR_DIGITS = 4300
 const PYTHON_FLOAT =
-  /^[+-]?(?:(?:[0-9](?:_?[0-9])*(?:\.[0-9](?:_?[0-9])*)?)|(?:[0-9](?:_?[0-9])*\.)|(?:\.[0-9](?:_?[0-9])*))(?:[eE][+-]?[0-9](?:_?[0-9])*)?$/
+  /^[+-]?(?:(?:(?:[0-9](?:_?[0-9])*(?:\.[0-9](?:_?[0-9])*)?)|(?:[0-9](?:_?[0-9])*\.)|(?:\.[0-9](?:_?[0-9])*))(?:[eE][+-]?[0-9](?:_?[0-9])*)?|inf(?:inity)?|nan)$/i
 
 /**
  * Decimal-zero code points from Unicode 15.0, the character database used by
@@ -84,11 +93,14 @@ export const normalizePythonDecimalDigits = (value: string): string =>
 export const parsePythonInt = (value: string): number | bigint => {
   const normalized = normalizePythonDecimalDigits(
     value
-      .replace(PYTHON_LEADING_WHITESPACE, '')
-      .replace(PYTHON_TRAILING_WHITESPACE, ''),
+      .replace(PYTHON_NUMERIC_LEADING_WHITESPACE, '')
+      .replace(PYTHON_NUMERIC_TRAILING_WHITESPACE, ''),
   )
   if (!PYTHON_INTEGER.test(normalized)) {
     throw new ValueError(`invalid literal for int(): ${JSON.stringify(value)}`)
+  }
+  if (normalized.replace(/^[+-]/, '').replaceAll('_', '').length > PYTHON_INT_MAX_STR_DIGITS) {
+    throw new ValueError('Exceeds the limit for integer string conversion')
   }
 
   const parsed = BigInt(normalized.replaceAll('_', ''))
@@ -104,13 +116,20 @@ export const parsePythonInt = (value: string): number | bigint => {
 export const parsePythonFloat = (value: string): number => {
   const normalized = normalizePythonDecimalDigits(
     value
-      .replace(PYTHON_LEADING_WHITESPACE, '')
-      .replace(PYTHON_TRAILING_WHITESPACE, ''),
+      .replace(PYTHON_NUMERIC_LEADING_WHITESPACE, '')
+      .replace(PYTHON_NUMERIC_TRAILING_WHITESPACE, ''),
   )
   if (!PYTHON_FLOAT.test(normalized)) {
     throw new ValueError(`could not convert string to float: ${value}`)
   }
-  return Number(normalized.replaceAll('_', ''))
+  const parsed = normalized.replaceAll('_', '')
+  if (/^[+-]?inf(?:inity)?$/i.test(parsed)) {
+    return parsed.startsWith('-') ? -Infinity : Infinity
+  }
+  if (/^[+-]?nan$/i.test(parsed)) {
+    return parsed.startsWith('-') ? -Number.NaN : Number.NaN
+  }
+  return Number(parsed)
 }
 
 /** Direct equivalent of Python's shortest finite `str(float)` formatting. */
