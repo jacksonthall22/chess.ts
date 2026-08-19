@@ -21,6 +21,7 @@ from .target import (
     CHILD_GAME_NODE,
     BOOLEAN,
     GAME,
+    GAME_BUILDER,
     GAME_NODE,
     FLOAT,
     FILE_EXPORTER,
@@ -404,6 +405,8 @@ REGISTERED_NUMERIC_CONSTANTS = frozenset(
         "chess.QUEEN",
         "chess.ROOK",
         "chess.STATUS_BAD_CASTLING_RIGHTS",
+        "chess.pgn.NAG_BRILLIANT_MOVE",
+        "chess.pgn.NAG_DUBIOUS_MOVE",
         "chess.pgn.NAG_MISTAKE",
     }
 )
@@ -833,6 +836,10 @@ def named_call_contract(name: str | None) -> CallContract | None:
             GAME,
             invocation=InvocationKind.CONSTRUCT,
         ),
+        "chess.pgn.GameBuilder": call_contract(
+            GAME_BUILDER,
+            invocation=InvocationKind.CONSTRUCT,
+        ),
         "chess.pgn.StringExporter": call_contract(
             STRING_EXPORTER,
             keywords=EXPORTER_KEYWORDS,
@@ -1152,7 +1159,14 @@ def method_call_contract(
             return call_contract(CHILD_GAME_NODE, MOVE_RULE)
         if method == "board":
             return call_contract(BOARD)
+        if method == "accept_subgame":
+            return call_contract(GAME, exact(GAME_BUILDER))
         if kind is ShapeKind.GAME:
+            if method == "setup":
+                return call_contract(
+                    VOID,
+                    exact(STRING, BOARD, description="string or board"),
+                )
             if method == "add_line":
                 return call_contract(
                     GAME_NODE,

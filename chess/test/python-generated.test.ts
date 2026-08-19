@@ -1368,6 +1368,46 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(virtualFile.getValue(), (pgn + "\n\n"), (__actual, __expected) => __actual === __expected)
   }
 
+  testSetup(): void {
+    const game = new pgnModule.Game()
+    this.assertEqualUsing(game.board(), new chess.Board(), (__actual, __expected) => __actual.equals(__expected))
+    this.assertNotContainsUsing("FEN", game.headers, (__container, __member) => __container.includes(__member))
+    this.assertNotContainsUsing("SetUp", game.headers, (__container, __member) => __container.includes(__member))
+    this.assertNotContainsUsing("Variant", game.headers, (__container, __member) => __container.includes(__member))
+
+    let fen = "rnbqkbnr/pp1ppp1p/6p1/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4"
+    game.setup(fen)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "FEN"), fen, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "SetUp"), "1", (__actual, __expected) => __actual === __expected)
+    this.assertNotContainsUsing("Variant", game.headers, (__container, __member) => __container.includes(__member))
+
+    game.setup(chess.STARTING_FEN)
+    this.assertNotContainsUsing("FEN", game.headers, (__container, __member) => __container.includes(__member))
+    this.assertNotContainsUsing("SetUp", game.headers, (__container, __member) => __container.includes(__member))
+    this.assertNotContainsUsing("Variant", game.headers, (__container, __member) => __container.includes(__member))
+
+    // Setup again, while starting FEN is already set.
+    game.setup(chess.STARTING_FEN)
+    this.assertNotContainsUsing("FEN", game.headers, (__container, __member) => __container.includes(__member))
+    this.assertNotContainsUsing("SetUp", game.headers, (__container, __member) => __container.includes(__member))
+    this.assertNotContainsUsing("Variant", game.headers, (__container, __member) => __container.includes(__member))
+
+    game.setup(new chess.Board(fen))
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "FEN"), fen, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "SetUp"), "1", (__actual, __expected) => __actual === __expected)
+    this.assertNotContainsUsing("Variant", game.headers, (__container, __member) => __container.includes(__member))
+
+    // Chess960 starting position #283.
+    fen = "rkbqrnnb/pppppppp/8/8/8/8/PPPPPPPP/RKBQRNNB w KQkq - 0 1"
+    game.setup(fen)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "FEN"), fen, (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "SetUp"), "1", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "Variant"), "Chess960", (__actual, __expected) => __actual === __expected)
+    const board = game.board()
+    this.assertTrue(board.chess960)
+    this.assertEqualUsing(board.fen(), fen, (__actual, __expected) => __actual === __expected)
+  }
+
   testPromoteToMain(): void {
     const e4 = chess.Move.fromUci("e2e4")
     const d4 = chess.Move.fromUci("d2d4")
@@ -1445,6 +1485,29 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(node.startingComments, ["Start of variation"], (__actual, __expected) => __actual.length === __expected.length && __actual.every((__value0, __index0) => __expected.slice(__index0, __index0 + 1).some(__expected0 => __value0 === __expected0)))
   }
 
+  testAnnotationSymbols(): void {
+    const pgn = new pgnModule.StringIO("1. b4?! g6 2. Bb2 Nc6? 3. Bxh8!!")
+    const game = pgnModule.readGame(pgn)
+
+    let node: pgnModule.GameNode = ((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).variation(chess.Move.fromUci("b2b4"))
+    this.assertContainsUsing(pgnModule.NAG_DUBIOUS_MOVE, node.nags, (__container, __member) => __container.has(__member))
+    this.assertEqualUsing(node.nags.size, 1, (__actual, __expected) => __actual === __expected)
+
+    node = node.getitem(0)
+    this.assertEqualUsing(node.nags.size, 0, (__actual, __expected) => __actual === __expected)
+
+    node = node.getitem(0)
+    this.assertEqualUsing(node.nags.size, 0, (__actual, __expected) => __actual === __expected)
+
+    node = node.getitem(0)
+    this.assertContainsUsing(pgnModule.NAG_MISTAKE, node.nags, (__container, __member) => __container.has(__member))
+    this.assertEqualUsing(node.nags.size, 1, (__actual, __expected) => __actual === __expected)
+
+    node = node.getitem(0)
+    this.assertContainsUsing(pgnModule.NAG_BRILLIANT_MOVE, node.nags, (__container, __member) => __container.has(__member))
+    this.assertEqualUsing(node.nags.size, 1, (__actual, __expected) => __actual === __expected)
+  }
+
   testTreeTraversal(): void {
     const game = new pgnModule.Game()
     const node = game.addVariation(new chess.Move(chess.E2, chess.E4))
@@ -1505,6 +1568,19 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(game.getitem(2), b, (__actual, __expected) => __actual === __expected)
   }
 
+  testBlackToMove(): void {
+    const game = new pgnModule.Game()
+    game.setup("8/8/4k3/8/4P3/4K3/8/8 b - - 0 17")
+    let node: pgnModule.GameNode = game
+    node = node.addMainVariation(chess.Move.fromUci("e6d6"))
+    node = node.addMainVariation(chess.Move.fromUci("e3d4"))
+    node = node.addMainVariation(chess.Move.fromUci("d6e6"))
+
+    const expected = "[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[FEN \"8/8/4k3/8/4P3/4K3/8/8 b - - 0 17\"]\n[SetUp \"1\"]\n\n17... Kd6 18. Kd4 Ke6 *"
+
+    this.assertEqualUsing(game.toString(), expected, (__actual, __expected) => __actual === __expected)
+  }
+
   testAddLine(): void {
     const game = new pgnModule.Game()
     game.addVariation(chess.Move.fromUci("e2e4"))
@@ -1533,6 +1609,35 @@ class PgnTestCase extends TestCase {
     this.assertTrue(game.mainlineMoves().bool())
     this.assertEqualUsing(Array.from(game.mainlineMoves().reversed()), Array.from(((__sequence) => { const __length = __sequence.length; return (function* () { for (let __index = __length - 1; __index >= 0; __index -= 1) { const __value = __sequence.at(__index); if (__value === undefined) return; yield __value; } })(); })(moves)), (__actual, __expected) => __actual.length === __expected.length && __actual.every((__value0, __index0) => __expected.slice(__index0, __index0 + 1).some(__expected0 => __value0.equals(__expected0))))
     this.assertEqualUsing(game.mainlineMoves().toString(), "1. d3 Nf6 2. e4", (__actual, __expected) => __actual === __expected)
+  }
+
+  testSemicolonComment(): void {
+    const pgn = new pgnModule.StringIO("1. e4 ; e5")
+    const game = pgnModule.readGame(pgn)
+    const node = ((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).next()
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).move, chess.Move.fromUci("e2e4"), (__actual, __expected) => __actual.equals(__expected))
+    this.assertTrue(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(node).isEnd())
+  }
+
+  testNoMovetext(): void {
+    const pgn = new pgnModule.StringIO("\n[Event \"A\"]\n\n\n[Event \"B\"]\n")
+
+    let game = pgnModule.readGame(pgn)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).headers, "Event"), "A", (__actual, __expected) => __actual === __expected)
+    game = pgnModule.readGame(pgn)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).headers, "Event"), "B", (__actual, __expected) => __actual === __expected)
+
+    this.assertTrue(((__left, __right) => __left === null)(pgnModule.readGame(pgn), null))
+  }
+
+  testSubgame(): void {
+    const pgn = new pgnModule.StringIO("1. d4 d5 (1... Nf6 2. c4 (2. Nf3 g6 3. g3))")
+    const game = pgnModule.readGame(pgn)
+    const node = ((__sequence, __index) => { const __indexedValue = __sequence.at(__index); if (__indexedValue === undefined) throw new RangeError("array index out of range"); return __indexedValue; })(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(game).next()).variations, 1)
+    const subgame = node.acceptSubgame(new pgnModule.GameBuilder())
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(subgame.headers, "FEN"), "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2", (__actual, __expected) => __actual === __expected)
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(subgame.next()).move, chess.Move.fromUci("c2c4"), (__actual, __expected) => __actual.equals(__expected))
+    this.assertEqualUsing(((__sequence, __index) => { const __indexedValue = __sequence.at(__index); if (__indexedValue === undefined) throw new RangeError("array index out of range"); return __indexedValue; })(subgame.variations, 1).move, chess.Move.fromUci("g1f3"), (__actual, __expected) => __actual.equals(__expected))
   }
 
   testAnnotations(): void {
@@ -1626,16 +1731,22 @@ class PgnTestCase extends TestCase {
 registerTestCase('PgnTestCase', PgnTestCase, {
   lines: {
     testExporter: 2097,
+    testSetup: 2159,
     testPromoteToMain: 2198,
     testReadGameWithLeadingWhitespaceBeforeHeader: 2236,
     testReadGameWithMulticommentMove: 2254,
     testCommentAtEol: 2262,
     testGameStartingComment: 2361,
     testGameStartingVariation: 2371,
+    testAnnotationSymbols: 2389,
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
+    testBlackToMove: 2631,
     testAddLine: 2723,
     testMainline: 2740,
+    testSemicolonComment: 2797,
+    testNoMovetext: 2809,
+    testSubgame: 2824,
     testAnnotations: 2865,
     testFloatEmt: 2916,
     testFloatClk: 2929,

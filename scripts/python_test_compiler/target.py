@@ -42,6 +42,7 @@ class ShapeKind(str, Enum):
     GAME_NODE = "game-node"
     CHILD_GAME_NODE = "child-game-node"
     GAME = "game"
+    GAME_BUILDER = "game-builder"
     HEADERS = "headers"
     MAINLINE = "mainline"
     STRING_EXPORTER = "string-exporter"
@@ -185,6 +186,7 @@ PSEUDO_LEGAL_MOVE_GENERATOR = TargetShape(
 GAME_NODE = TargetShape(ShapeKind.GAME_NODE)
 CHILD_GAME_NODE = TargetShape(ShapeKind.CHILD_GAME_NODE)
 GAME = TargetShape(ShapeKind.GAME)
+GAME_BUILDER = TargetShape(ShapeKind.GAME_BUILDER)
 HEADERS = TargetShape(ShapeKind.HEADERS)
 MAINLINE_MOVE = TargetShape(ShapeKind.MAINLINE, element=MOVE)
 STRING_EXPORTER = TargetShape(ShapeKind.STRING_EXPORTER)
