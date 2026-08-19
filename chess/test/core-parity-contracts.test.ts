@@ -130,6 +130,33 @@ describe('TypeScript-native parity contracts', () => {
     expect(board.moveStack.map(move => move.uci())).toEqual(beforeStack)
   })
 
+  test('effective promoted policy is distinct from raw promotion state', () => {
+    class PromotionAwareBoard extends chess.Board {
+      _effectivePromoted(): chess.Bitboard {
+        return this.promoted
+      }
+    }
+
+    const fen = '4k3/8/8/8/8/8/8/4K2R w K - 0 1'
+    const board = new PromotionAwareBoard(fen)
+    board.promoted = chess.BB_E1
+
+    expect(board.boardFen()).toBe('4k3/8/8/8/8/8/8/4K~2R')
+    expect(board.boardFen({ promoted: false })).toBe(
+      '4k3/8/8/8/8/8/8/4K2R',
+    )
+    expect(board.king(chess.WHITE)).toBeNull()
+    expect(board.cleanCastlingRights()).toBe(chess.BB_EMPTY)
+
+    const standard = new chess.Board(fen)
+    standard.promoted = chess.BB_E1
+    expect(standard.boardFen()).toBe('4k3/8/8/8/8/8/8/4K2R')
+    expect(standard.boardFen({ promoted: true })).toBe(
+      '4k3/8/8/8/8/8/8/4K~2R',
+    )
+    expect(standard.king(chess.WHITE)).toBe(chess.E1)
+  })
+
   test('inline Python whitespace translations preserve the exact source character set', () => {
     expect(
       '\u001cvalue\u001c'
