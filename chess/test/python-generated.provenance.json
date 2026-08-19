@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "upstreamCommit": "b53c6e60d996a5a674efc036f8fd14965591ae4c",
+  "upstreamCommit": "77f1dab824757695d0a648fd337af5563b2ead1c",
   "sourcePath": "python-chess/test.py",
   "translatedMethodCount": 90,
   "sourceCommentCount": 59,
@@ -1552,8 +1552,8 @@
           78
         ]
       },
-      "sourceSha256": "104c6ecc3e6368f9f8e1f1249ebdeebd92785212eef4ef2f2fad0202700da363",
-      "astSha256": "0dc5f5cb35823093349c934e48079f90e234acbc5b53fe8e37d0f46d9d070b2b",
+      "sourceSha256": "064231dc068d57345190577ce905fdd1222bcdcea2b5d4a210918464e85fae4f",
+      "astSha256": "6b37259fc30775327a42c11c3edd276c406ba1a31f460339d5aa1375d107854c",
       "semanticNodeCount": 201,
       "assertionCount": 8,
       "comments": [],

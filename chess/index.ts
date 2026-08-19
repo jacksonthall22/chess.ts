@@ -4370,7 +4370,7 @@ export class Board extends BaseBoard {
   /**
    * Given a sequence of moves, returns a string representing the sequence
    * in standard algebraic notation (e.g., ``1. e4 e5 2. Nf3 Nc6`` or
-   * ``37...Bg6 38. fxg6``).
+   * ``37... Bg6 38. fxg6``).
    *
    * The board will not be modified as a result of calling this.
    *
@@ -4390,7 +4390,7 @@ export class Board extends BaseBoard {
       if (board.turn === WHITE) {
         san.push(`${board.fullmoveNumber}. ${board.sanAndPush(move)}`)
       } else if (san.length === 0) {
-        san.push(`${board.fullmoveNumber}...${board.sanAndPush(move)}`)
+        san.push(`${board.fullmoveNumber}... ${board.sanAndPush(move)}`)
       } else {
         san.push(board.sanAndPush(move))
       }
