@@ -1581,6 +1581,22 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(game.toString(), expected, (__actual, __expected) => __actual === __expected)
   }
 
+  testGameFromBoard(): void {
+    const setup = "3k4/8/4K3/8/8/8/8/2R5 b - - 0 1"
+    const board = new chess.Board(setup)
+    board.pushSan("Ke8")
+    board.pushSan("Rc8#")
+
+    const game = pgnModule.Game.fromBoard(board)
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "FEN"), setup, (__actual, __expected) => __actual === __expected)
+
+    const endNode = game.end()
+    this.assertEqualUsing(endNode.move, chess.Move.fromUci("c1c8"), (__actual, __expected) => __actual !== null && (__actual.equals(__expected)))
+    this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(endNode.parent).move, chess.Move.fromUci("d8e8"), (__actual, __expected) => __actual !== null && (__actual.equals(__expected)))
+
+    this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(game.headers, "Result"), "1-0", (__actual, __expected) => __actual === __expected)
+  }
+
   testAddLine(): void {
     const game = new pgnModule.Game()
     game.addVariation(chess.Move.fromUci("e2e4"))
@@ -1638,6 +1654,18 @@ class PgnTestCase extends TestCase {
     this.assertEqualUsing(((__mapping, __key) => { const __mappedValue = __mapping.get(__key); if (__mappedValue === undefined) throw new chess.KeyError(String(__key)); return __mappedValue; })(subgame.headers, "FEN"), "rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2", (__actual, __expected) => __actual === __expected)
     this.assertEqualUsing(((__receiver) => { if (__receiver === null) throw new TypeError("cannot access an attribute of null"); return __receiver; })(subgame.next()).move, chess.Move.fromUci("c2c4"), (__actual, __expected) => __actual.equals(__expected))
     this.assertEqualUsing(((__sequence, __index) => { const __indexedValue = __sequence.at(__index); if (__indexedValue === undefined) throw new RangeError("array index out of range"); return __indexedValue; })(subgame.variations, 1).move, chess.Move.fromUci("g1f3"), (__actual, __expected) => __actual.equals(__expected))
+  }
+
+  testRecursion(): void {
+    const board = new chess.Board("4k3/8/8/8/8/8/8/4K3 w - - 0 1")
+    for (let _ of ({ *[Symbol.iterator]() { for (let __index = 0; __index < 1000; __index += 1) { yield __index; } } })) {
+      board.push(new chess.Move(chess.E1, chess.E2))
+      board.push(new chess.Move(chess.E8, chess.E7))
+      board.push(new chess.Move(chess.E2, chess.E1))
+      board.push(new chess.Move(chess.E7, chess.E8))
+    }
+    const game = pgnModule.Game.fromBoard(board)
+    this.assertTrue(game.toString().endsWith("2000. Ke1 Ke8 1/2-1/2"))
   }
 
   testAnnotations(): void {
@@ -1742,11 +1770,13 @@ registerTestCase('PgnTestCase', PgnTestCase, {
     testTreeTraversal: 2411,
     testPromoteDemote: 2442,
     testBlackToMove: 2631,
+    testGameFromBoard: 2694,
     testAddLine: 2723,
     testMainline: 2740,
     testSemicolonComment: 2797,
     testNoMovetext: 2809,
     testSubgame: 2824,
+    testRecursion: 2855,
     testAnnotations: 2865,
     testFloatEmt: 2916,
     testFloatClk: 2929,
