@@ -163,6 +163,14 @@ describe('TypeScript-native PGN parity contracts', () => {
     })
   })
 
+  test('readGame strips every leading BOM like Python lstrip', () => {
+    const game = pgn.readGame(
+      new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n*'),
+    )
+
+    expect(game?.headers.get('Event')).toBe('BOM')
+  })
+
   test('StringExporter output round-trips the mainline and sidelines', () => {
     const game = new pgn.Game()
     const e4 = game.addVariation(chess.Move.fromUci('e2e4'))
