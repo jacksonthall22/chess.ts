@@ -975,6 +975,8 @@ def method_call_contract(
             "has_queenside_castling_rights",
         }:
             return call_contract(BOOLEAN, BOOLEAN_RULE)
+        if method == "king":
+            return call_contract(NUMBER.optional(), BOOLEAN_RULE)
         if method in {"is_legal", "is_pseudo_legal"}:
             return call_contract(BOOLEAN, MOVE_RULE)
         if method == "is_game_over":
