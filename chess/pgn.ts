@@ -3,7 +3,7 @@ import { Board, Color, Move, Square, WHITE } from './index'
 import { PovScore, Cp, Score, Mate } from './engine'
 import { Arrow } from './svg'
 import { findVariant } from './variant'
-import { KeyError, OverflowError, ValueError } from './errors'
+import { KeyError, OSError, OverflowError, ValueError } from './errors'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
@@ -108,6 +108,11 @@ export class StringIO implements TextIO {
 
   write(str: string): number {
     const characters = Array.from(str)
+    if (characters.length > 0 && this.position > this.buffer.length) {
+      this.buffer = this.buffer.concat(
+        Array(this.position - this.buffer.length).fill('\0'),
+      )
+    }
     const replaced = Math.min(
       characters.length,
       this.buffer.length - this.position,
@@ -123,7 +128,7 @@ export class StringIO implements TextIO {
 
   read(): string {
     const value = this.buffer.slice(this.position).join('')
-    this.position = this.buffer.length
+    this.position = Math.max(this.position, this.buffer.length)
     return value
   }
 
@@ -135,6 +140,29 @@ export class StringIO implements TextIO {
     const line = this.buffer.slice(this.position, index + 1).join('')
     this.position = index + 1
     return line
+  }
+
+  seek(offset: number, whence: 0 | 1 | 2 = 0): number {
+    if (!Number.isInteger(offset)) {
+      throw new TypeError('StringIO seek offset must be an integer')
+    }
+    if (whence !== 0 && whence !== 1 && whence !== 2) {
+      throw new ValueError('StringIO seek whence must be 0, 1, or 2')
+    }
+    if (whence !== 0 && offset !== 0) {
+      throw new OSError("Can't do nonzero cur-relative seeks")
+    }
+    const position =
+      (whence === 0
+        ? 0
+        : whence === 1
+          ? this.position
+          : this.buffer.length) + offset
+    if (position < 0) {
+      throw new ValueError('StringIO seek position must not be negative')
+    }
+    this.position = position
+    return position
   }
 }
 

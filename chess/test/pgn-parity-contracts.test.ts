@@ -163,6 +163,132 @@ describe('TypeScript-native PGN parity contracts', () => {
     })
   })
 
+  test('visitors observe the board and move trace through parsing and traversal', () => {
+    class TraceVisitor extends pgn.BaseVisitor<string[]> {
+      trace: string[]
+
+      constructor() {
+        super()
+        this.trace = []
+      }
+
+      override visitBoard(board: chess.Board): void {
+        this.trace.push(board.fen())
+      }
+
+      override visitMove(board: chess.Board, move: chess.Move): void {
+        this.trace.push(board.san(move))
+      }
+
+      override result(): string[] {
+        return this.trace
+      }
+    }
+
+    const handle = new pgn.StringIO(`[FEN "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"]
+
+1... e5 (1... d5 2. exd5) (1... c5) 2. Nf3 Nc6
+`)
+    const trace = [
+      'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1',
+      'e5',
+      'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      'd5',
+      'rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      'exd5',
+      'rnbqkbnr/ppp1pppp/8/3P4/8/8/PPPP1PPP/RNBQKBNR b KQkq - 0 2',
+      'c5',
+      'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2',
+      'Nf3',
+      'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2',
+      'Nc6',
+      'r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3',
+    ]
+
+    expect(trace).toEqual(
+      pgn.readGame<string[]>(handle, {
+        Visitor: TraceVisitor,
+      }),
+    )
+
+    handle.seek(0)
+    expect(trace).toEqual(
+      pgn.readGame(handle)!.accept(new TraceVisitor()),
+    )
+
+    handle.seek(0)
+    const board = pgn.readGame<chess.Board>(handle, {
+      Visitor: pgn.BoardBuilder,
+    })
+    expect(new chess.Board(trace.at(-1)!).equals(board!)).toBe(true)
+  })
+
+  test('visitors can skip nested variations through parsing and traversal', () => {
+    class BlackVariationsOnly extends pgn.GameBuilder {
+      skipping!: boolean
+
+      override beginVariation(): pgn.SkipType | void {
+        this.skipping = this.variationStack.at(-1)!.turn() !== chess.WHITE
+        if (this.skipping) {
+          return pgn.SKIP
+        } else {
+          return super.beginVariation()
+        }
+      }
+
+      override endVariation(): void {
+        if (this.skipping) {
+          this.skipping = false
+        } else {
+          return super.endVariation()
+        }
+      }
+    }
+
+    const source =
+      '1. e4 e5 ( 1... d5 2. exd5 Qxd5 3. Nc3 ( 3. c4 ) 3... Qa5 ) *'
+    const expectedPgn = '1. e4 e5 ( 1... d5 2. exd5 Qxd5 3. Nc3 Qa5 ) *'
+
+    // Driven by parser.
+    let game = pgn.readGame<pgn.Game>(new pgn.StringIO(source), {
+      Visitor: BlackVariationsOnly,
+    })!
+    expect(
+      game.accept(new pgn.StringExporter({ headers: false })),
+    ).toBe(expectedPgn)
+
+    // Driven by game tree traversal.
+    game = pgn
+      .readGame(new pgn.StringIO(source))!
+      .accept(new BlackVariationsOnly())
+    expect(
+      game.accept(new pgn.StringExporter({ headers: false })),
+    ).toBe(expectedPgn)
+  })
+
+  test('StringIO seek preserves Python writes and errors', () => {
+    const stream = new pgn.StringIO('abc')
+    stream.seek(5)
+    expect(stream.write('x')).toBe(1)
+    expect(stream.getValue()).toBe('abc\0\0x')
+    expect(() => stream.seek(-1)).toThrow(chess.ValueError)
+    expect(() => stream.seek(1, 1)).toThrow(chess.OSError)
+
+    const largeGap = new pgn.StringIO()
+    largeGap.seek(125_000)
+    expect(largeGap.write('x')).toBe(1)
+    expect(largeGap.getValue()).toHaveLength(125_001)
+    expect(largeGap.getValue().at(-1)).toBe('x')
+
+    const emptyWrite = new pgn.StringIO('abc')
+    emptyWrite.seek(5)
+    expect(emptyWrite.write('')).toBe(0)
+    expect(emptyWrite.getValue()).toBe('abc')
+    expect(emptyWrite.read()).toBe('')
+    expect(emptyWrite.write('x')).toBe(1)
+    expect(emptyWrite.getValue()).toBe('abc\0\0x')
+  })
+
   test('readGame strips every leading BOM like Python lstrip', () => {
     const game = pgn.readGame(
       new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n*'),
