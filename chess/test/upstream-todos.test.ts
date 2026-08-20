@@ -9,19 +9,15 @@ describe('BoardTestCase — translation pending', () => {
   test.todo('test_move_generation_bug (python-chess test.py:923)',)
   test.todo('test_stateful_move_generation_bug (python-chess test.py:949)',)
   test.todo('test_ninesixty_castling_bug (python-chess test.py:960)',)
-  test.todo('test_equality (python-chess test.py:971)',)
   test.todo('test_status (python-chess test.py:982)',)
   test.todo('test_one_king_movegen (python-chess test.py:1049)',)
   test.todo('test_epd (python-chess test.py:1062)',)
   test.todo('test_eret_epd (python-chess test.py:1148)',)
-  test.todo('test_null_moves (python-chess test.py:1160)',)
   test.todo('test_attackers (python-chess test.py:1174)',)
   test.todo('test_en_passant_attackers (python-chess test.py:1185)',)
   test.todo('test_attacks (python-chess test.py:1198)',)
-  test.todo('test_threefold_repetition (python-chess test.py:1229)',)
   test.todo('test_fivefold_repetition (python-chess test.py:1282)',)
   test.todo('test_trivial_is_repetition (python-chess test.py:1341)',)
-  test.todo('test_fifty_moves (python-chess test.py:1344)',)
   test.todo('test_ep_legality (python-chess test.py:1387)',)
   test.todo('test_pseudo_legality (python-chess test.py:1404)',)
   test.todo('test_pseudo_legal_castling_masks (python-chess test.py:1445)',)
@@ -40,7 +36,6 @@ describe('BoardTestCase — translation pending', () => {
   test.todo('test_from_chess960_pos (python-chess test.py:1662)',)
   test.todo('test_mirror (python-chess test.py:1667)',)
   test.todo('test_chess960_pos (python-chess test.py:1674)',)
-  test.todo('test_is_irreversible (python-chess test.py:1693)',)
   test.todo('test_king_captures_unmoved_rook (python-chess test.py:1711)',)
   test.todo('test_impossible_check_due_to_en_passant (python-chess test.py:1719)',)
 })
@@ -250,5 +245,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Baseline: python-chess 9c24454dcea4f8a30259d811a2f10b26e911deb4
 // Total upstream tests: 292
-// Translated tests: 91
-// Pending tests: 201
+// Translated tests: 96
+// Pending tests: 196
