@@ -200,7 +200,9 @@ explicit target API contracts. It does not run the textual rewrites from
 Unsupported syntax, unknown semantics, unclaimed comments, stale generated
 files, or values that cannot be compared safely across runtimes fail the build
 instead of producing approximate tests. See [`UPSTREAM.md`](UPSTREAM.md) for
-the complete architecture, provenance, and update process.
+the complete architecture, provenance, and update process, and
+[`generated-test-compiler.md`](generated-test-compiler.md) for the compiler
+extension contract.
 
 ### `chess.ts`'s GPT
 I made a GPT to help with this project, [`python-chess` to `chess.ts` helper](https://chat.openai.com/g/g-Ht5toEWik-python-chess-to-chess-ts-helper).
