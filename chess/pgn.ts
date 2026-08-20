@@ -161,6 +161,12 @@ type HeadersBuilderArguments<HeadersT extends Headers> =
     ? [] | [options: { Headers_?: HeadersClass<HeadersT> }]
     : [options: { Headers_: HeadersClass<HeadersT> }]
 
+type VisitorConstructor<ResultT> = new () => BaseVisitor<ResultT>
+type VisitorFactory<ResultT> = () => BaseVisitor<ResultT>
+type VisitorCallable<ResultT> =
+  | VisitorConstructor<ResultT>
+  | VisitorFactory<ResultT>
+
 /** ========== Direct transpilation ========== */
 
 export const LOGGER = {
@@ -2270,7 +2276,7 @@ export class FileExporter extends StringExporterMixin<number> {
 export function readGame(handle: StringIO): Game | null
 export function readGame<ResultT>(
   handle: StringIO,
-  { Visitor }: { Visitor?: typeof BaseVisitor<ResultT> },
+  { Visitor }: { Visitor?: VisitorCallable<ResultT> },
 ): ResultT | null
 /**
  * Reads a game from a file opened in text mode.
@@ -2324,9 +2330,16 @@ export function readGame<ResultT>(
  */
 export function readGame<ResultT>(
   handle: StringIO,
-  { Visitor = GameBuilder }: { Visitor?: any } = {},
+  {
+    Visitor = GameBuilder as VisitorConstructor<ResultT>,
+  }: { Visitor?: VisitorCallable<ResultT> } = {},
 ): ResultT | null {
-  const visitor = new Visitor()
+  // Python invokes constructors and functions alike; JavaScript classes require `new`.
+  const visitor: any = Function.prototype
+    .toString.call(Visitor)
+    .startsWith('class ')
+    ? new (Visitor as VisitorConstructor<ResultT>)()
+    : (Visitor as VisitorFactory<ResultT>)()
 
   let foundGame = false
   let skippingGame = false

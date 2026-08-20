@@ -163,6 +163,19 @@ describe('TypeScript-native PGN parity contracts', () => {
     })
   })
 
+  test('readGame accepts a zero-argument visitor factory', () => {
+    class ResultVisitor extends pgn.BaseVisitor<string> {
+      override result(): string {
+        return 'factory'
+      }
+    }
+
+    const visitorFactory = (): pgn.BaseVisitor<string> => new ResultVisitor()
+    expect(
+      pgn.readGame(new pgn.StringIO('*'), { Visitor: visitorFactory }),
+    ).toBe('factory')
+  })
+
   test('readGame strips every leading BOM like Python lstrip', () => {
     const game = pgn.readGame(
       new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n*'),

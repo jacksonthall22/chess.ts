@@ -138,6 +138,20 @@ blocks. Without that binding, a later upstream use outside either block could
 resolve to a same-named enclosing or module variable. That is valid TypeScript,
 so typechecking could pass while the port silently uses the wrong `board`.
 
+### Preserve callable arguments without changing their source API
+
+Python invokes constructors and zero-argument factories through the same
+`Visitor()` syntax. TypeScript requires `new` for the former, so a translated
+call site that accepts either form must make that narrow distinction there; do
+not introduce a target-only option such as `visitorFactory` to change the
+source API.
+
+A Python classmethod passed as a callback is bound to its class. A bare
+TypeScript reference loses that receiver, so use `Class.method.bind(Class)` at
+the equivalent call site. Preserve any generic result information with a local
+type assertion only when the `bind()` declaration widens it and later code
+needs the specific result type.
+
 Default whitespace operations are one proved language boundary. Python
 `str.strip()` and whitespace `str.split()` include `U+001C` but exclude
 `U+FEFF`; JavaScript `trim()` and `\s` do the opposite for those characters.
