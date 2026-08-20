@@ -107,13 +107,18 @@ Every selected upstream body is emitted into
 `scripts/python_test_compiler/`; none is maintained as a hand-written
 TypeScript test.
 
+Expanding that selection is coverage work against the existing pin, not an
+upstream synchronization by itself. Add a small, coherent group of methods at
+a time, together with any general compiler rule and focused compiler checks
+they require, so the rule and generated diff remain independently reviewable.
+
 The other Vitest files are explicitly not translations:
 
 - `python-assertion-oracle.test.ts` and `errors.test.ts` test compiler/runtime
   infrastructure and the target error taxonomy.
 - `core-parity-contracts.test.ts` and `pgn-parity-contracts.test.ts` characterize
-  TypeScript API contracts and edge cases that are useful beyond the selected
-  upstream bodies.
+  TypeScript API contracts and parity edge cases useful beyond any one upstream
+  body. They must not recreate an unsupported upstream test method.
 
 No file other than `python-generated.test.ts` may register an upstream test
 identity. The compiler test suite enforces that rule.
@@ -254,6 +259,11 @@ the public broad result.
 Dereferencing any nullable result uses one general bind-once null guard. It
 does not depend on a test name, literal value, or surrounding assertion, and it
 does not use a postfix non-null assertion.
+
+## Compiler contract
+
+For the compiler glasses test and rules for extending the generated-test
+compiler, read [`generated-test-compiler.md`](generated-test-compiler.md).
 
 ## Compiler decision boundary
 

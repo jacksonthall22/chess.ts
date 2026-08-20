@@ -103,3 +103,7 @@ rewrite oracle output merely to make a failing test pass.
 For the first-parent upstream synchronization process, read
 [`UPSTREAM.md`](UPSTREAM.md). For established syntax mappings and exceptional
 language patterns, read [`py-to-ts-tips.md`](py-to-ts-tips.md).
+Before extending the generated-test compiler, read the **Compiler glasses
+test** in [`generated-test-compiler.md`](generated-test-compiler.md); test
+selection may name an upstream test, but lowering rules may not be shaped around
+one.
