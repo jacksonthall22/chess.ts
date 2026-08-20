@@ -110,16 +110,22 @@ TRANSLATED_TESTS = (
     *_tests(
         "PgnTestCase",
         "test_exporter",
+        "test_setup",
         "test_promote_to_main",
         "test_read_game_with_leading_whitespace_before_header",
         "test_read_game_with_multicomment_move",
         "test_comment_at_eol",
         "test_game_starting_comment",
         "test_game_starting_variation",
+        "test_annotation_symbols",
         "test_tree_traversal",
         "test_promote_demote",
+        "test_black_to_move",
         "test_add_line",
         "test_mainline",
+        "test_semicolon_comment",
+        "test_no_movetext",
+        "test_subgame",
         "test_annotations",
         "test_float_emt",
         "test_float_clk",
@@ -129,7 +135,7 @@ TRANSLATED_TESTS = (
 )
 
 
-if len(TRANSLATED_TESTS) != 96:
+if len(TRANSLATED_TESTS) != 102:
     raise RuntimeError(
-        f"translation selection must contain 96 methods, got {len(TRANSLATED_TESTS)}"
+        f"translation selection must contain 102 methods, got {len(TRANSLATED_TESTS)}"
     )

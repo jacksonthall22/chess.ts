@@ -155,6 +155,7 @@ def typescript_type(shape: TargetShape) -> str:
         ShapeKind.BASE_BOARD: "chess.BaseBoard",
         ShapeKind.SQUARE_SET: "chess.SquareSet",
         ShapeKind.GAME: "pgnModule.Game",
+        ShapeKind.GAME_BUILDER: "pgnModule.GameBuilder",
         ShapeKind.GAME_NODE: "pgnModule.GameNode",
         ShapeKind.CHILD_GAME_NODE: "pgnModule.ChildNode",
         ShapeKind.STRING_EXPORTER: "pgnModule.StringExporter",
@@ -2559,6 +2560,7 @@ class MethodCompiler:
         if kind is ShapeKind.PIECE:
             return Expression(f"{argument.code}.symbol()", STRING)
         if kind in {
+            ShapeKind.GAME,
             ShapeKind.MOVE,
             ShapeKind.SQUARE_SET,
             ShapeKind.PSEUDO_LEGAL_MOVE_GENERATOR,

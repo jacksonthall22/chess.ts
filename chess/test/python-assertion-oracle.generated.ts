@@ -4,9 +4,9 @@ import type { PythonAssertionOracleArtifact } from './python-assertion-oracle'
 
 export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
   schemaVersion: 1,
-  translatedMethodCount: 96,
-  tracedMethodCount: 96,
-  eventCount: 5516,
+  translatedMethodCount: 102,
+  tracedMethodCount: 102,
+  eventCount: 5554,
   excludedMethods: [
   ],
   methods: {
@@ -2554,6 +2554,29 @@ export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
       ["equal",["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[VeryLongHeader \"This is a very long header, much wider than the 80 columns that PGNs are formatted with by default\"]\n\n{ Test game: } 1. e4 { Scandinavian Defense: } 1... d5 ( { This } 1... h5 $2\n{ is nonsense } ) ( 1... e5 2. Qf3 $2 ) ( 1... c5 { Sicilian } ) 2. exd5\n{ Best } { and the end of this example } *"],["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[VeryLongHeader \"This is a very long header, much wider than the 80 columns that PGNs are formatted with by default\"]\n\n{ Test game: } 1. e4 { Scandinavian Defense: } 1... d5 ( { This } 1... h5 $2\n{ is nonsense } ) ( 1... e5 2. Qf3 $2 ) ( 1... c5 { Sicilian } ) 2. exd5\n{ Best } { and the end of this example } *"]],
       ["equal",["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[VeryLongHeader \"This is a very long header, much wider than the 80 columns that PGNs are formatted with by default\"]\n\n{ Test game: } 1. e4 { Scandinavian Defense: } 1... d5 ( { This } 1... h5 $2\n{ is nonsense } ) ( 1... e5 2. Qf3 $2 ) ( 1... c5 { Sicilian } ) 2. exd5\n{ Best } { and the end of this example } *\n\n"],["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[VeryLongHeader \"This is a very long header, much wider than the 80 columns that PGNs are formatted with by default\"]\n\n{ Test game: } 1. e4 { Scandinavian Defense: } 1... d5 ( { This } 1... h5 $2\n{ is nonsense } ) ( 1... e5 2. Qf3 $2 ) ( 1... c5 { Sicilian } ) 2. exd5\n{ Best } { and the end of this example } *\n\n"]],
     ],
+    "PgnTestCase.testSetup": [
+      ["equal",["board","rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"],["board","rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"]],
+      ["contains",["str","FEN"],"headers",false],
+      ["contains",["str","SetUp"],"headers",false],
+      ["contains",["str","Variant"],"headers",false],
+      ["equal",["str","rnbqkbnr/pp1ppp1p/6p1/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4"],["str","rnbqkbnr/pp1ppp1p/6p1/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4"]],
+      ["equal",["str","1"],["str","1"]],
+      ["contains",["str","Variant"],"headers",false],
+      ["contains",["str","FEN"],"headers",false],
+      ["contains",["str","SetUp"],"headers",false],
+      ["contains",["str","Variant"],"headers",false],
+      ["contains",["str","FEN"],"headers",false],
+      ["contains",["str","SetUp"],"headers",false],
+      ["contains",["str","Variant"],"headers",false],
+      ["equal",["str","rnbqkbnr/pp1ppp1p/6p1/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4"],["str","rnbqkbnr/pp1ppp1p/6p1/8/3pP3/5N2/PPP2PPP/RNBQKB1R w KQkq - 0 4"]],
+      ["equal",["str","1"],["str","1"]],
+      ["contains",["str","Variant"],"headers",false],
+      ["equal",["str","rkbqrnnb/pppppppp/8/8/8/8/PPPPPPPP/RKBQRNNB w KQkq - 0 1"],["str","rkbqrnnb/pppppppp/8/8/8/8/PPPPPPPP/RKBQRNNB w KQkq - 0 1"]],
+      ["equal",["str","1"],["str","1"]],
+      ["equal",["str","Chess960"],["str","Chess960"]],
+      ["truth",true],
+      ["equal",["str","rkbqrnnb/pppppppp/8/8/8/8/PPPPPPPP/RKBQRNNB w KQkq - 0 1"],["str","rkbqrnnb/pppppppp/8/8/8/8/PPPPPPPP/RKBQRNNB w KQkq - 0 1"]],
+    ],
     "PgnTestCase.testPromoteToMain": [
       ["equal",["sequence",[["move","e2e4"],["move","d2d4"]]],["sequence",[["move","e2e4"],["move","d2d4"]]]],
       ["equal",["sequence",[["move","d2d4"],["move","e2e4"]]],["sequence",[["move","d2d4"],["move","e2e4"]]]],
@@ -2585,6 +2608,16 @@ export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
       ["equal",["move","d2d4"],["move","d2d4"]],
       ["truth",false],
       ["equal",["sequence",[["str","Start of variation"]]],["sequence",[["str","Start of variation"]]]],
+    ],
+    "PgnTestCase.testAnnotationSymbols": [
+      ["contains",["int","6"],"set",true],
+      ["equal",["int","1"],["int","1"]],
+      ["equal",["int","0"],["int","0"]],
+      ["equal",["int","0"],["int","0"]],
+      ["contains",["int","2"],"set",true],
+      ["equal",["int","1"],["int","1"]],
+      ["contains",["int","3"],"set",true],
+      ["equal",["int","1"],["int","1"]],
     ],
     "PgnTestCase.testTreeTraversal": [
       ["equal",["pgn-node",1],["pgn-node",1]],
@@ -2625,6 +2658,9 @@ export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
       ["equal",["pgn-node",1],["pgn-node",1]],
       ["equal",["pgn-node",2],["pgn-node",2]],
     ],
+    "PgnTestCase.testBlackToMove": [
+      ["equal",["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[FEN \"8/8/4k3/8/4P3/4K3/8/8 b - - 0 17\"]\n[SetUp \"1\"]\n\n17... Kd6 18. Kd4 Ke6 *"],["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[FEN \"8/8/4k3/8/4P3/4K3/8/8 b - - 0 17\"]\n[SetUp \"1\"]\n\n17... Kd6 18. Kd4 Ke6 *"]],
+    ],
     "PgnTestCase.testAddLine": [
       ["equal",["move","g1f3"],["move","g1f3"]],
       ["equal",["sequence",[["str","start"]]],["sequence",[["str","start"]]]],
@@ -2639,6 +2675,20 @@ export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
       ["truth",true],
       ["equal",["sequence",[["move","e2e4"],["move","g8f6"],["move","d2d3"]]],["sequence",[["move","e2e4"],["move","g8f6"],["move","d2d3"]]]],
       ["equal",["str","1. d3 Nf6 2. e4"],["str","1. d3 Nf6 2. e4"]],
+    ],
+    "PgnTestCase.testSemicolonComment": [
+      ["equal",["move","e2e4"],["move","e2e4"]],
+      ["truth",true],
+    ],
+    "PgnTestCase.testNoMovetext": [
+      ["equal",["str","A"],["str","A"]],
+      ["equal",["str","B"],["str","B"]],
+      ["truth",true],
+    ],
+    "PgnTestCase.testSubgame": [
+      ["equal",["str","rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"],["str","rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]],
+      ["equal",["move","c2c4"],["move","c2c4"]],
+      ["equal",["move","g1f3"],["move","g1f3"]],
     ],
     "PgnTestCase.testAnnotations": [
       ["truth",true],

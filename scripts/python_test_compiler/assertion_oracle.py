@@ -232,6 +232,8 @@ class _TraceSession:
             return "set"
         if isinstance(value, (list, tuple)):
             return "sequence"
+        if isinstance(value, self.chess.pgn.Headers):
+            return "headers"
         if isinstance(value, chess.LegalMoveGenerator):
             return "legal-moves"
         if isinstance(value, chess.PseudoLegalMoveGenerator):

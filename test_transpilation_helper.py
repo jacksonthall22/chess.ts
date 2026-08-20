@@ -59,7 +59,9 @@ from python_test_compiler.target import (  # noqa: E402
     BIGINT,
     BOARD,
     BOOLEAN,
+    CHILD_GAME_NODE,
     GAME,
+    GAME_BUILDER,
     LEGAL_MOVE_GENERATOR,
     LEGAL_MOVE_ITERATOR,
     MOVE,
@@ -212,8 +214,8 @@ class SourceBoundaryTest(unittest.TestCase):
     def test_parses_exact_selection_once_and_preserves_every_comment(self) -> None:
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
-        self.assertEqual(len(unit.methods), 96)
-        self.assertEqual(len(unit.comments), 73)
+        self.assertEqual(len(unit.methods), 102)
+        self.assertEqual(len(unit.comments), 75)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
 
@@ -662,6 +664,11 @@ self.assertEqual(value, "first\\nsecond")""",
 self.assertEqual(copy.copy(move), move)""",
                 "this.assertEqualUsing(move.copy(), move, "
                 "(__actual, __expected) => __actual.equals(__expected))",
+            ),
+            (
+                """game = chess.pgn.Game()
+self.assertEqual(str(game), "*")""",
+                "this.assertEqualUsing(game.toString(), \"*\"",
             ),
         )
         for body, expected in cases:
@@ -2030,6 +2037,13 @@ class TargetAlgebraTest(unittest.TestCase):
         self.assertIs(add_line.keyword_style, KeywordStyle.OPTIONS_OBJECT)
         self.assertIsNotNone(add_line.result_refinement)
 
+        game_builder = named_call_contract("chess.pgn.GameBuilder")
+        assert game_builder is not None
+        self.assertEqual(game_builder.result, GAME_BUILDER)
+        accept_subgame = method_call_contract("accept_subgame", CHILD_GAME_NODE)
+        assert accept_subgame is not None
+        validate_call_contract(accept_subgame, (GAME_BUILDER,), ())
+
     def test_call_contract_validation_checks_arity_arguments_and_keywords(self) -> None:
         parse_square = named_call_contract("chess.parse_square")
         assert parse_square is not None
@@ -2171,7 +2185,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         # compile_suite() fails if any selected semantic AST node or COMMENT token
         # is unclaimed by a lowering rule.
         self.assertEqual(self.first, self.second)
-        self.assertEqual(len(TRANSLATED_TESTS), 96)
+        self.assertEqual(len(TRANSLATED_TESTS), 102)
         for identity in TRANSLATED_TESTS:
             self.assertIn(py_identifier_to_ts(identity.method_name), self.first.typescript)
 
@@ -2180,15 +2194,15 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         self.assertNotIn("python-semantics", self.first.typescript)
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
-        self.assertEqual(self.provenance["translatedMethodCount"], 96)
-        self.assertEqual(self.provenance["sourceCommentCount"], 73)
-        self.assertEqual(self.provenance["semanticNodeCount"], 7870)
-        self.assertEqual(self.provenance["assertionCount"], 552)
+        self.assertEqual(self.provenance["translatedMethodCount"], 102)
+        self.assertEqual(self.provenance["sourceCommentCount"], 75)
+        self.assertEqual(self.provenance["semanticNodeCount"], 8414)
+        self.assertEqual(self.provenance["assertionCount"], 590)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
-        self.assertEqual(len(methods), 96)
-        self.assertEqual(len({method["identity"] for method in methods}), 96)
+        self.assertEqual(len(methods), 102)
+        self.assertEqual(len({method["identity"] for method in methods}), 102)
         for method in methods:
             self.assertRegex(method["sourceSha256"], r"^[0-9a-f]{64}$")
             self.assertRegex(method["astSha256"], r"^[0-9a-f]{64}$")

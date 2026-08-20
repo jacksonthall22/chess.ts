@@ -57,20 +57,17 @@ describe('PolyglotTestCase — translation pending', () => {
 
 describe('PgnTestCase — translation pending', () => {
   test.todo('test_game_without_tag_roster (python-chess test.py:2155)',)
-  test.todo('test_setup (python-chess test.py:2159)',)
   test.todo('test_read_game (python-chess test.py:2210)',)
   test.todo('test_promotion_without_equals (python-chess test.py:2278)',)
   test.todo('test_header_with_paren (python-chess test.py:2315)',)
   test.todo('test_special_tag_names (python-chess test.py:2321)',)
   test.todo('test_chess960_without_fen (python-chess test.py:2331)',)
   test.todo('test_variation_stack (python-chess test.py:2341)',)
-  test.todo('test_annotation_symbols (python-chess test.py:2389)',)
   test.todo('test_skip_game (python-chess test.py:2469)',)
   test.todo('test_tricky_skip_game (python-chess test.py:2490)',)
   test.todo('test_read_headers (python-chess test.py:2523)',)
   test.todo('test_parse_time_control (python-chess test.py:2540)',)
   test.todo('test_visit_board (python-chess test.py:2587)',)
-  test.todo('test_black_to_move (python-chess test.py:2631)',)
   test.todo('test_result_termination_marker (python-chess test.py:2654)',)
   test.todo('test_missing_setup_tag (python-chess test.py:2659)',)
   test.todo('test_chessbase_empty_line (python-chess test.py:2685)',)
@@ -82,10 +79,7 @@ describe('PgnTestCase — translation pending', () => {
   test.todo('test_z0 (python-chess test.py:2780)',)
   test.todo('test_uci_moves (python-chess test.py:2786)',)
   test.todo('test_wierd_header (python-chess test.py:2792)',)
-  test.todo('test_semicolon_comment (python-chess test.py:2797)',)
   test.todo('test_empty_game (python-chess test.py:2804)',)
-  test.todo('test_no_movetext (python-chess test.py:2809)',)
-  test.todo('test_subgame (python-chess test.py:2824)',)
   test.todo('test_is_wild (python-chess test.py:2833)',)
   test.todo('test_my_game_node (python-chess test.py:2838)',)
   test.todo('test_recursion (python-chess test.py:2855)',)
@@ -245,5 +239,5 @@ describe('GiveawayTestCase — translation pending', () => {
 
 // Baseline: python-chess 9c24454dcea4f8a30259d811a2f10b26e911deb4
 // Total upstream tests: 292
-// Translated tests: 96
-// Pending tests: 196
+// Translated tests: 102
+// Pending tests: 190
