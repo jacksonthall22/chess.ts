@@ -193,6 +193,9 @@ export class StringIO implements TextIO {
     if (!Number.isInteger(offset)) {
       throw new TypeError('StringIO seek offset must be an integer')
     }
+    if (offset < -(2 ** 63) || offset >= 2 ** 63) {
+      throw new OverflowError("cannot fit 'int' into an index-sized integer")
+    }
     if (whence !== 0 && whence !== 1 && whence !== 2) {
       throw new ValueError('StringIO seek whence must be 0, 1, or 2')
     }
