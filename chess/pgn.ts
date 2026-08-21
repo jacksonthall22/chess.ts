@@ -3,7 +3,7 @@ import { Board, Color, Move, Square, WHITE } from './index'
 import { PovScore, Cp, Score, Mate } from './engine'
 import { Arrow } from './svg'
 import { findVariant } from './variant'
-import { KeyError, OverflowError, ValueError } from './errors'
+import { KeyError, OSError, OverflowError, ValueError } from './errors'
 
 /** ========== Custom declarations (no mirror in python-chess) ========== */
 
@@ -117,7 +117,7 @@ export interface TextIO {
   write(str: string): number
 }
 
-/** A minimal in-memory text stream used by the PGN reader and writer. */
+/** A cursor-backed in-memory text stream used by the PGN reader and writer. */
 export class StringIO implements TextIO {
   private buffer: string[]
   private position = 0
@@ -128,6 +128,11 @@ export class StringIO implements TextIO {
 
   write(str: string): number {
     const characters = Array.from(str)
+    if (characters.length > 0 && this.position > this.buffer.length) {
+      this.buffer = this.buffer.concat(
+        Array(this.position - this.buffer.length).fill('\0'),
+      )
+    }
     const replaced = Math.min(
       characters.length,
       this.buffer.length - this.position,
@@ -141,20 +146,73 @@ export class StringIO implements TextIO {
     return this.buffer.join('')
   }
 
-  read(): string {
-    const value = this.buffer.slice(this.position).join('')
-    this.position = this.buffer.length
+  read(size: number | null = -1): string {
+    if (size !== null && !Number.isInteger(size)) {
+      throw new TypeError('StringIO read size must be an integer')
+    }
+    if (size !== null && (size < -(2 ** 63) || size >= 2 ** 63)) {
+      throw new OverflowError("cannot fit 'int' into an index-sized integer")
+    }
+    if (this.position >= this.buffer.length) {
+      return ''
+    }
+    const end =
+      size === null || size < 0
+        ? this.buffer.length
+        : Math.min(this.position + size, this.buffer.length)
+    const value = this.buffer.slice(this.position, end).join('')
+    this.position = end
     return value
   }
 
-  readline(): string {
+  readline(size: number | null = -1): string {
+    if (size !== null && !Number.isInteger(size)) {
+      throw new TypeError('StringIO readline size must be an integer')
+    }
+    if (size !== null && (size < -(2 ** 63) || size >= 2 ** 63)) {
+      throw new OverflowError("cannot fit 'int' into an index-sized integer")
+    }
     const index = this.buffer.indexOf('\n', this.position)
     if (index === -1) {
-      return this.read()
+      return this.read(size)
     }
-    const line = this.buffer.slice(this.position, index + 1).join('')
-    this.position = index + 1
+    const end =
+      size === null || size < 0
+        ? index + 1
+        : Math.min(this.position + size, index + 1)
+    const line = this.buffer.slice(this.position, end).join('')
+    this.position = end
     return line
+  }
+
+  tell(): number {
+    return this.position
+  }
+
+  seek(offset: number, whence: 0 | 1 | 2 = 0): number {
+    if (!Number.isInteger(offset)) {
+      throw new TypeError('StringIO seek offset must be an integer')
+    }
+    if (offset < -(2 ** 63) || offset >= 2 ** 63) {
+      throw new OverflowError("cannot fit 'int' into an index-sized integer")
+    }
+    if (whence !== 0 && whence !== 1 && whence !== 2) {
+      throw new ValueError('StringIO seek whence must be 0, 1, or 2')
+    }
+    if (whence !== 0 && offset !== 0) {
+      throw new OSError("Can't do nonzero cur-relative seeks")
+    }
+    const position =
+      (whence === 0
+        ? 0
+        : whence === 1
+          ? this.position
+          : this.buffer.length) + offset
+    if (position < 0) {
+      throw new ValueError('StringIO seek position must not be negative')
+    }
+    this.position = position
+    return position
   }
 }
 

@@ -20,6 +20,13 @@ describe('Python-compatible error families', () => {
     expect(keyError.name).toBe('KeyError')
     expect(keyError.message).toBe('missing key')
 
+    const osError = new chess.OSError('seek failed')
+    expect(chessDefault.OSError).toBe(chess.OSError)
+    expect(osError).toBeInstanceOf(Error)
+    expect(osError).not.toBeInstanceOf(RangeError)
+    expect(osError.name).toBe('OSError')
+    expect(osError.message).toBe('seek failed')
+
     const overflowError = new chess.OverflowError('too large')
     expect(chessDefault.OverflowError).toBe(chess.OverflowError)
     expect(overflowError).toBeInstanceOf(Error)
