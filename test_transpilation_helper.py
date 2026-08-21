@@ -214,7 +214,7 @@ class SourceBoundaryTest(unittest.TestCase):
     def test_parses_exact_selection_once_and_preserves_every_comment(self) -> None:
         unit = load_source_unit(UPSTREAM_TEST, TRANSLATED_TESTS)
         self.assertEqual(tuple(method.identity for method in unit.methods), TRANSLATED_TESTS)
-        self.assertEqual(len(unit.methods), 102)
+        self.assertEqual(len(unit.methods), 104)
         self.assertEqual(len(unit.comments), 75)
         self.assertIn("# Letter R", {comment.text for comment in unit.comments})
         self.assertIn("# Test file exporter.", {comment.text for comment in unit.comments})
@@ -2044,6 +2044,67 @@ class TargetAlgebraTest(unittest.TestCase):
         assert accept_subgame is not None
         validate_call_contract(accept_subgame, (GAME_BUILDER,), ())
 
+    def test_game_from_board_contract_requires_an_exact_board(self) -> None:
+        for body, expected in (
+            (
+                "game = chess.pgn.Game.from_board(chess.Board())",
+                "pgnModule.Game.fromBoard(new chess.Board())",
+            ),
+            (
+                "board = chess.Board()\n"
+                "game = chess.pgn.Game.from_board(board)",
+                "pgnModule.Game.fromBoard(board)",
+            ),
+        ):
+            with self.subTest(body=body):
+                self.assertIn(expected, compile_fixture(body))
+
+        for body, message in (
+            (
+                "chess.pgn.Game.from_board(chess.BaseBoard())",
+                "argument 1 requires board, got base-board",
+            ),
+            (
+                "chess.pgn.Game.from_board()",
+                "expected 1 positional arguments, got 0",
+            ),
+        ):
+            with self.subTest(body=body), self.assertRaisesRegex(
+                UnsupportedSyntax, re.escape(message)
+            ):
+                compile_fixture(body)
+
+    def test_endswith_contract_requires_string_receiver_and_suffix(self) -> None:
+        for body, expected in (
+            (
+                'self.assertTrue("checkmate".endswith("mate"))',
+                'this.assertTrue("checkmate".endsWith("mate"))',
+            ),
+            (
+                'prefix = "checkmate"\n'
+                'suffix = "mate"\n'
+                "self.assertTrue(prefix.endswith(suffix))",
+                "this.assertTrue(prefix.endsWith(suffix))",
+            ),
+        ):
+            with self.subTest(body=body):
+                self.assertIn(expected, compile_fixture(body))
+
+        for body, message in (
+            (
+                'self.assertTrue("checkmate".endswith(1))',
+                "argument 1 requires string, got number",
+            ),
+            (
+                'self.assertTrue(chess.Board().endswith("x"))',
+                "no finite call contract for <dynamic call>",
+            ),
+        ):
+            with self.subTest(body=body), self.assertRaisesRegex(
+                UnsupportedSyntax, re.escape(message)
+            ):
+                compile_fixture(body)
+
     def test_call_contract_validation_checks_arity_arguments_and_keywords(self) -> None:
         parse_square = named_call_contract("chess.parse_square")
         assert parse_square is not None
@@ -2185,7 +2246,7 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         # compile_suite() fails if any selected semantic AST node or COMMENT token
         # is unclaimed by a lowering rule.
         self.assertEqual(self.first, self.second)
-        self.assertEqual(len(TRANSLATED_TESTS), 102)
+        self.assertEqual(len(TRANSLATED_TESTS), 104)
         for identity in TRANSLATED_TESTS:
             self.assertIn(py_identifier_to_ts(identity.method_name), self.first.typescript)
 
@@ -2194,15 +2255,15 @@ class WholeSuiteCompilationTest(unittest.TestCase):
         self.assertNotIn("python-semantics", self.first.typescript)
 
     def test_emits_machine_checkable_source_provenance(self) -> None:
-        self.assertEqual(self.provenance["translatedMethodCount"], 102)
+        self.assertEqual(self.provenance["translatedMethodCount"], 104)
         self.assertEqual(self.provenance["sourceCommentCount"], 75)
-        self.assertEqual(self.provenance["semanticNodeCount"], 8414)
-        self.assertEqual(self.provenance["assertionCount"], 590)
+        self.assertEqual(self.provenance["semanticNodeCount"], 8562)
+        self.assertEqual(self.provenance["assertionCount"], 595)
         self.assertEqual(self.provenance["parityGapRootCount"], 0)
         self.assertEqual(self.provenance["parityGapCaseCount"], 0)
         methods = self.provenance["methods"]
-        self.assertEqual(len(methods), 102)
-        self.assertEqual(len({method["identity"] for method in methods}), 102)
+        self.assertEqual(len(methods), 104)
+        self.assertEqual(len({method["identity"] for method in methods}), 104)
         for method in methods:
             self.assertRegex(method["sourceSha256"], r"^[0-9a-f]{64}$")
             self.assertRegex(method["astSha256"], r"^[0-9a-f]{64}$")
