@@ -163,6 +163,60 @@ describe('TypeScript-native PGN parity contracts', () => {
     })
   })
 
+  test('readGame distinguishes visitor factories from native classes', () => {
+    class ResultVisitor extends pgn.BaseVisitor<string> {
+      override result(): string {
+        return 'factory'
+      }
+    }
+
+    function visitorFactory(this: void): pgn.BaseVisitor<string> {
+      if (new.target) {
+        throw new Error('visitor factory must be called without new')
+      }
+      return new ResultVisitor()
+    }
+
+    // prettier-ignore
+    class
+    WhitespaceVisitor extends pgn.BaseVisitor<string> {
+      override result(): string {
+        return 'whitespace'
+      }
+    }
+
+    class /* comment */ CommentVisitor extends pgn.BaseVisitor<string> {
+      override result(): string {
+        return 'comment'
+      }
+    }
+
+    class ReceiverVisitor extends pgn.BaseVisitor<string> {
+      static factory(this: typeof ReceiverVisitor): ReceiverVisitor {
+        return new this()
+      }
+
+      override result(): string {
+        return 'receiver'
+      }
+    }
+
+    if (false) {
+      // @ts-expect-error Factories requiring a receiver must be bound first.
+      pgn.readGame(new pgn.StringIO('*'), { Visitor: ReceiverVisitor.factory })
+    }
+
+    expect(
+      pgn.readGame(new pgn.StringIO('*'), { Visitor: visitorFactory }),
+    ).toBe('factory')
+    expect(
+      pgn.readGame(new pgn.StringIO('*'), { Visitor: WhitespaceVisitor }),
+    ).toBe('whitespace')
+    expect(
+      pgn.readGame(new pgn.StringIO('*'), { Visitor: CommentVisitor }),
+    ).toBe('comment')
+  })
+
   test('readGame strips every leading BOM like Python lstrip', () => {
     const game = pgn.readGame(
       new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n*'),
