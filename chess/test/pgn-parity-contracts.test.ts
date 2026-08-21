@@ -228,6 +228,7 @@ describe('TypeScript-native PGN parity contracts', () => {
     expect(stream.getValue()).toBe('a♞c\n\0\0Z')
 
     expect(() => stream.read(1e100)).toThrow(chess.OverflowError)
+    expect(() => stream.seek(2 ** 63)).toThrow(chess.OverflowError)
     expect(() => stream.seek(1, 1)).toThrow(chess.OSError)
   })
 
