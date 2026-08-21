@@ -162,7 +162,7 @@ type HeadersBuilderArguments<HeadersT extends Headers> =
     : [options: { Headers_: HeadersClass<HeadersT> }]
 
 type VisitorConstructor<ResultT> = new () => BaseVisitor<ResultT>
-type VisitorFactory<ResultT> = () => BaseVisitor<ResultT>
+type VisitorFactory<ResultT> = (this: void) => BaseVisitor<ResultT>
 type VisitorCallable<ResultT> =
   | VisitorConstructor<ResultT>
   | VisitorFactory<ResultT>
@@ -2335,9 +2335,9 @@ export function readGame<ResultT>(
   }: { Visitor?: VisitorCallable<ResultT> } = {},
 ): ResultT | null {
   // Python invokes constructors and functions alike; JavaScript classes require `new`.
-  const visitor: any = Function.prototype
-    .toString.call(Visitor)
-    .startsWith('class ')
+  const visitor: any = /^class(?:\s|\/[*/])/u.test(
+    Function.prototype.toString.call(Visitor),
+  )
     ? new (Visitor as VisitorConstructor<ResultT>)()
     : (Visitor as VisitorFactory<ResultT>)()
 
