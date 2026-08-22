@@ -1876,7 +1876,7 @@ export class GameBuilder<GameT extends Game = Game> extends BaseVisitor<GameT> {
    * >>>
    * >>> pgn = open("data/pgn/kasparov-deep-blue-1997.pgn")
    * >>>
-   * >>> game = pgn.readGame(pgn, Visitor=MyGameBuilder)
+   * >>> game = pgn.readGame(pgn, { Visitor: () => new MyGameBuilder() })
    */
   override handleError(error: Error): void {
     LOGGER.error(`${error} while parsing ${this.game}`)
@@ -2270,7 +2270,11 @@ export class FileExporter extends StringExporterMixin<number> {
 export function readGame(handle: StringIO): Game | null
 export function readGame<ResultT>(
   handle: StringIO,
-  { Visitor }: { Visitor?: typeof BaseVisitor<ResultT> },
+  {
+    Visitor,
+  }: {
+    Visitor: (this: void) => BaseVisitor<ResultT>
+  },
 ): ResultT | null
 /**
  * Reads a game from a file opened in text mode.
@@ -2324,9 +2328,13 @@ export function readGame<ResultT>(
  */
 export function readGame<ResultT>(
   handle: StringIO,
-  { Visitor = GameBuilder }: { Visitor?: any } = {},
+  {
+    Visitor = () => new GameBuilder() as unknown as BaseVisitor<ResultT>,
+  }: {
+    Visitor?: (this: void) => BaseVisitor<ResultT>
+  } = {},
 ): ResultT | null {
-  const visitor = new Visitor()
+  const visitor = Visitor()
 
   let foundGame = false
   let skippingGame = false
@@ -2361,7 +2369,7 @@ export function readGame<ResultT>(
       foundGame = true
       skippingGame = visitor.beginGame() === SKIP
       if (!skippingGame) {
-        managedHeaders = visitor.beginHeaders()
+        managedHeaders = visitor.beginHeaders() ?? null
         if (!(managedHeaders instanceof Headers)) {
           unmanagedHeaders = new Headers(new Map<string, string>())
         }
@@ -2414,7 +2422,7 @@ export function readGame<ResultT>(
     try {
       VariantBoard = headers.variant()
     } catch (error) {
-      visitor.handleError(error)
+      visitor.handleError(error as Error)
       VariantBoard = Board
     }
 
@@ -2426,7 +2434,7 @@ export function readGame<ResultT>(
       boardStack = [board]
       visitor.visitBoard(board)
     } catch (error) {
-      visitor.handleError(error)
+      visitor.handleError(error as Error)
       skippingGame = true
     }
   }
@@ -2563,10 +2571,10 @@ export function readGame<ResultT>(
         if (visitor.beginParseSan(boardStack!.at(-1)!, token) !== SKIP) {
           try {
             const move = boardStack!.at(-1)!.parseSan(token)
-            visitor.visitMove(boardStack!.at(-1), move)
+            visitor.visitMove(boardStack!.at(-1)!, move)
             boardStack!.at(-1)!.push(move)
           } catch (error) {
-            visitor.handleError(error)
+            visitor.handleError(error as Error)
             skipVariationDepth = 1
           }
         }
@@ -2622,14 +2630,14 @@ export function readGame<ResultT>(
  *      <Game at ... ('Garry Kasparov' vs. 'Deep Blue (Computer)', 1997.??.??)>
  */
 export const readHeaders = (handle: StringIO): Headers | null => {
-  return readGame(handle, { Visitor: HeadersBuilder })
+  return readGame(handle, { Visitor: () => new HeadersBuilder() })
 }
 
 /**
  * Skips a game. Returns ``true`` if a game was found and skipped.
  */
 export const skipGame = (handle: StringIO): boolean => {
-  return utils.bool(readGame(handle, { Visitor: SkipVisitor }))
+  return utils.bool(readGame(handle, { Visitor: () => new SkipVisitor() }))
 }
 
 export const parseTimeControl = (timeControl: string): TimeControl => {
