@@ -4,9 +4,9 @@ import type { PythonAssertionOracleArtifact } from './python-assertion-oracle'
 
 export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
   schemaVersion: 1,
-  translatedMethodCount: 102,
-  tracedMethodCount: 102,
-  eventCount: 5554,
+  translatedMethodCount: 104,
+  tracedMethodCount: 104,
+  eventCount: 5559,
   excludedMethods: [
   ],
   methods: {
@@ -2661,6 +2661,12 @@ export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
     "PgnTestCase.testBlackToMove": [
       ["equal",["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[FEN \"8/8/4k3/8/4P3/4K3/8/8 b - - 0 17\"]\n[SetUp \"1\"]\n\n17... Kd6 18. Kd4 Ke6 *"],["str","[Event \"?\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"?\"]\n[Black \"?\"]\n[Result \"*\"]\n[FEN \"8/8/4k3/8/4P3/4K3/8/8 b - - 0 17\"]\n[SetUp \"1\"]\n\n17... Kd6 18. Kd4 Ke6 *"]],
     ],
+    "PgnTestCase.testGameFromBoard": [
+      ["equal",["str","3k4/8/4K3/8/8/8/8/2R5 b - - 0 1"],["str","3k4/8/4K3/8/8/8/8/2R5 b - - 0 1"]],
+      ["equal",["move","c1c8"],["move","c1c8"]],
+      ["equal",["move","d8e8"],["move","d8e8"]],
+      ["equal",["str","1-0"],["str","1-0"]],
+    ],
     "PgnTestCase.testAddLine": [
       ["equal",["move","g1f3"],["move","g1f3"]],
       ["equal",["sequence",[["str","start"]]],["sequence",[["str","start"]]]],
@@ -2689,6 +2695,9 @@ export const PYTHON_ASSERTION_ORACLE: PythonAssertionOracleArtifact = {
       ["equal",["str","rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"],["str","rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2"]],
       ["equal",["move","c2c4"],["move","c2c4"]],
       ["equal",["move","g1f3"],["move","g1f3"]],
+    ],
+    "PgnTestCase.testRecursion": [
+      ["truth",true],
     ],
     "PgnTestCase.testAnnotations": [
       ["truth",true],
