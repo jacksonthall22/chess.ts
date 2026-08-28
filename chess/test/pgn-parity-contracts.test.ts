@@ -163,6 +163,29 @@ describe('TypeScript-native PGN parity contracts', () => {
     })
   })
 
+  test('readGame accepts explicit visitor factories', () => {
+    class CustomGame extends pgn.Game {
+      marker = 'custom'
+    }
+
+    const game = pgn.readGame(new pgn.StringIO('*'), {
+      Visitor: () => CustomGame.builder(),
+    })
+    expect(game).toBeInstanceOf(CustomGame)
+    expect(game?.marker).toBe('custom')
+
+    const headers = pgn.readGame(
+      new pgn.StringIO('[Event "Factories"]\n\n*'),
+      { Visitor: () => new pgn.HeadersBuilder() },
+    )
+    expect(headers?.get('Event')).toBe('Factories')
+
+    if (false) {
+      // @ts-expect-error Visitor must be an explicit factory.
+      pgn.readGame(new pgn.StringIO('*'), {})
+    }
+  })
+
   test('readGame strips every leading BOM like Python lstrip', () => {
     const game = pgn.readGame(
       new pgn.StringIO('\ufeff\ufeff[Event "BOM"]\n\n*'),

@@ -138,6 +138,30 @@ blocks. Without that binding, a later upstream use outside either block could
 resolve to a same-named enclosing or module variable. That is valid TypeScript,
 so typechecking could pass while the port silently uses the wrong `board`.
 
+### When TypeScript needs a different API shape
+
+Source fidelity is the default, including public API spelling. However, Python
+can sometimes express several valid inputs with one operation while JavaScript
+requires incompatible operations. For example, Python calls both a class and a
+factory function as `Visitor()`, whereas JavaScript must use `new Visitor()`
+for a class and `Visitor()` for a factory.
+
+Do not preserve that source spelling by adding runtime guessing, reflection, or
+Python-emulation machinery to the TypeScript implementation when a small,
+ordinary TypeScript call-site adaptation expresses every meaningful upstream
+use. Prefer the idiomatic TypeScript shape, even though its syntax differs from
+Python, when callers can make the distinction explicitly and cheaply—for
+example, passing `() => new MyVisitor()` or `() => MyGame.builder()` instead
+of passing either a class constructor or factory directly.
+
+This exception must preserve the upstream capability and resulting behavior; it
+must not silently narrow valid inputs or change chess logic. It deliberately
+changes the TypeScript-facing API, so do not make it unilaterally. First
+explain the Python behavior, why a source-shaped port would be awkward or
+brittle in JavaScript, the proposed TypeScript pattern, and the caller-visible
+consequences. Implement it only after explicit user approval, then document
+and test the supported upstream forms through the new API.
+
 Default whitespace operations are one proved language boundary. Python
 `str.strip()` and whitespace `str.split()` include `U+001C` but exclude
 `U+FEFF`; JavaScript `trim()` and `\s` do the opposite for those characters.
