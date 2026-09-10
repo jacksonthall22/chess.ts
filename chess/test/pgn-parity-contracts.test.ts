@@ -5,6 +5,24 @@ import * as pgn from '../pgn'
 import * as utils from '../utils'
 
 describe('TypeScript-native PGN parity contracts', () => {
+  test('header values follow roster order then custom header insertion order', () => {
+    const headers = new pgn.Headers(
+      new Map([
+        ['Annotator', 'Coach'],
+        ['White', 'Alice'],
+        ['Event', 'World Championship'],
+        ['X', ''],
+      ]),
+    )
+
+    expect([...headers.values()]).toEqual([
+      'World Championship',
+      'Alice',
+      'Coach',
+      '',
+    ])
+  })
+
   test('parent and move identity are getter-only', () => {
     const game = new pgn.Game()
     const move = chess.Move.fromUci('e2e4')

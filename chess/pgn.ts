@@ -1552,7 +1552,7 @@ export class Headers {
   }
 
   *values(): IterableIterator<string> {
-    for (const [_, value] of this.iter()) {
+    for (const [, value] of this.items()) {
       yield value
     }
   }
