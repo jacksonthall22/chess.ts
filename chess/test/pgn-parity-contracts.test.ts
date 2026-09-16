@@ -23,6 +23,36 @@ describe('TypeScript-native PGN parity contracts', () => {
     ])
   })
 
+  test('header copies preserve entries, concrete type, and independent storage', () => {
+    class CustomHeaders extends pgn.Headers {
+      marker = 'custom'
+    }
+
+    const headers = new CustomHeaders(
+      new Map([
+        ['Annotator', 'Coach'],
+        ['White', 'Alice'],
+        ['Event', 'Example'],
+        ['CustomEmpty', ''],
+      ]),
+    )
+    const copy = headers.copy()
+
+    expectTypeOf(copy).toEqualTypeOf<CustomHeaders>()
+    expect(copy).toBeInstanceOf(CustomHeaders)
+    expect([...copy.items()]).toEqual([
+      ['Event', 'Example'],
+      ['White', 'Alice'],
+      ['Annotator', 'Coach'],
+      ['CustomEmpty', ''],
+    ])
+
+    copy.set('Event', 'Changed copy')
+    headers.set('Annotator', 'Changed original')
+    expect(headers.get('Event')).toBe('Example')
+    expect(copy.get('Annotator')).toBe('Coach')
+  })
+
   test('parent and move identity are getter-only', () => {
     const game = new pgn.Game()
     const move = chess.Move.fromUci('e2e4')

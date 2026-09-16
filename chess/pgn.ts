@@ -1519,7 +1519,9 @@ export class Headers {
   }
 
   copy(): this {
-    return new (this.constructor as new (data: this) => this)(this)
+    return new (this.constructor as new (
+      data: Iterable<[string, string]>,
+    ) => this)(this.items())
   }
 
   // __copy__() skipped
