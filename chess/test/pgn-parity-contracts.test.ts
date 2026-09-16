@@ -25,8 +25,17 @@ describe('TypeScript-native PGN parity contracts', () => {
 
   test('header copies preserve entries, concrete type, and independent storage', () => {
     class CustomHeaders extends pgn.Headers {
-      marker = 'custom'
+      eventAtConstruction: string | undefined
+
+      constructor(data: Map<string, string>) {
+        const event = data.get('Event')
+        super(data)
+        this.eventAtConstruction = event
+      }
     }
+
+    const empty = CustomHeaders.builder().beginHeaders().copy()
+    expect([...empty.items()]).toEqual([])
 
     const headers = new CustomHeaders(
       new Map([
@@ -40,6 +49,7 @@ describe('TypeScript-native PGN parity contracts', () => {
 
     expectTypeOf(copy).toEqualTypeOf<CustomHeaders>()
     expect(copy).toBeInstanceOf(CustomHeaders)
+    expect(copy.eventAtConstruction).toBe('Example')
     expect([...copy.items()]).toEqual([
       ['Event', 'Example'],
       ['White', 'Alice'],

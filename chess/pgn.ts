@@ -1519,9 +1519,9 @@ export class Headers {
   }
 
   copy(): this {
-    return new (this.constructor as new (
-      data: Iterable<[string, string]>,
-    ) => this)(this.items())
+    return new (this.constructor as new (data: Map<string, string>) => this)(
+      new Map(this.items()),
+    )
   }
 
   // __copy__() skipped
